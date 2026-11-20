@@ -1,4 +1,4 @@
-/* Menü unten: Liga, Kader, Spiel, Ranking (Hall of Fame), Ich.
+/* Menü unten: Liga, Team (Manager), Spiel, Ranking (Hall of Fame), Ich.
    Sichtbar nur in den Hauptbereichen; der aktive Punkt zeigt seine Beschriftung.
    „Spiel“ öffnet das laufende Spiel oder legt ein neues an, „Ich“ führt zu Mein Bereich bzw. zum Konto. */
 import { $ } from '../core/util.js';
@@ -9,7 +9,7 @@ import { requestNewGame } from './start.js';
 import { resetHof } from './hof.js';
 
 /* Ansicht → Menüpunkt */
-const TAB_OF = { start: 'start', kader: 'kader', hof: 'hof', me: 'me', admin: 'me' };
+const TAB_OF = { start: 'start', manager: 'manager', kader: 'manager', hof: 'hof', me: 'me', admin: 'me' };
 const running = () => { const S = store.S; return !!(S.match && !(S.ended && allSaved())); };
 const meTarget = () => (myPlayer() && !isAdmin() ? 'me' : 'admin');
 
@@ -34,9 +34,9 @@ export function updateTabbar(view = nav.current) {
 }
 
 /* ---------- Wischen zwischen den Bereichen ----------
-   Waagerecht wischen wechselt zum Nachbarbereich (Liga ⇄ Kader ⇄ Ranking ⇄ Ich, „Spiel“ ist eine Aktion und fehlt).
+   Waagerecht wischen wechselt zum Nachbarbereich (Liga ⇄ Team ⇄ Ranking ⇄ Ich, „Spiel“ ist eine Aktion und fehlt).
    Die Ansicht folgt dem Finger; waagerecht scrollende Leisten und Formularfelder behalten ihr eigenes Wischen. */
-const ORDER = ['start', 'kader', 'hof', 'me'];
+const ORDER = ['start', 'manager', 'hof', 'me'];
 const standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
 const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const scrollsX = el => {

@@ -17,6 +17,7 @@ import { liveTilesHtml } from './watch.js';
 import { resetHof } from './hof.js';
 import { spieltagCardHtml, maybeLaunch } from './mvp.js';
 import { byDate } from '../core/market.js';
+import { managerCardHtml } from './manager.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
 
@@ -101,7 +102,7 @@ function latest() {
 }
 
 function html() {
-  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + spieltagCardHtml() + fixturesStrip() + latest();
+  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + managerCardHtml() + spieltagCardHtml() + fixturesStrip() + latest();
 }
 
 /* Kader: alle aktiven Spieler, nach Mannschaft */
@@ -143,5 +144,6 @@ export function initStart() {
     else if (k === 'new') requestNewGame();
     else if (k === 'me') show('me');
     else if (k === 'hof') { resetHof(); show('hof', { tab: true }); }
+    else if (k === 'mgr') show('manager', { tab: true });
   });
 }

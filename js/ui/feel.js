@@ -3,6 +3,7 @@
 import { nav, back, rerender, currentEls } from '../router.js';
 import { games, loadGames, loadRoster, loadSchedule, forgetEvents } from '../services/api.js';
 import { buzz } from '../core/util.js';
+import { loadManagers } from '../services/manager.js';
 
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
@@ -60,7 +61,8 @@ const REFRESH = {
   start: () => Promise.all([loadGames(true), loadRoster(), loadSchedule()]),
   hof: () => { forgetEvents(); return loadGames(true); },
   kader: () => Promise.all([loadGames(true), loadRoster()]),
-  me: () => loadGames(true)
+  me: () => loadGames(true),
+  manager: () => Promise.all([loadGames(true), loadRoster(), loadManagers(true)])
 };
 function initPull() {
   if (isIOS && !standalone) return;
