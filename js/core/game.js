@@ -1,0 +1,302 @@
+/* Spielzustand (lokal gespeichert) und die komplette Punkteberechnung.
+   Ein Spiel läuft immer nur auf dem Gerät, auf dem es gebucht wird. */
+import { KEYS } from '../config.js';
+import { GROUPS, CLEAN_SHEET, GOAL_KEYS, ASSIST_KEYS } from '../data/actions.js';
+import { PL, POS_NAME } from '../data/players.js';
+import { CL } from '../data/clubs.js';
+import { minStamp, randomId } from './util.js';
+
+/* ---------- Zustand ---------- */
+export function freshGame(keep = {}) {
+  return {
+    pos: keep.pos || 'ABW', match: keep.match || null, startelf: true, stints: [{ from: 0, to: null }],
+    clock: { offset: 0, startedAt: null }, ended: false, events: [], nextId: 1, subs: []
+  };
+}
+function loadGame() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEYS.game) || 'null');
+    if (s && s.events && s.clock && s.stints) {
+      if (!POS_NAME[s.pos]) s.pos = 'ABW';
+      if (!s.match || !PL[s.match.p] || !CL[s.match.o]) s.match = null;
+      else applyMedia(s.match.p, s.match.o, s.match.pf, s.match.of);
+      if (s.squad && !(s.match && s.squad.every(x => PL[x.p]))) { delete s.squad; delete s.cur; }
+      if (s.squad) s.squad.forEach(x => applyMedia(x.p, null, x.pf, null));
+      s.subs = s.subs || [];
+      return s;
+    }
+  } catch (e) {}
+  return null;
+}
+export const store = { S: loadGame() || freshGame() };
+/* hooks.save läuft nach jedem Speichern (Mitbuch-Modus: Änderungen weitergeben) */
+export const hooks = { save: null };
+export function saveGame() {
+  if (isMulti()) store.S.squad[store.S.cur] = extract(store.S);
+  /* Mitbucher arbeiten auf einer Kopie des fremden Spiels – das eigene Spiel im Speicher bleibt unberührt */
+  if (!store.S.remote) try { localStorage.setItem(KEYS.game, JSON.stringify(store.S)); } catch (e) {}
+  if (hooks.save) try { hooks.save(); } catch (e) {}
+}
+/* Eigenes Spiel wieder aus dem Speicher holen (nach dem Mitbuchen) */
+export function reloadGame() { store.S = loadGame() || freshGame(); applyMatchNames(); }
+
+/* ---------- Mehrere Spieler in einem Spiel ----------
+   Gemeinsam: Uhr, Gegner, Spielort, Mannschaft, Spielende. Pro Spieler: Position, Startelf, Einsatzzeiten,
+   Aktionen, Wechsel, Halbzeit-Marke, eigene Spiel-ID und ob er schon gespeichert ist.
+   Der gerade gewählte Spieler liegt wie bisher direkt in store.S, die anderen in store.S.squad. */
+const SLOT_KEYS = ['pos', 'startelf', 'stints', 'events', 'subs', 'nextId', 'h2Id', 'uid', 'saved'];
+/* Team-Tor/Gegentor ohne Punkte (Spieler nicht auf dem Platz): zählt fürs Ergebnis, erscheint aber nirgends */
+export const silentGoal = e => (e.key === 'tg' || e.key === 'cg') && !e.pts;
+export const MAX_SQUAD = 15;
+export const isMulti = () => !!(store.S.squad && store.S.squad.length > 1);
+export function extract(S) {
+  const o = { p: S.match.p, pf: S.match.pf || null };
+  for (const k of SLOT_KEYS) o[k] = S[k];
+  return o;
+}
+export function load(S, o) {
+  S.match.p = o.p;
+  if (o.pf) S.match.pf = o.pf; else delete S.match.pf;
+  for (const k of SLOT_KEYS) S[k] = o[k];
+}
+/* Neuer Spieler-Eintrag für den Kader eines Spiels */
+export function newSlot(p, pos, uid) {
+  return { p, pf: PL[p] && PL[p].guest && PL[p].foto ? PL[p].foto : null, pos, startelf: true, stints: [{ from: 0, to: null }], events: [], subs: [], nextId: 1, h2Id: null, uid, saved: false };
+}
+/* Spieler nachträglich ins laufende Spiel holen (vergessen oder spontan dabei).
+   mode: 'start' = seit Anpfiff auf dem Platz, 'bench' = auf der Bank, 'in' = jetzt eingewechselt.
+   Bisherige Tore werden übernommen, damit der Spielstand stimmt – Punkte dafür nur, wenn er da auf dem Platz stand. */
+export function addToSquad(p, mode = 'start') {
+  const S = store.S;
+  if (!PL[p] || S.manual || squadIds().includes(p) || squadIds().length >= MAX_SQUAD) return false;
+  if (!isMulti()) {
+    /* Bisher allein: Tore als gemeinsame Einträge markieren, damit „Rückgängig“ sie bei allen entfernt */
+    for (const e of S.events) if ((e.key === 'tg' || e.key === 'cg') && !e.grp) e.grp = 'g' + (e.ts || e.id);
+    S.squad = [extract(S)]; S.cur = 0;
+  }
+  const slot = newSlot(p, PL[p].pos || 'MIT', randomId()), el = elapsed(), run = started();
+  if (run) {
+    const on = mode === 'start';
+    slot.startelf = on;
+    slot.stints = on ? [{ from: 0, to: S.ended ? el : null }] : mode === 'in' && !S.ended ? [{ from: el, to: null }] : [];
+    for (const e of S.events) {
+      if (e.key !== 'tg' && e.key !== 'cg') continue;
+      if (S.h2 && S.h2Id != null && slot.h2Id == null && e.id >= S.h2Id) slot.h2Id = slot.nextId;
+      slot.events.push({ id: slot.nextId++, key: e.key, label: e.label, pts: on ? (e.key === 'tg' ? 5 : -5) : 0, t: e.t, ts: e.ts, grp: e.grp });
+    }
+    if (S.h2 && slot.h2Id == null) slot.h2Id = slot.nextId;
+    if (mode === 'in' && !S.ended) slot.subs.push({ o: 'in', at: slot.nextId, t: Math.floor(el) });
+  }
+  S.squad.push(slot);
+  saveGame();
+  return true;
+}
+/* Team-Tor/Gegentor für alle Spieler buchen; gibt die Gruppen-ID zurück */
+export function bookGoal(key, t, ts) {
+  const a = ACT[key], grp = 'g' + ts;
+  eachPlayer(() => { const P = store.S; P.events.push({ id: P.nextId++, key, label: a.s || a.l, pts: val(a), t, ts, grp }); });
+  saveGame();
+  return grp;
+}
+/* Spiel-ID je Spieler-Eintrag und die Spieler, die dieses Gerät gerade bucht (Mitbucher: nur die gesperrten) */
+export const uidAt = i => (isMulti() ? (i === store.S.cur ? store.S.uid : store.S.squad[i].uid) : store.S.uid);
+export const mineAt = i => !store.S.mine || store.S.mine.includes(uidAt(i));
+/* Nächster Spieler beim Wischen (Mitbucher: nur die eigenen) */
+export function stepPlayer(dir) {
+  const S = store.S, n = isMulti() ? S.squad.length : 1;
+  for (let k = 1; k < n; k++) { const i = (S.cur + dir * k + n * k) % n; if (mineAt(i)) return switchPlayer(i), true; }
+  return false;
+}
+export const squadIds = () => (isMulti() ? eachPlayer(() => store.S.match.p) : store.S.match ? [store.S.match.p] : []);
+
+/* fn für Spieler i ausführen (Spieler wird kurz „eingewechselt“ und danach zurückgetauscht) */
+export function withPlayer(i, fn) {
+  const S = store.S;
+  if (!isMulti() || i === S.cur) return fn(S.cur);
+  S.squad[S.cur] = extract(S);
+  load(S, S.squad[i]);
+  try { return fn(i); } finally { S.squad[i] = extract(S); load(S, S.squad[S.cur]); }
+}
+export function eachPlayer(fn) {
+  if (!isMulti()) return [fn(0)];
+  return store.S.squad.map((_, i) => withPlayer(i, fn));
+}
+export function switchPlayer(i) {
+  const S = store.S;
+  if (!isMulti() || i === S.cur || !S.squad[i]) return;
+  S.squad[S.cur] = extract(S);
+  load(S, S.squad[i]);
+  S.cur = i;
+  saveGame();
+  applyMatchNames();
+}
+/* Übersicht aller Spieler im Spiel (für die Spielerleiste) */
+export function squadInfo() {
+  return eachPlayer(i => ({ i, p: store.S.match.p, t: total(), on: onField(), started: !!store.S.stints.length, saved: !!store.S.saved }));
+}
+export const allSaved = () => (isMulti() ? store.S.squad.every((x, i) => (i === store.S.cur ? store.S.saved : x.saved)) : !!store.S.saved);
+export function replaceGame(next) { store.S = next; saveGame(); }
+
+/* Eigene Bilder von Gastspielern / eigenen Gegnern an die (temporären) Einträge hängen */
+export function applyMedia(p, o, pf, of) {
+  if (pf && PL[p] && PL[p].guest) PL[p].foto = pf;
+  if (of && CL[o] && CL[o].custom) CL[o].f = of;
+}
+/* Eigene Mannschaft: im Spiel gespeichert (z. B. B5-Einsatz), sonst der Verein des Spielers */
+export const teamOf = m => (m && m.team && CL[m.team] ? m.team : PL[m.p].c);
+export const recordTeam = g => (g.team && CL[g.team] ? g.team : PL[g.player].c);
+
+/* Anzeigenamen des laufenden Spiels */
+export const names = { player: '', team: '', opp: '' };
+export function applyMatchNames() {
+  const m = store.S.match;
+  if (!m || !PL[m.p] || !CL[m.o]) return;
+  names.player = PL[m.p].n; names.team = CL[teamOf(m)].n; names.opp = CL[m.o].n;
+  document.title = names.player + ' – Kickbase KL';
+}
+export const isHome = () => !!(store.S.match && store.S.match.home);
+export const scoreText = (sc, home) => (home ? sc.us + ' : ' + sc.them : sc.them + ' : ' + sc.us);
+
+/* ---------- Aktionskatalog ---------- */
+export const ACT = {
+  tg: { get l() { return 'Tor ' + names.team; }, s: 'Team-Tor', side: 'us', v: () => (onField() ? 5 : 0) },
+  cg: { get l() { return 'Tor ' + names.opp; }, s: 'Gegentor', side: 'them', v: () => (onField() ? -5 : 0) }
+};
+export const CAT = { tg: 'Einsatz & Team', cg: 'Einsatz & Team' };
+for (const k of ['att', 'def', 'err']) {
+  for (const g of GROUPS[k]) {
+    for (const [key, label, v] of g.a) {
+      ACT[key] = { l: label, v, only: g.only };
+      CAT[key] = k === 'err' ? 'Fehler & Strafen' : g.t;
+    }
+  }
+}
+
+/* ---------- Zeit und Einsatz ---------- */
+export function elapsed() { const c = store.S.clock; return c.offset + (c.startedAt ? (Date.now() - c.startedAt) / 1000 : 0); }
+export function onField() {
+  const S = store.S;
+  const l = S.stints[S.stints.length - 1];
+  return !!(l && l.to === null);
+}
+export function started() { const S = store.S; return S.ended || S.clock.startedAt !== null || S.clock.offset > 0 || S.events.length > 0; }
+export function playedSec() {
+  const el = elapsed();
+  return Math.max(0, store.S.stints.reduce((s, x) => s + ((x.to === null ? el : x.to) - x.from), 0));
+}
+export const minPlayed = () => Math.floor(playedSec() / 60);
+
+export function val(a) {
+  const S = store.S, v = a.v;
+  if (typeof v === 'function') return v();
+  if (typeof v === 'number') return v;
+  if (!S.startelf && v.SUB != null) return v.SUB;
+  return v[S.pos];
+}
+export const count = key => store.S.events.filter(e => e.key === key).length;
+export function score() {
+  let us = 0, them = 0;
+  for (const e of store.S.events) { const a = ACT[e.key]; if (a && a.side === 'us') us++; if (a && a.side === 'them') them++; }
+  return { us, them };
+}
+
+/* Startelf bzw. Einwechslung zählt von Anfang an */
+export function startLine() {
+  const S = store.S;
+  if (!started() || !S.stints.length) return null;
+  return S.startelf ? { l: 'Startelf', p: 5, r: '1’' } : { l: 'Eingewechselt', p: 2, r: minStamp(Math.floor(S.stints[0].from)) };
+}
+/* Minutenbonus, Zu null und Sieg/Niederlage kommen erst nach Spielende dazu.
+   Zu null: nur wenn das eigene Team im ganzen Spiel kein Gegentor bekommt (auch nicht nach einer Auswechslung).
+   Er wächst wie der Minutenbonus mit der Spielzeit (je 10 Minuten), nur mal dem Wert der Position. */
+export function endLines() {
+  const S = store.S, out = [], m = minPlayed(), sc = score(), r = Math.ceil(playedSec() / 60) + '’';
+  if (!S.ended || !S.stints.length) return out;
+  const mb = Math.floor(m / 10) + (m >= 90 ? 1 : 0);
+  if (sc.them === 0 && mb > 0) {
+    const v = CLEAN_SHEET[S.pos] || 2;
+    out.push({ l: 'Zu null', h: '+' + v + ' je 10 Minuten, +' + v + ' bei voller Spielzeit', p: mb * v, r });
+  }
+  out.push({ l: 'Minutenbonus', h: '+1 je 10 Minuten, +1 bei voller Spielzeit', p: mb, r });
+  if (sc.us > sc.them) out.push({ l: 'Spiel gewonnen', p: 15, r });
+  else if (sc.us < sc.them) out.push({ l: 'Spiel verloren', p: -15, r });
+  return out;
+}
+export function total() {
+  const s = startLine();
+  return store.S.events.reduce((t, e) => t + e.pts, 0) + (s ? s.p : 0) + endLines().reduce((t, l) => t + l.p, 0);
+}
+
+/* ---------- Marken: Halbzeit und Wechsel ---------- */
+export function markers() {
+  const S = store.S, m = [];
+  if (S.h2 && S.h2Id != null) m.push({ at: S.h2Id, t: 2700, ht: 1 });
+  for (const x of S.subs || []) m.push({ at: x.at, t: x.t, sub: x });
+  return m.sort((a, b) => b.at - a.at || b.t - a.t);
+}
+/* Ereignisse (neueste zuerst) mit Marken an der richtigen Stelle */
+export function withMarkers(list) {
+  const mk = markers(), out = [];
+  let i = 0;
+  const flush = id => { while (i < mk.length && mk[i].at > id) { out.push(mk[i].ht ? { ht: 1 } : { sub: mk[i].sub }); i++; } };
+  for (const e of list) { flush(e.id); out.push({ e }); }
+  flush(-Infinity);
+  return out;
+}
+
+/* ---------- Auswertung ---------- */
+export function breakdown() {
+  const map = new Map(), add = (n, p) => map.set(n, (map.get(n) || 0) + p);
+  for (const e of store.S.events) add(CAT[e.key] || 'Sonstiges', e.pts);
+  const s = startLine(); if (s) add('Einsatz & Team', s.p);
+  for (const l of endLines()) add('Einsatz & Team', l.p);
+  return [...map].map(([n, p]) => ({ n, p })).filter(x => x.p !== 0).sort((a, b) => b.p - a.p);
+}
+export function matchEntry() {
+  const S = store.S, sc = score();
+  let g = 0, a = 0;
+  for (const e of S.events) { if (GOAL_KEYS[e.key]) g++; if (ASSIST_KEYS[e.key]) a++; }
+  return { tm: teamOf(S.match), t: total(), m: Math.ceil(playedSec() / 60), us: sc.us, them: sc.them, g, a, p: S.match.p, o: S.match.o, h: isHome() ? 1 : 0 };
+}
+
+/* Datensatz für die Hall of Fame (chronologische Ereignisse inkl. Marken und Automatik-Zeilen) */
+export function gameRecord(season) {
+  const S = store.S, e = matchEntry(), evs = [];
+  const mk = markers().reverse();
+  let mi = 0;
+  const mkPush = id => { while (mi < mk.length && mk[mi].at <= id) { const q = mk[mi++]; evs.push(q.ht ? { k: 'ht' } : { k: 'sub', o: q.sub.o, t: q.sub.t }); } };
+  for (const x of S.events.slice().sort((a, b) => a.id - b.id)) { mkPush(x.id); evs.push({ k: x.key, l: x.label, p: x.pts, t: x.t }); }
+  mkPush(Infinity);
+  const st = startLine(); if (st) evs.push({ k: 'auto', a: 's', l: st.l, p: st.p, t: -1 });
+  for (const l of endLines()) evs.push({ k: 'auto', a: 'e', l: l.l, p: l.p, t: -1 });
+  const row = {
+    uid: S.uid, season, player: S.match.p, opp: S.match.o, home: !!S.match.home, pos: S.pos, team: teamOf(S.match),
+    player_foto: S.match.pf || null, opp_foto: S.match.of || null,
+    us: e.us, them: e.them, minutes: e.m, points: e.t, goals: e.g, assists: e.a, events: evs
+  };
+  if (S.manual) { row.manual = true; row.played_at = S.playedAt; }
+  return row;
+}
+
+/* Textzusammenfassung zum Kopieren */
+export function summaryText() {
+  const S = store.S, sc = score(), agg = new Map();
+  for (const e of S.events) {
+    const a = agg.get(e.key) || { l: e.label, n: 0, p: 0 };
+    a.n++; a.p += e.pts; agg.set(e.key, a);
+  }
+  const autos = [startLine(), ...endLines()].filter(Boolean);
+  const f = n => (n > 0 ? '+' + n : String(n));
+  const out = [
+    names.player + ' (' + POS_NAME[S.pos] + ') – ' + names.team,
+    'Gesamt: ' + total() + ' Punkte',
+    (isHome() ? names.team : names.opp) + ' ' + scoreText(sc, isHome()).replace(/ /g, '') + ' ' + (isHome() ? names.opp : names.team) +
+      ', Spielzeit ' + minPlayed() + ' Min.' + (S.ended ? '' : ' (Spiel läuft)'),
+    ''
+  ];
+  if (autos.length) { out.push('Automatisch'); autos.forEach(l => out.push('  ' + l.l + ': ' + f(l.p))); out.push(''); }
+  out.push('Aktionen');
+  if (!agg.size) out.push('  noch keine');
+  for (const g of agg.values()) out.push('  ' + g.n + 'x ' + g.l + ': ' + f(g.p));
+  return out.join('\n');
+}
