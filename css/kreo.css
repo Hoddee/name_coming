@@ -94,3 +94,6 @@ body { background: radial-gradient(120% 60% at 50% -10%, rgba(var(--acc-rgb), .1
 /* Zwischenüberschriften (Spieluhr, Spieler …): klein, normale Schreibweise, mit Kreo-Punkt */
 .eb h2, .sec { text-transform: none; letter-spacing: 0; font: 600 14px var(--font-head); color: var(--muted); }
 .eb h2::before, .sec::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--acc); vertical-align: 2px; }
+
+/* „Jetzt live“ hat schon den roten Live-Punkt */
+#startBody > h2.lvh::before { display: none; }
