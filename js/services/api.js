@@ -39,7 +39,9 @@ function cleanGame(g) {
   return Object.assign(g, {
     points: num(g.points), us: num(g.us), them: num(g.them), minutes: num(g.minutes), goals: num(g.goals), assists: num(g.assists),
     pos: POS.includes(g.pos) ? g.pos : 'MIT', team: okId(g.team), home: !!g.home, manual: !!g.manual,
-    player_foto: okFoto(g.player_foto), opp_foto: okFoto(g.opp_foto), erfasst_von: str(g.erfasst_von, 40) || null, season: str(g.season, 20)
+    player_foto: okFoto(g.player_foto), opp_foto: okFoto(g.opp_foto), erfasst_von: str(g.erfasst_von, 40) || null, season: str(g.season, 20),
+    /* Migration 016: mit Anmeldung gespeichert? Ohne die Spalte zählt alles (Testphase) */
+    konto: g.mit_konto !== false
   });
 }
 const cleanEvents = ev => (Array.isArray(ev) ? ev : []).filter(e => e && typeof e === 'object')
@@ -50,20 +52,34 @@ const LIST_FIELDS = 'uid,created_at,played_at,season,player,opp,home,pos,us,them
 /* „erfasst_von“ kommt mit Migration 011 – bis sie ausgeführt ist, ohne die Spalte weiterarbeiten */
 let byCol = true;
 const noByCol = e => /erfasst_von/.test(e && e.message || '');
+/* „mit_konto“ kommt mit Migration 016 (Manager zählt nur Spiele mit Anmeldung) */
+let kontoCol = true;
+const noKonto = e => /mit_konto/.test(e && e.message || '');
 
 export const games = { list: null, busy: false, error: false, failedAt: 0 };
+let backoff = null;
 const gameListeners = new Set();
 export const onGamesChange = fn => gameListeners.add(fn);
 
 export async function loadGames(force = false) {
   if (games.busy || (games.list && !force)) return games.list;
   /* Nach einem Fehler höchstens alle 20 Sekunden neu versuchen (verhindert Endlosschleifen beim Neuzeichnen) */
-  if (!force && games.error && Date.now() - games.failedAt < 20000) return games.list;
+  /* Wartende Aufrufer bekommen ein gemeinsames Versprechen, das erst nach der Pause erfüllt wird. Sofort erfüllt hätte
+     „render → loadGames().then(render)“ ohne Netz eine Endlosschleife ergeben (App friert ein, z. B. offline am Platz). */
+  if (!force && games.error && Date.now() - games.failedAt < 20000) {
+    return backoff || (backoff = new Promise(r => setTimeout(() => { backoff = null; r(games.list); }, 20000 - (Date.now() - games.failedAt))));
+  }
   games.busy = true; games.error = false;
   try {
     let r;
-    try { r = await rest('spiele?select=' + LIST_FIELDS + (byCol ? ',erfasst_von' : '') + '&order=played_at.desc&limit=2000'); }
-    catch (e) { if (!byCol || !noByCol(e)) throw e; byCol = false; r = await rest('spiele?select=' + LIST_FIELDS + '&order=played_at.desc&limit=2000'); }
+    for (let i = 0; ; i++) {
+      try { r = await rest('spiele?select=' + LIST_FIELDS + (byCol ? ',erfasst_von' : '') + (kontoCol ? ',mit_konto' : '') + '&order=played_at.desc&limit=2000'); break; }
+      catch (e) {
+        if (i < 2 && byCol && noByCol(e)) byCol = false;
+        else if (i < 2 && kontoCol && noKonto(e)) kontoCol = false;
+        else throw e;
+      }
+    }
     const d = await r.json();
     /* Live gebuchte Spiele ohne Einsatzminuten (nur auf der Bank) zählen nirgends mit.
        Nachträge hat jemand bewusst eingetragen – die bleiben immer. */

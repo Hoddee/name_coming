@@ -1,0 +1,33 @@
+# Vereinsliste aus offenen Daten neu bauen (OpenStreetMap + Wikidata) und als Pull Request vorschlagen.
+# Start von Hand: GitHub → Actions → „Vereinsliste aktualisieren“ → Run workflow. Nichts geht automatisch live.
+name: Vereinsliste aktualisieren
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/vereine/osm-laden.mjs
+      - run: node tools/vereine/wikidata-laden.mjs || echo "Wikidata nicht erreichbar – nur OpenStreetMap"
+      - run: node tools/vereine/build.mjs
+      - name: Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then echo "Keine Änderung"; exit 0; fi
+          b="vereine-$(date +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$b"
+          git add tools/vereine/quellen assets/data/vereine.json
+          git commit -m "Vereinsliste aus offenen Daten aktualisiert"
+          git push -u origin "$b"
+          gh pr create --title "Vereinsliste aktualisieren" --body "Neu gebaut aus OpenStreetMap (ODbL) und Wikidata (CC0). Bitte Stichproben prüfen, dann mergen."
