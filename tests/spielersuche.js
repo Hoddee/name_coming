@@ -91,6 +91,13 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   const ser = await p.evaluate(() => ({ done: document.querySelectorAll('.su-done .su-row').length, vn: document.querySelector('#snForm [name=vn]').value, ok: document.querySelector('#snForm [name=ok]').checked, view: !document.getElementById('sneu').hidden }));
   ok(ser.done === 1 && ser.vn === '' && ser.ok && ser.view, 'Serie: ' + JSON.stringify(ser));
 
+  // Hall of Fame: Chip „Andere“ für Mannschaften außerhalb der Kreisliga
+  await p.evaluate(async () => { const A = await import('./js/services/api.js'); await A.loadGames(true); const R = await import('./js/router.js'); R.show('hof'); });
+  await p.waitForTimeout(700);
+  ok(await p.$('[data-hof="l:OTHER"]'), 'Chip Andere da');
+  await c('[data-hof="l:OTHER"]'); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => document.getElementById('hof').textContent.includes('245')), 'Andere zeigt Spiel');
+
   // Ausblenden
   const hid = await p.evaluate(async () => { const A0 = await import('./js/services/api.js'); await A0.loadGames(true); const S = await import('./js/services/spieler.js'); await S.hideSpieler('sp0123456789'); const P = await import('./js/data/players.js'); const A = await import('./js/services/api.js');
     return { h: P.PL.sp0123456789.hidden, g: A.games.list.some(x => x.player === 'sp0123456789'), r: S.recent().some(x => x.id === 'sp0123456789') }; });
