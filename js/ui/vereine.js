@@ -15,6 +15,8 @@ import { games, loadGames } from '../services/api.js';
 import { recordTeam } from '../core/game.js';
 import { byDate } from '../core/market.js';
 import { vereinKader, addRecent, sp, teamText } from '../services/spieler.js';
+import { liveTilesHtml } from './watch.js';
+import { onLive } from '../services/live.js';
 import { spielerRow, openNeu } from './suche.js';
 
 const ui = { q: '', db: [], dbFor: '', id: null, teams: null, teamsErr: false, kader: null, kRev: 0, form: '', busy: false, err: '', neu: null };
@@ -132,6 +134,10 @@ function vereinHtml() {
     (v.web ? '<a class="vr-web" href="https://' + esc(v.web) + '" target="_blank" rel="noopener nofollow">' + esc(v.web.replace(/\/.*$/, '')) + '</a>' : '') + '</div>' +
     '<div class="duo vr-duo"><button type="button" class="btn' + (mine ? '' : ' primary') + '" data-vr="mine">' + (mine ? 'Mein Verein ✓' : 'Mein Verein') + '</button>' +
     '<button type="button" class="btn" data-vr="share">Teilen</button></div>';
+  /* Live-Spiele des Vereins (eigene Mannschaft oder Gegner) */
+  const ids0 = new Set([v.id, ...(v.teams || []).map(t => t.crest).filter(Boolean)]);
+  const lv = liveTilesHtml(d => ids0.has(d.team) || ids0.has(d.opp));
+  ui.liveSig = lv; h += lv;
   h += '<h2>Mannschaften <small class="vr-season">2026/27</small></h2>';
   if (ui.teams === null) h += ui.teamsErr ? '<p class="hmsg">Keine Verbindung.</p>' : skeleton(2);
   else if (!ui.teams.length) h += '<p class="vr-none">Noch keine eingetragen.</p>';
@@ -242,6 +248,14 @@ export function initVereine() {
   registerView('verein', { elements: ['verein'], render: renderVerein });
   registerView('vneu', { elements: ['vneu'], render: renderNeu });
   onAuthChange(() => { if (nav.current === 'verein') renderVerein(); if (nav.current === 'vneu') renderNeu(); });
+  /* Live: nur neu zeichnen, wenn sich etwas an den Spielen dieses Vereins geändert hat */
+  onLive(() => {
+    if (nav.current !== 'verein') return;
+    const v = vereinById(ui.id);
+    if (!v) return;
+    const ids = new Set([v.id, ...(v.teams || []).map(t => t.crest).filter(Boolean)]);
+    if (liveTilesHtml(d => ids.has(d.team) || ids.has(d.opp)) !== (ui.liveSig || '')) renderVerein();
+  });
   $('vrQ').addEventListener('input', e => onInput(e.target.value));
   $('vrQ').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 

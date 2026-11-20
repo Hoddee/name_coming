@@ -68,3 +68,9 @@
 .vr-kh:first-of-type { margin-top: 2px; }
 .vr-kh small { margin-left: 4px; font-weight: 500; opacity: .7; }
 .vr-none { margin: 2px 0 6px; color: var(--muted); font-size: 14px; }
+
+/* Live-Spiele auf der Vereinsseite: Überschrift wie die anderen Abschnitte, nur in Live-Rot */
+#verein h2.lvh { margin-top: 22px !important; }
+#verein h2.lvh::before { display: none; }
+#verein .lvh .lv-live { font: 600 14px var(--font-head); color: var(--live) !important; gap: 8px; }
+#verein .lvh .lv-live i { width: 8px; height: 8px; }
