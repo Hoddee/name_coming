@@ -12,10 +12,10 @@ import { skeleton, gameRow } from './components.js';
 import { games, loadGames } from '../services/api.js';
 import { recordTeam } from '../core/game.js';
 import { byDate } from '../core/market.js';
-import { vereinKader, addRecent } from '../services/spieler.js';
+import { vereinKader, addRecent, sp } from '../services/spieler.js';
 import { spielerRow, openNeu } from './suche.js';
 
-const ui = { q: '', db: [], dbFor: '', id: null, teams: null, teamsErr: false, kader: null, form: '', busy: false, err: '', neu: null };
+const ui = { q: '', db: [], dbFor: '', id: null, teams: null, teamsErr: false, kader: null, kRev: 0, form: '', busy: false, err: '', neu: null };
 let timer = 0;
 
 /* ---------- Bausteine ---------- */
@@ -137,6 +137,8 @@ function vereinHtml() {
 function renderVerein() {
   applyTier(0);
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'verein') renderVerein(); });
+  /* Zurück vom Eintragen: Spielerliste neu holen */
+  if (ui.kader && ui.kRev !== sp.rev) { ui.kRev = sp.rev; const v = vereinById(ui.id); if (v) vereinKader(v, true).then(k => { ui.kader = k; if (nav.current === 'verein') renderVerein(); }, () => {}); }
   $('vrBody').innerHTML = vereinHtml();
   const f = $('vrTeamForm');
   if (f) f.art.addEventListener('change', () => { f.querySelector('.vr-jg').hidden = f.art.value !== 'jugend'; });
@@ -151,7 +153,7 @@ export async function openVerein(id) {
   try { ui.teams = await loadTeams(id); } catch (e) { ui.teamsErr = true; }
   if (nav.current === 'verein' && ui.id === id) renderVerein();
   const v = vereinById(id);
-  ui.kader = v ? await vereinKader(v).catch(() => []) : [];
+  ui.kader = v ? await vereinKader(v).catch(() => []) : []; ui.kRev = sp.rev;
   if (nav.current === 'verein' && ui.id === id) renderVerein();
 }
 

@@ -109,11 +109,13 @@ function onInput(q) {
 }
 
 /* ---------- Spieler eintragen ---------- */
-const nf = { vn: '', n: '', verein: null, vq: '', art: 'herren', nr: 1, pos: 'MIT', num: '', ok: false, err: '', busy: false, dupe: null, dupeOk: false };
+const nf = { vn: '', n: '', verein: null, vq: '', art: 'herren', nr: 1, pos: 'MIT', num: '', ok: false, err: '', busy: false, dupe: null, dupeOk: false, serie: false, done: [] };
 export function openNeu({ verein = null, name = '' } = {}) {
   const parts = String(name || '').trim().split(/\s+/);
   Object.assign(nf, { vn: parts.length > 1 ? parts.slice(0, -1).join(' ') : '', n: parts.length > 1 ? parts[parts.length - 1] : parts[0] || '',
-    verein: verein || (myClub() && vereinById(myClub().id)) || null, vq: '', art: 'herren', nr: 1, pos: 'MIT', num: '', ok: false, err: '', busy: false, dupe: null, dupeOk: false });
+    verein: verein || (myClub() && vereinById(myClub().id)) || null, vq: '', art: 'herren', nr: 1, pos: 'MIT', num: '', ok: false, err: '', busy: false, dupe: null, dupeOk: false,
+    /* Vom Verein aus: mehrere hintereinander eintragen (Formular bleibt offen) */
+    serie: !!verein, done: [] });
   show('sneu');
 }
 const seg = (key, opts, cur) => '<div class="seg full">' + opts.map(([k, l]) => '<button type="button" data-sn="' + key + ':' + k + '" aria-pressed="' + (String(cur) === String(k)) + '">' + l + '</button>').join('') + '</div>';
@@ -127,7 +129,9 @@ function vereinPick() {
 const vresHtml = l => l.map(v => '<button type="button" class="su-vopt" data-sn="v:' + esc(v.id) + '"><b>' + esc(v.name) + '</b><small>' + esc(v.ort || '') + '</small></button>').join('');
 function neuHtml() {
   const logged = isLoggedIn();
-  let h = '<form class="card inline-form su-form" id="snForm" autocomplete="off">' +
+  let h = nf.done.length ? '<h2 class="su-h">Eingetragen<button type="button" class="lnk inline" data-nav="back">Fertig</button></h2><div class="su-list su-done">' +
+    nf.done.filter(id => PL[id]).map(id => spielerRow(PL[id], 'data-open="p:' + esc(id) + '"')).join('') + '</div>' : '';
+  h += '<form class="card inline-form su-form" id="snForm" autocomplete="off">' +
     '<div class="vr-two"><label class="nf"><span>Vorname</span><input class="fi" name="vn" maxlength="30" autocapitalize="words" value="' + esc(nf.vn) + '"></label>' +
     '<label class="nf"><span>Nachname</span><input class="fi" name="n" maxlength="30" autocapitalize="words" value="' + esc(nf.n) + '"></label></div>' +
     '<div class="nf"><span>Verein</span>' + vereinPick() + '</div>' +
@@ -176,6 +180,12 @@ async function submitNeu() {
     const p = await createSpieler({ vn: nf.vn, n: nf.n, verein: nf.verein.id, vname: nf.verein.name, team: crestTeam(), art: nf.art, nr: nf.nr, pos: nf.pos, num: +nf.num || null, ok: nf.ok });
     nf.busy = false; buzz(20); toast('Eingetragen');
     addRecent('p', p.id, fullName(p));
+    if (nf.serie) {
+      Object.assign(nf, { vn: '', n: '', num: '', dupe: null, dupeOk: false });
+      nf.done.unshift(p.id); renderNeu();
+      const f = $('snForm'); if (f) f.vn.focus();
+      return;
+    }
     show('suche'); openProfile(p.id);
   } catch (e) { nf.busy = false; nf.err = e.message; renderNeu(); }
 }

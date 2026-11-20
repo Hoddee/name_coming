@@ -83,6 +83,14 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   ok(made.v === 'Neu', 'Nach Eintragen Profil offen: ' + JSON.stringify(made));
   ok(posted && posted.vorname === 'Tim' && posted.bestaetigt === true && posted.verein_id === 'ow91603662' && !('user_id' in posted), 'Eintrag gesendet: ' + JSON.stringify(posted));
 
+  // Vom Verein aus: mehrere hintereinander
+  await p.evaluate(async () => { const V = await import('./js/services/vereine.js'), M = await import('./js/ui/suche.js'); await V.loadVereine(); M.openNeu({ verein: V.vereinById('ow91603662') }); });
+  await p.waitForTimeout(400);
+  await p.fill('#snForm [name=vn]', 'Ben'); await p.fill('#snForm [name=n]', 'Zwei'); await p.check('#snForm [name=ok]');
+  await c('#snForm [type=submit]'); await p.waitForTimeout(900);
+  const ser = await p.evaluate(() => ({ done: document.querySelectorAll('.su-done .su-row').length, vn: document.querySelector('#snForm [name=vn]').value, ok: document.querySelector('#snForm [name=ok]').checked, view: !document.getElementById('sneu').hidden }));
+  ok(ser.done === 1 && ser.vn === '' && ser.ok && ser.view, 'Serie: ' + JSON.stringify(ser));
+
   // Ausblenden
   const hid = await p.evaluate(async () => { const A0 = await import('./js/services/api.js'); await A0.loadGames(true); const S = await import('./js/services/spieler.js'); await S.hideSpieler('sp0123456789'); const P = await import('./js/data/players.js'); const A = await import('./js/services/api.js');
     return { h: P.PL.sp0123456789.hidden, g: A.games.list.some(x => x.player === 'sp0123456789'), r: S.recent().some(x => x.id === 'sp0123456789') }; });

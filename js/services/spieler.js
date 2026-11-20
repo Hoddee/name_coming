@@ -15,7 +15,7 @@ const json = { 'Content-Type': 'application/json' };
 const VID = /^[a-z0-9_-]{2,40}$/;
 const POS = ['TW', 'ABW', 'MIT', 'ANG'];
 export const TEAM_ART = { herren: 'Herren', frauen: 'Frauen', ah: 'Alte Herren' };
-export const sp = { dbMissing: false };
+export const sp = { dbMissing: false, rev: 0 };
 const FIELDS = 'id,vorname,nachname,verein_id,verein_name,team_id,team_art,team_nr,pos,nummer,status,doppelt_von';
 
 /* ---------- Prüfen und eintragen ---------- */
@@ -180,7 +180,7 @@ export async function createSpieler(f) {
     const d = await (await rest('spieler?select=' + FIELDS, { method: 'POST', headers: Object.assign({ Prefer: 'return=representation' }, json), body: JSON.stringify(row) })).json();
     const p = clean(Array.isArray(d) ? d[0] : d);
     if (!p) throw new Error('leer');
-    remember([p]); dbCache.clear(); keyCache.delete(p.id);
+    remember([p]); dbCache.clear(); keyCache.delete(p.id); sp.rev++;
     return PL[p.id];
   } catch (e) { throw new Error(errText(e)); }
 }

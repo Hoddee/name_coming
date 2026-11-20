@@ -90,16 +90,17 @@ revoke all on function public.spieler_vor_insert() from public, anon, authentica
 drop trigger if exists spieler_vor_insert on public.spieler;
 create trigger spieler_vor_insert before insert on public.spieler for each row execute function public.spieler_vor_insert();
 
--- Suche: q = Name (auch Teil), v = nur dieser Verein (optional), n = Anzahl
+-- Suche: q = Name (auch Teil), v = nur dieser Verein (optional), n = Anzahl.
+-- security definer, weil die Spalte suchname nicht öffentlich lesbar ist; zurück kommen nur sichtbare Spieler (neu/ok).
 create or replace function public.spieler_suche(q text, v text default null, n int default 20)
 returns table (id text, vorname text, nachname text, verein_id text, verein_name text, team_id text, team_art text, team_nr smallint, pos text, nummer smallint, status text, doppelt_von text)
-language sql stable set search_path = public, extensions as $$
+language sql stable security definer set search_path = public, extensions as $$
   with s as (select public.vereine_suchname(q) as t)
   select p.id, p.vorname, p.nachname, p.verein_id, p.verein_name, p.team_id, p.team_art, p.team_nr, p.pos, p.nummer, p.status, p.doppelt_von
   from public.spieler p, s
   where p.status in ('neu', 'ok') and (v is null or p.verein_id = v)
     and (char_length(s.t) = 0 and v is not null
-      or char_length(s.t) >= 2 and (p.suchname like '%' || s.t || '%' or word_similarity(s.t, p.suchname) > 0.4))
+      or char_length(s.t) >= 2 and (p.suchname like '%' || s.t || '%' or word_similarity(s.t, p.suchname) > 0.3))
   order by (p.suchname like s.t || '%') desc, word_similarity(s.t, p.suchname) desc, p.nachname, p.vorname
   limit least(greatest(coalesce(n, 20), 1), 60)
 $$;
