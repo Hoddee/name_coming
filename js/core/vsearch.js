@@ -102,15 +102,15 @@ function wordScore(q, qk, w, wk) {
 
 /* Treffer bewerten: jedes Suchwort muss irgendwo passen; Kürzel (FC, SV …) zählen wenig.
    Ergebnis 0 = kein Treffer, sonst höher = besser. */
-export function score(query, key) {
-  const qw = words(query);
-  if (!qw.length) return 0;
+/* Suchanfrage einmal vorbereiten (bei 25.000 Vereinen pro Tastendruck spürbar) */
+export const prepQuery = query => words(query).map(q => ({ q, qk: koeln(q), pre: PREFIX.has(q) }));
+export function scorePrep(qp, key) {
+  if (!qp.length) return 0;
   let sum = 0, weight = 0;
-  for (const q of qw) {
-    const qk = koeln(q), pre = PREFIX.has(q);
+  for (const { q, qk, pre } of qp) {
     let best = 0;
-    for (let i = 0; i < key.w.length; i++) best = Math.max(best, wordScore(q, qk, key.w[i], key.k[i]));
-    for (let i = 0; i < key.x.length; i++) best = Math.max(best, 0.85 * wordScore(q, qk, key.x[i], key.kx[i]));
+    for (let i = 0; i < key.w.length && best < 1; i++) { const v = wordScore(q, qk, key.w[i], key.k[i]); if (v > best) best = v; }
+    for (let i = 0; i < key.x.length && best < 0.85; i++) { const v = 0.85 * wordScore(q, qk, key.x[i], key.kx[i]); if (v > best) best = v; }
     const wt = pre ? 0.3 : 1;
     if (!best) {
       if (pre) { sum -= 0.1; weight += wt; continue; } // anderes Kürzel: kleiner Abzug, kein Ausschluss
@@ -122,6 +122,7 @@ export function score(query, key) {
   /* Kürzere Namen bei gleicher Güte vorne (genauerer Treffer) */
   return s <= 0 ? 0 : s + 0.02 / (1 + key.w.length);
 }
+export const score = (query, key) => scorePrep(prepQuery(query), key);
 
 /* Mannschaftsnummer aus dem Namen lösen: „SC Fornsbach II“ → { base: 'SC Fornsbach', nr: 2 } */
 const ROMAN = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9 };

@@ -14,7 +14,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const query = land => `[out:json][timeout:300];
 area["ISO3166-2"="DE-${land}"]->.a;
 (
-  nwr["club"="sport"]["sport"~"soccer"](area.a);
+  nwr["club"="sport"]["sport"~"soccer|multi|football"](area.a);
+  nwr["club"="sport"]["name"][!"sport"](area.a);
   nwr["leisure"="sports_centre"]["sport"~"soccer"]["name"](area.a);
   nwr["leisure"="pitch"]["sport"="soccer"]["operator"](area.a);
 );

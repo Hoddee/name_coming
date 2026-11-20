@@ -35,7 +35,7 @@ function html() {
       '<li><b>GitHub Pages</b> (Auslieferung der App). Dabei fallen technisch IP-Adressen an.</li>' +
       '<li><b>jsDelivr</b> nur beim Freistellen eines Fotos (Bildbearbeitung läuft im Browser).</li>' +
       '<li><b>OpenStreetMap Foundation</b> (Nominatim) nur beim Anlegen eines Vereins: der eingegebene Ort wird dort geprüft.</li></ul>' +
-      '<h3>Vereinsdaten</h3>' + p('Vereinsliste aus OpenStreetMap, © OpenStreetMap-Mitwirkende, Lizenz ODbL 1.0. Von Nutzern angelegte Vereine und Mannschaften sind öffentlich sichtbar; gespeichert wird dazu, welches Konto sie angelegt hat.') +
+      '<h3>Vereinsdaten</h3>' + p('Vereinsliste aus offenen Daten: OpenStreetMap (© OpenStreetMap-Mitwirkende, ODbL 1.0), Wikidata (CC0) und Overture Maps Foundation (CDLA Permissive 2.0). Von Nutzern angelegte Vereine und Mannschaften sind öffentlich sichtbar; gespeichert wird dazu, welches Konto sie angelegt hat.') +
       '<h3>Rechtsgrundlage</h3>' + p('Konto, Manager und Push: Art. 6 Abs. 1 lit. b DSGVO (Nutzung der App). Spielerprofile und Fotos: Einwilligung, Art. 6 Abs. 1 lit. a DSGVO, jederzeit widerrufbar. Spiele und Statistik: berechtigtes Interesse, Art. 6 Abs. 1 lit. f DSGVO.') +
       '<h3>Deine Rechte</h3>' + p('Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Eine Nachricht an ' + esc(b.mail) + ' genügt.')) +
     '<p class="lg-st">' + esc(b.stand) + '</p></div>';

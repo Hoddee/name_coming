@@ -1,4 +1,4 @@
-# Vereinsliste aus offenen Daten neu bauen (OpenStreetMap + Wikidata) und als Pull Request vorschlagen.
+# Vereinsliste aus offenen Daten neu bauen (OpenStreetMap + Wikidata + Overture Maps) und als Pull Request vorschlagen.
 # Start von Hand: GitHub → Actions → „Vereinsliste aktualisieren“ → Run workflow. Nichts geht automatisch live.
 name: Vereinsliste aktualisieren
 on:
@@ -17,7 +17,12 @@ jobs:
           node-version: 20
       - run: node tools/vereine/osm-laden.mjs
       - run: node tools/vereine/wikidata-laden.mjs || echo "Wikidata nicht erreichbar – nur OpenStreetMap"
-      - run: node tools/vereine/build.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyarrow fsspec aiohttp requests
+      - run: python3 tools/vereine/overture-laden.py || echo "Overture nicht erreichbar – alte Datei bleibt"
+      - run: node tools/vereine/build.mjs --kuerzen
       - name: Pull Request
         env:
           GH_TOKEN: ${{ github.token }}
@@ -30,4 +35,4 @@ jobs:
           git add tools/vereine/quellen assets/data/vereine.json
           git commit -m "Vereinsliste aus offenen Daten aktualisiert"
           git push -u origin "$b"
-          gh pr create --title "Vereinsliste aktualisieren" --body "Neu gebaut aus OpenStreetMap (ODbL) und Wikidata (CC0). Bitte Stichproben prüfen, dann mergen."
+          gh pr create --title "Vereinsliste aktualisieren" --body "Neu gebaut aus OpenStreetMap (ODbL), Wikidata (CC0) und Overture Maps (CDLA Permissive 2.0). Bitte Stichproben prüfen, dann mergen."
