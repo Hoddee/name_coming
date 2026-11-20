@@ -9,17 +9,21 @@ const L = require('./lib.js');
   // Suchmaschine ohne Oberfläche
   const r = await p.evaluate(async () => {
     const V = await import('./js/core/vsearch.js'), S = await import('./js/services/vereine.js');
-    await S.loadVereine();
+    const l0 = performance.now(); await S.loadVereine(); const load = performance.now() - l0;
     const top = q => (S.searchLocal(q, 3)[0] || {}).name || '';
     return {
       n: S.vr.list.length, phon: V.koeln('Vornspach') === V.koeln('Fornsbach'),
       vorn: top('SC Vornspach'), typo: top('TSC Murhardt'), lang: top('Turn- und Sportverein Leutenbach'), ort: top('Fornsbach'),
+      load, ms: (() => { const t0 = performance.now(); for (const q of ['S', 'SV', 'SV H', 'SV Hau', 'SV Hausen']) S.searchLocal(q, 25); return (performance.now() - t0) / 5; })(),
       split: JSON.stringify(V.splitTeam('SC Fornsbach II')), none: S.searchLocal('xqzw blub', 3).length,
       simple: V.simple('Großerlach Süd-1'),
       teams: (await S.loadTeams((S.searchLocal('SC Fornsbach', 1)[0] || {}).id || '')).map(x => x.nummer).join(',')
     };
   });
-  ok(r.n > 2000, 'Grundbestand geladen: ' + r.n);
+  ok(r.n > 20000, 'Grundbestand geladen: ' + r.n);
+  ok(r.ms < 150, 'Suche zu langsam: ' + Math.round(r.ms) + ' ms je Tastendruck');
+  ok(r.load < 1500, 'Laden zu langsam: ' + Math.round(r.load) + ' ms');
+  console.log('Vereine:', r.n, '· Laden', Math.round(r.load), 'ms · Suche Ø', Math.round(r.ms), 'ms');
   ok(r.phon, 'Kölner Phonetik');
   ok(r.vorn === 'SC Fornsbach', '„SC Vornspach“ findet: ' + r.vorn);
   ok(r.typo === 'TSC Murrhardt', 'Tippfehler: ' + r.typo);

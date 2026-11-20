@@ -5,7 +5,7 @@
 import { KEYS, SEASON } from '../config.js';
 import { rest, str } from './api.js';
 import { readJson, writeJson } from '../core/util.js';
-import { keyOf, score, splitTeam, words, simple } from '../core/vsearch.js';
+import { keyOf, score, scorePrep, prepQuery, splitTeam, words, simple } from '../core/vsearch.js';
 import { CLUB_LIST } from '../data/clubs.js';
 import { LAENDER, VERBAENDE, KLASSEN, ARTEN, JUGEND, ligaName } from '../data/verbaende.js';
 
@@ -39,7 +39,7 @@ function addSeeds(list) {
     if (!c.lg) continue;
     const { base, nr } = splitTeam(c.n.replace(/\s*\/\s*/g, '/'));
     const k = words(base).join(' ');
-    let v = list.find(x => x.land === 'BW' && words(x.name).join(' ') === k && (!x.lat || km(x, KL) < 40));
+    let v = list.find(x => x.land === 'BW' && (!x.lat || km(x, KL) < 40) && x.key.w.join(' ') === k);
     if (!v) { v = make('k-' + c.id.toLowerCase().replace(/[^a-z0-9_-]/g, ''), base, '', KL.land, KL.lat, KL.lon, '', 'kl', KL.verband); if (!v) continue; list.push(v); }
     v.teams.push({ art: 'herren', nr, klasse: 'Kreisliga', nummer: c.lg, kreis: KL.kreis, verband: KL.verband, crest: c.id, src: 'kl' });
   }
@@ -57,7 +57,7 @@ export function loadVereine() {
       if (v) list.push(v);
     }
     addSeeds(list);
-    vr.quelle = str(d.quelle, 120); vr.stand = str(d.stand, 10);
+    vr.quelle = str(d.quelle, 200); vr.stand = str(d.stand, 10);
     for (const v of list) byId.set(v.id, v);
     vr.list = list; vr.error = false;
     return list;
@@ -70,9 +70,9 @@ export const vereinById = id => byId.get(id) || null;
 const mineFirst = () => (readJson(KEYS.club, null) || {}).id;
 export function searchLocal(q, n = 25) {
   if (!vr.list || words(q).length === 0) return [];
-  const my = mineFirst(), out = [];
+  const my = mineFirst(), out = [], qp = prepQuery(q);
   for (const v of vr.list) {
-    const s = score(q, v.key);
+    const s = scorePrep(qp, v.key);
     if (s > 0.5) out.push([s + (v.id === my ? 0.05 : 0) + (v.teams.length ? 0.02 : 0), v]);
   }
   return out.sort((a, b) => b[0] - a[0]).slice(0, n).map(x => Object.assign(x[1], { s: x[0] }));

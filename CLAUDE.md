@@ -111,7 +111,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   `played_at` in der Zeit im Team. Angemeldet + Migration 014: Tabelle `manager_moves` (nur anfügen, Zeit vom Server), sonst lokal (`KEYS.manager`).
   Test: `tests/manager.js`. Impressum/Datenschutz-Entwurf: `js/ui/legal.js` (Ansicht `legal`, Link im Konto). Startplan: `docs/produkt-plan.md`.
 - Vereinssuche (`js/core/vsearch.js` Suchlogik, `js/services/vereine.js` Daten, `js/ui/vereine.js` Ansichten `vereine`/`verein`/`vneu`, `css/vereine.css`, Klassen `vr-`):
-  Grundbestand `assets/data/vereine.json` aus OpenStreetMap (ODbL, Namensnennung bei der Suche lassen), gebaut mit `tools/vereine/` (README dort).
+  Grundbestand `assets/data/vereine.json` (~24.400 Vereine) aus OpenStreetMap (ODbL), Wikidata (CC0) und Overture Maps (CDLA Permissive 2.0) – Namensnennung bei der Suche lassen –, gebaut mit `tools/vereine/` (README dort).
   Suche läuft im Gerät; DB (Migration 015) nur für angelegte Vereine, Mannschaften, Staffeln, Meldungen. fussball.de/FuPa nicht auslesen (Nutzungsbedingungen).
   „Mein Verein“ in `KEYS.club`. Fun-Punkte (`js/ui/fun.js`, Ansicht `fun`, Klassen `fun-`, `KEYS.fun`): ohne Konto, nichts in die DB.
   Manager nur angemeldet und nur Spiele mit `mit_konto` (Migration 016, in `cleanGame` als `g.konto`; `mgGames()` in ui/manager.js).
