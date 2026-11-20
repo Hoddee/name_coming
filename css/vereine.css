@@ -62,3 +62,9 @@
 .fun-hist span { display: grid; }
 .fun-hist small { color: var(--muted); }
 .fun-hist em { font: 700 18px var(--font-display); font-style: normal; color: var(--ct, var(--ink)); }
+
+/* Kader auf der Vereinsseite nach Mannschaft */
+.vr-kh { margin: 14px 0 8px; font: 600 13px var(--font-body); color: var(--muted); }
+.vr-kh:first-of-type { margin-top: 2px; }
+.vr-kh small { margin-left: 4px; font-weight: 500; opacity: .7; }
+.vr-none { margin: 2px 0 6px; color: var(--muted); font-size: 14px; }

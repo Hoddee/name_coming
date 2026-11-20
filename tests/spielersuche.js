@@ -99,6 +99,13 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   const ser = await p.evaluate(() => ({ done: document.querySelectorAll('.su-done .su-row').length, vn: document.querySelector('#snForm [name=vn]').value, ok: document.querySelector('#snForm [name=ok]').checked, view: !document.getElementById('sneu').hidden }));
   ok(ser.done === 1 && ser.vn === '' && ser.ok && ser.view, 'Serie: ' + JSON.stringify(ser));
 
+  // Vereinsseite: Kader nach Mannschaft gruppiert
+  await p.evaluate(async () => { const M = await import('./js/ui/vereine.js'); await M.openVerein('q162195'); });
+  await p.waitForTimeout(900);
+  const kh = await p.$$eval('#verein .vr-kh', l => l.map(e => e.textContent));
+  ok(kh.length >= 2 && kh.some(x => /Herren II/.test(x)), 'Kader-Gruppen: ' + JSON.stringify(kh));
+  await p.screenshot({ path: 'out/verein-kader.png' });
+
   // Hall of Fame: Chip „Andere“ für Mannschaften außerhalb der Kreisliga
   await p.evaluate(async () => { const A = await import('./js/services/api.js'); await A.loadGames(true); const R = await import('./js/router.js'); R.show('hof'); });
   await p.waitForTimeout(700);
