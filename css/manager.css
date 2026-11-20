@@ -1,4 +1,4 @@
-/* Manager: Team, Markt, Liga und Karte auf der Liga-Seite (Klassen mit mg-) */
+/* Manager (Klassen mit mg-) und Rechtliches (lg-) */
 #mgrBody h2 { font: 700 21px var(--font-head); letter-spacing: -.03em; margin: 22px 0 8px; display: flex; align-items: center; gap: 10px; }
 #mgrBody h2::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--acc2); box-shadow: 0 0 12px rgba(201, 255, 74, .55); }
 .mg-cnt { font: 600 13px var(--font-body); color: var(--muted); letter-spacing: 0; }
@@ -76,3 +76,11 @@
 .mg-c-go { font: 600 13px var(--font-body); color: #fff; padding: 8px 12px; border-radius: 999px; background: linear-gradient(135deg, #9B80FF, #6E4CF5); }
 .mg-in { width: 100%; min-height: 48px; margin: 6px 0 14px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(225, 230, 245, .16); background: var(--raised); color: var(--ink); font: 500 16px var(--font-body); }
 @media (max-width: 360px) { .mg-kpi { grid-template-columns: repeat(2, 1fr); row-gap: 12px; } .mg-act { min-width: 74px; } }
+
+/* Impressum und Datenschutz */
+.lg h2 { font: 700 22px var(--font-head); letter-spacing: -.03em; margin: 18px 0 8px; }
+.lg h3 { font: 650 15px var(--font-head); margin: 18px 0 6px; }
+.lg p, .lg li { color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+.lg b { color: var(--ink); font-weight: 600; }
+.lg ul { padding-left: 18px; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.lg-st { margin-top: 24px; font-size: 12px !important; color: var(--muted2) !important; }

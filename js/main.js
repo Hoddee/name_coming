@@ -18,6 +18,7 @@ import { initFeel } from './ui/feel.js';
 import { initTabbar } from './ui/tabbar.js';
 import { initMvp } from './ui/mvp.js';
 import { initManager } from './ui/manager.js';
+import { initLegal } from './ui/legal.js';
 import { startTraffic } from './services/traffic.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
@@ -36,6 +37,7 @@ initAdmin();
 initTabbar();
 initMvp();
 initManager();
+initLegal();
 
 /* Navigation über data-nav="…" (back = zur vorherigen Ansicht) */
 document.addEventListener('click', e => {
