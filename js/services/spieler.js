@@ -78,6 +78,17 @@ async function loadRefs(rows) {
 }
 setRefLoader(loadRefs);
 
+/* Ein Spieler per ID (Profil-Link ?p=…) */
+export async function fetchSpieler(id) {
+  if (PL[id] || !EXT_ID.test(id) || sp.dbMissing) return PL[id] || null;
+  try {
+    const d = await (await rest('spieler?select=' + FIELDS + '&id=eq.' + id)).json();
+    const p = clean(Array.isArray(d) ? d[0] : null);
+    if (p && !p.st) remember([p]);
+    return PL[id] || null;
+  } catch (e) { if (isMissing(e)) sp.dbMissing = true; return null; }
+}
+
 /* ---------- Suchen ---------- */
 const keyCache = new Map();
 const pkey = p => { let k = keyCache.get(p.id); if (!k) { k = keyOf(fullName(p), p.ext ? p.vname : (CL[p.c] || {}).n || ''); keyCache.set(p.id, k); } return k; };
@@ -181,6 +192,29 @@ export function forget(id) {
   dbCache.clear();
   if (PL[id] && PL[id].ext) PL[id].hidden = true;
   if (games.list) games.list = games.list.filter(g => g.player !== id);
+}
+
+/* ---------- Admin: Meldungen und ausgeblendete Spieler ---------- */
+export async function loadModeration() {
+  const [r, h] = await Promise.all([
+    rest('spieler_meldungen?select=id,spieler_id,art,text,created_at&erledigt=eq.false&order=created_at.desc&limit=50').then(x => x.json()),
+    rest('spieler?select=' + FIELDS + '&status=eq.ausgeblendet&order=created_at.desc&limit=50').then(x => x.json())
+  ]);
+  const rows = (Array.isArray(h) ? h : []).map(x => Object.assign(clean(Object.assign({}, x, { status: 'neu' })) || {}, { id: x.id })).filter(x => x.n);
+  const names = new Map(rows.map(p => [p.id, fullName(p)]));
+  const reps = (Array.isArray(r) ? r : []).filter(x => x && EXT_ID.test(x.spieler_id) && /^\d+$/.test(String(x.id))).map(x => ({
+    id: +x.id, sp: x.spieler_id, art: str(x.art, 12), text: str(x.text, 200), name: names.get(x.spieler_id) || (PL[x.spieler_id] ? fullName(PL[x.spieler_id]) : x.spieler_id) }));
+  return { hidden: rows, reports: reps };
+}
+export async function setSpielerStatus(id, status) {
+  const r = await rest('spieler?id=eq.' + id, { method: 'PATCH', headers: Object.assign({ Prefer: 'return=representation' }, json), body: JSON.stringify({ status }) });
+  const d = await r.json();
+  if (!Array.isArray(d) || !d.length) throw new Error('Keine Berechtigung');
+  dbCache.clear();
+  if (PL[id]) PL[id].hidden = status !== 'ok' && status !== 'neu';
+}
+export async function reportDone(id) {
+  await rest('spieler_meldungen?id=eq.' + id, { method: 'PATCH', headers: json, body: JSON.stringify({ erledigt: true }) });
 }
 
 /* Mannschaft als Text: „Herren II“, „Frauen“ */

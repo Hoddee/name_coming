@@ -17,7 +17,7 @@ function initPress() { document.addEventListener('touchstart', () => {}, { passi
    Nicht beim Punktevergeben – dort wechselt Wischen den Spieler. */
 function initEdgeSwipe() {
   if (!(isIOS && standalone)) return;
-  let x0 = null, y0 = 0, dx = 0, on = false, els = [];
+  let x0 = null, y0 = 0, t0 = 0, dx = 0, on = false, els = [];
   const move = v => els.forEach(el => { el.style.transform = v ? 'translateX(' + v + 'px)' : ''; });
   document.addEventListener('touchstart', e => {
     x0 = null;
@@ -25,7 +25,7 @@ function initEdgeSwipe() {
     if (e.touches.length !== 1 || nav.current === 'start' || nav.current === 'edit' || document.body.classList.contains('sheet-open') || document.body.classList.contains('tab-root')) return;
     const t = e.touches[0];
     if (t.clientX > 22) return;
-    x0 = t.clientX; y0 = t.clientY; dx = 0; on = false;
+    x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); dx = 0; on = false;
   }, { passive: true });
   document.addEventListener('touchmove', e => {
     if (x0 == null) return;
@@ -45,10 +45,19 @@ function initEdgeSwipe() {
     if (x0 == null) return;
     x0 = null;
     if (!on) return;
-    const go = dx > 90;
+    /* Weit genug oder schnell geschnippt = zurück; die Ansicht gleitet dann ganz hinaus statt zurückzuspringen */
+    const go = dx > 90 || (dx > 36 && dx / Math.max(1, Date.now() - t0) > 0.5);
+    const done = () => els.forEach(el => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; });
+    if (go && !reduced()) {
+      els.forEach(el => { el.style.transition = 'transform .16s ease-in, opacity .16s ease-in'; el.style.opacity = '0'; });
+      move(window.innerWidth * 0.6);
+      buzz(8);
+      setTimeout(() => { done(); back(); }, 160);
+      return;
+    }
     els.forEach(el => { el.style.transition = 'transform .18s ease-out'; });
     move(0);
-    setTimeout(() => els.forEach(el => { el.style.transition = ''; el.style.transform = ''; }), 200);
+    setTimeout(done, 200);
     if (go) { buzz(8); back(); }
   };
   document.addEventListener('touchend', end, { passive: true });

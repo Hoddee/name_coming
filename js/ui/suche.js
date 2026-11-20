@@ -9,7 +9,7 @@ import { CL, crestUrl } from '../data/clubs.js';
 import { games, loadGames } from '../services/api.js';
 import { avatar, skeleton, playerStats } from './components.js';
 import { vr, loadVereine, searchLocal as vLocal, searchDb as vDb, merged as vMerged, vereinById, myClub } from '../services/vereine.js';
-import { searchDb, mergePlayers, recent, addRecent, clearRecent, createSpieler, useVerein, teamText, clubName, TEAM_ART, sp, searchLocal } from '../services/spieler.js';
+import { loadModeration, setSpielerStatus, reportDone, fetchSpieler, searchDb, mergePlayers, recent, addRecent, clearRecent, createSpieler, useVerein, teamText, clubName, TEAM_ART, sp, searchLocal } from '../services/spieler.js';
 import { vereinRow, openVerein } from './vereine.js';
 import { keyOf, score } from '../core/vsearch.js';
 import { openProfile } from './profile.js';
@@ -181,6 +181,48 @@ function asGuest() {
   if (PL[id]) PL[id].pos = nf.pos;
   requestNewGame({ player: id });
 }
+
+/* Profil-Link aus WhatsApp & Co.: ?p=<Spieler-ID> */
+export async function openPlayerLink(id) {
+  const p = await fetchSpieler(id);
+  if (p && !p.hidden) { addRecent('p', id, fullName(p)); openProfile(id); }
+  else toast('Spieler nicht gefunden', 'bad');
+}
+export const profileUrl = id => location.origin + location.pathname + '?p=' + encodeURIComponent(id);
+
+/* ---------- Admin: Meldungen und ausgeblendete Spieler (Karte im Admin-Bereich) ---------- */
+const mod = { data: null, err: '', at: 0 };
+const ART = { ausblenden: 'Ausblenden', doppelt: 'Doppelt', falsch: 'Falsch', sonstiges: 'Sonstiges' };
+export function modHtml() {
+  if (sp.dbMissing) return '';
+  const d = mod.data;
+  if (!d) return '<div class="card su-mod" id="modCard"><b>Spieler-Meldungen</b><p class="muted small">' + esc(mod.err || 'Lädt …') + '</p></div>';
+  if (!d.reports.length && !d.hidden.length) return '<div class="card su-mod" id="modCard"><b>Spieler-Meldungen</b><p class="muted small">Keine</p></div>';
+  return '<div class="card su-mod" id="modCard"><b>Spieler-Meldungen</b>' +
+    d.reports.map(r => '<div class="su-modr"><span class="su-t"><b>' + esc(r.name) + '</b><small>' + esc(ART[r.art] || r.art) + (r.text ? ' · ' + esc(r.text) : '') + '</small></span>' +
+      '<button type="button" class="btn sm" data-mod="done:' + r.id + '">Erledigt</button></div>').join('') +
+    (d.hidden.length ? '<div class="su-modh">Ausgeblendet</div>' + d.hidden.map(p => '<div class="su-modr"><span class="su-t"><b>' + esc(fullName(p)) + '</b><small>' + esc(p.vname) + '</small></span>' +
+      '<button type="button" class="btn sm" data-mod="show:' + esc(p.id) + '">Wieder zeigen</button></div>').join('') : '') + '</div>';
+}
+export async function loadMod(force) {
+  if (sp.dbMissing || (!force && Date.now() - mod.at < 120000)) return;
+  mod.at = Date.now();
+  try { mod.data = await loadModeration(); mod.err = ''; }
+  catch (e) { mod.data = null; mod.err = e.status === 404 ? 'Migration 017 fehlt' : 'Nicht erreichbar'; }
+  const el = $('modCard'); if (el) el.outerHTML = modHtml();
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-mod]');
+  if (!b || b.disabled) return;
+  b.disabled = true;
+  const k = b.dataset.mod, v = k.slice(k.indexOf(':') + 1);
+  try {
+    if (k.startsWith('done:')) await reportDone(+v);
+    else if (k.startsWith('show:')) await setSpielerStatus(v, 'ok');
+    toast('Erledigt');
+  } catch (err) { toast(err.message || 'Nicht gespeichert', 'bad'); }
+  loadMod(true);
+});
 
 /* ---------- Einstieg ---------- */
 export function openSuche(q = null) { if (q != null) ui.q = q; show('suche'); setTimeout(() => { if (!ui.q) $('suQ').focus(); }, 60); }

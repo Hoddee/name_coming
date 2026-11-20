@@ -3,7 +3,7 @@
    Leistung: Balken je Spiel (gespielt + kommend), Antippen öffnet das Spiel-Detail.
    Marktwert: große Kurve (3M/1J), Antippen zeigt den Wert an einem Tag. */
 import { $, esc, eur, cleanSheet, trendClass, applyTier, tierOf, pad2 } from '../core/util.js';
-import { PL, POS_NAME, POS_SHORT, STATUS_NAME, photoUrl } from '../data/players.js';
+import { PL, POS_NAME, POS_SHORT, STATUS_NAME, photoUrl, fullName } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { upcomingFixtures, pastFixtures } from '../data/schedule.js';
 import { recordTeam, scoreText } from '../core/game.js';
@@ -19,7 +19,8 @@ import { onManagerChange } from '../services/manager.js';
 import { bindSheet } from './sheet.js';
 import { teamText, hideSpieler, reportSpieler } from '../services/spieler.js';
 import { isLoggedIn } from '../services/auth.js';
-import { toast, buzz } from '../core/util.js';
+import { toast, buzz, shareLink } from '../core/util.js';
+import { APP_NAME } from '../config.js';
 
 const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null, ask: '' };
 const TABS = [['ov', 'Übersicht'], ['perf', 'Leistung'], ['mw', 'Marktwert']];
@@ -149,7 +150,8 @@ function html() {
   if (!p || p.hidden) return '<p class="hmsg">Spieler nicht gefunden.</p>';
   const c = CL[p.c], played = byDate((games.list || []).filter(g => g.player === id)), mw = marketOf(id, games.list || []);
   let h = '';
-  if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c, p) + overview(p, id, played, mw) + (p.ext ? privacyHtml() : profileTradeHtml(id)) + '</div>';
+  if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c, p) + overview(p, id, played, mw) + profileTradeHtml(id) +
+    (p.guest ? '' : '<button type="button" class="btn full su-share" data-pf="share">Profil teilen</button>') + (p.ext ? privacyHtml() : '') + '</div>';
   else h += '<div class="pbody">' + miniHead(p) + (state.tab === 'perf' ? performance(id, played, p) : marketTab(id, played, mw)) + '</div>';
   if (games.busy && !games.list) h += skeleton(3);
   return h;
@@ -181,6 +183,7 @@ export function initProfile() {
     if (!b) return;
     const k = b.getAttribute('data-pf');
     if (k === 'play') requestNewGame({ player: state.id });
+    else if (k === 'share') { const p = PL[state.id]; shareLink(location.origin + location.pathname + '?p=' + encodeURIComponent(state.id), fullName(p) + ' – ' + APP_NAME, fullName(p) + ' bei ' + APP_NAME); }
     else if (k === 'verein') import('./vereine.js').then(m => m.openVerein(PL[state.id].verein));
     else if (k.startsWith('ask:')) { state.ask = k.slice(4); render(); }
     else if (k.startsWith('rep:')) {

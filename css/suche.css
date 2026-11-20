@@ -67,3 +67,9 @@
 .su-mono span { display: grid; place-items: center; width: 132px; height: 132px; border-radius: 50%; position: relative; z-index: 1;
   background: linear-gradient(145deg, rgba(var(--acc-rgb), .55), rgba(var(--acc-rgb), .15)); box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 20px 60px rgba(var(--acc-rgb), .35);
   font: 700 46px var(--font-display); color: #fff; letter-spacing: -.02em; }
+.su-share { margin-top: 18px; }
+
+/* Admin: Meldungen */
+.su-mod { display: grid; gap: 10px; }
+.su-modr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.su-modh { margin-top: 4px; font: 600 12px var(--font-body); color: var(--muted); }

@@ -21,7 +21,7 @@ import { initManager } from './ui/manager.js';
 import { initLegal } from './ui/legal.js';
 import { initVereine } from './ui/vereine.js';
 import { initFun } from './ui/fun.js';
-import { initSuche } from './ui/suche.js';
+import { initSuche, openPlayerLink } from './ui/suche.js';
 import { startTraffic } from './services/traffic.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
@@ -83,6 +83,13 @@ const liveParam = new URLSearchParams(location.search).get('live');
 if (liveParam) {
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (/^[A-Za-z0-9_-]{6,64}$/.test(liveParam)) openLiveLink(liveParam);
+}
+
+/* Profil-Link: ?p=<Spieler-ID> */
+const pParam = new URLSearchParams(location.search).get('p');
+if (pParam) {
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (/^[A-Za-z0-9_-]{1,64}$/.test(pParam)) openPlayerLink(pParam);
 }
 
 /* Startbildschirm ausblenden (mindestens kurz sichtbar, damit er nicht flackert); beim ersten Mal die Einführung */

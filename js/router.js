@@ -70,7 +70,7 @@ export function show(name, opts = {}) {
   def.render();
   if (!opts.keepScroll && !def.overlay && !wasOverlay) window.scrollTo(0, wasInStack ? scrollMem.get(name) || 0 : 0);
   /* Gleiten nur zwischen normalen Ansichten; Blätter haben ihre eigene Animation */
-  if (from && from !== name && !def.overlay && !wasOverlay && !opts.noAnim) slideIn(def, opts.tab ? 'tab' : wasInStack ? 'back' : 'fwd');
+  if (from && from !== name && !def.overlay && !wasOverlay && !opts.noAnim) slideIn(def, opts.dir || (opts.tab ? 'tab' : wasInStack ? 'back' : 'fwd'));
   wasOverlay = !!def.overlay;
   for (const fn of hooks) try { fn(name); } catch (e) {}
   armHistory();

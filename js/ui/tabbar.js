@@ -145,6 +145,8 @@ export function initTabbar() {
     /* Nochmal auf den aktiven Punkt: nach oben scrollen */
     if (TAB_OF[nav.current] === k && nav.current === target) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (target === 'hof') resetHof();
-    show(target, { tab: true });
+    /* Richtung wie beim Wischen: rechts liegende Bereiche kommen von rechts */
+    const from = ORDER.indexOf(TAB_OF[nav.current]), to = ORDER.indexOf(k);
+    show(target, { tab: true, dir: from < 0 || to < 0 ? undefined : to > from ? 'fwd' : 'back' });
   });
 }

@@ -8,7 +8,10 @@ import { crestUrl } from '../data/clubs.js';
 import { LAENDER, VERBAENDE, verbaendeIn, verbandOf, KLASSEN, ARTEN, JUGEND } from '../data/verbaende.js';
 import { roman, score } from '../core/vsearch.js';
 import { vr, loadVereine, searchLocal, searchDb, merged, vereinById, fetchVerein, loadTeams, teamLiga, saveTeam, createVerein, report, checkOrt, myClub, setMyClub } from '../services/vereine.js';
-import { skeleton } from './components.js';
+import { skeleton, gameRow } from './components.js';
+import { games, loadGames } from '../services/api.js';
+import { recordTeam } from '../core/game.js';
+import { byDate } from '../core/market.js';
 import { vereinKader, addRecent } from '../services/spieler.js';
 import { spielerRow, openNeu } from './suche.js';
 
@@ -119,7 +122,12 @@ function vereinHtml() {
   h += '<h2>Spieler' + (ui.kader && ui.kader.length ? ' <small class="vr-season">' + ui.kader.length + '</small>' : '') + '</h2>';
   if (ui.kader === null) h += skeleton(2, true);
   else if (ui.kader.length) h += '<div class="su-list">' + ui.kader.map(p => spielerRow(p, 'data-open="p:' + esc(p.id) + '"')).join('') + '</div>';
+  /* Letzte Spiele von Spielern des Vereins (aus den schon geladenen Spielen, kein Extra-Traffic) */
+  const ids = new Set([v.id, ...(v.teams || []).map(t => t.crest).filter(Boolean)]);
+  const gl = games.list ? byDate(games.list.filter(g => ids.has(recordTeam(g)))).reverse().slice(0, 5) : [];
+  const gamesHtml = gl.length ? '<h2>Letzte Spiele</h2><ul class="glist">' + gl.map(g => gameRow(g, 0)).join('') + '</ul>' : '';
   h += '<button type="button" class="su-add" data-vr="spieler"><span aria-hidden="true">+</span>Spieler eintragen</button>';
+  h += gamesHtml;
   if (ui.form === 'team') h += teamForm(v);
   else if (ui.form === 'report') h += reportForm();
   else if (isLoggedIn()) h += '<button type="button" class="btn full vr-add" data-vr="team">Mannschaft eintragen</button><button type="button" class="lnk vr-rep" data-vr="report">Fehler melden</button>';
@@ -128,6 +136,7 @@ function vereinHtml() {
 }
 function renderVerein() {
   applyTier(0);
+  if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'verein') renderVerein(); });
   $('vrBody').innerHTML = vereinHtml();
   const f = $('vrTeamForm');
   if (f) f.art.addEventListener('change', () => { f.querySelector('.vr-jg').hidden = f.art.value !== 'jugend'; });
