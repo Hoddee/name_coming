@@ -75,7 +75,7 @@ export async function shareCard() {
   spacing(x, '0px');
   x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillStyle = '#6E7690';
   const d = S.manual && S.playedAt ? new Date(S.playedAt) : new Date();
-  x.fillText(APP_NAME + ' · Kreisliga ' + (CL[teamOf(S.match)].lg || '') + ' · ' + dateLong(d), W / 2, 1316);
+  x.fillText(APP_NAME + (CL[teamOf(S.match)].lg ? ' · Kreisliga ' + CL[teamOf(S.match)].lg : '') + ' · ' + dateLong(d), W / 2, 1316);
 
   shareCanvas(cv, names.player.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + t + '.png', names.player + ' – ' + t + ' Punkte');
 }
@@ -136,7 +136,7 @@ export async function shareTeamCard() {
     x.textAlign = 'right'; x.fillStyle = col; x.font = '800 ' + f(76) + 'px "Kreo Display", Arial, sans-serif'; x.fillText(String(r.t), W - 90, cy + f(26));
   });
   x.textAlign = 'center'; x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillStyle = '#6E7690';
-  x.fillText(APP_NAME + ' · Kreisliga ' + (CL[teamOf(S.match)].lg || ''), W / 2, H - 30);
+  x.fillText(APP_NAME + (CL[teamOf(S.match)].lg ? ' · Kreisliga ' + CL[teamOf(S.match)].lg : ''), W / 2, H - 30);
   shareCanvas(cv, 'spiel-' + sc.us + '-' + sc.them + '.png', 'Endstand ' + (home ? sc.us + ':' + sc.them : sc.them + ':' + sc.us));
 }
 export function roundRect(x, l, t, w, h, r) {

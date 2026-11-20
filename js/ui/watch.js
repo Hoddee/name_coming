@@ -3,7 +3,7 @@
 import { $, esc, fmt, cls, tierOf, shareLink, toast } from '../core/util.js';
 import { APP_URL, APP_NAME } from '../config.js';
 import { PL, photoUrl } from '../data/players.js';
-import { CL, crestUrl, storageUrl } from '../data/clubs.js';
+import { CL, crestUrl, storageUrl, generatedCrest } from '../data/clubs.js';
 import { live, onLive, ownLive, liveStatus } from '../services/live.js';
 import { games, loadGames } from '../services/api.js';
 import { registerView, show, back, nav, rerender } from '../router.js';
@@ -14,10 +14,11 @@ import { openMatch } from './match.js';
 const state = { uid: null, seen: new Set(), ended: null };
 
 const photo = (d, small) => (PL[d.p] ? photoUrl(d.p, small) : d.pf ? storageUrl(d.pf) : photoUrl(''));
-const crest = (id, f) => (CL[id] ? crestUrl(id) : f ? storageUrl(f) : crestUrl(id));
+/* Unbekannter Verein (Spielersuche, ganz Deutschland): Wappen aus dem Namen im Live-Stand */
+const crest = (id, f, n) => (CL[id] ? crestUrl(id) : f ? storageUrl(f) : n ? generatedCrest(n) : crestUrl(id));
 const sides = d => {
-  const l = d.home ? [d.team] : [d.opp, d.of], r = d.home ? [d.opp, d.of] : [d.team];
-  return { l: crest(l[0], l[1]), r: crest(r[0], r[1]), score: d.home ? d.us + ' : ' + d.them : d.them + ' : ' + d.us };
+  const l = d.home ? [d.team, null, d.tn] : [d.opp, d.of, d.on], r = d.home ? [d.opp, d.of, d.on] : [d.team, null, d.tn];
+  return { l: crest(l[0], l[1], l[2]), r: crest(r[0], r[1], r[2]), score: d.home ? d.us + ' : ' + d.them : d.them + ' : ' + d.us };
 };
 /* Andere Geräte: sortiert nach Spiel, dann Reihenfolge der Spieler */
 export const liveList = () => [...live.map.entries()].filter(([uid]) => !ownLive(uid))

@@ -70,11 +70,11 @@ export function storageUrl(path) {
 }
 /* Generiertes Wappen (Schild mit Initialen) für eigene Gegner */
 function initials(name) {
-  const w = name.replace(/[^\p{L}\p{N} ]/gu, ' ').split(' ').filter(x => x && !/^(fc|sv|tsv|sc|sg|sgm|fsv|vfr|vfb|tsg|sf|svg|fv|tsc|sk)$/i.test(x));
+  const w = name.replace(/[^\p{L}\p{N} ]/gu, ' ').split(' ').filter(x => x && !/^\d+$/.test(x) && !/^(fc|sv|tsv|sc|sg|sgm|fsv|vfr|vfb|tsg|sf|svg|fv|tsc|sk)$/i.test(x));
   return ((w[0] || name)[0] + (w[1] ? w[1][0] : (w[0] || '').slice(1, 2))).toUpperCase();
 }
 const crestCache = new Map();
-function generatedCrest(name) {
+export function generatedCrest(name) {
   if (!crestCache.has(name)) {
     let h = 0;
     for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -84,6 +84,12 @@ function generatedCrest(name) {
     crestCache.set(name, 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
   }
   return crestCache.get(name);
+}
+/* Verein aus der Vereinssuche bzw. Mannschaft eines gesuchten Spielers als Eintrag in CL (Wappen generiert, keine Liga) */
+export function registerClub(id, name) {
+  if (!id || clubBase[id]) return clubBase[id] || null;
+  clubBase[id] = { id, n: String(name || '').slice(0, 60) || 'Verein', lg: null, ext: true, img: generatedCrest(String(name || id)) };
+  return clubBase[id];
 }
 export function crestUrl(clubId) {
   const c = CL[clubId];

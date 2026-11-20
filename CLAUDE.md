@@ -115,6 +115,13 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Suche läuft im Gerät; DB (Migration 015) nur für angelegte Vereine, Mannschaften, Staffeln, Meldungen. fussball.de/FuPa nicht auslesen (Nutzungsbedingungen).
   „Mein Verein“ in `KEYS.club`. Fun-Punkte (`js/ui/fun.js`, Ansicht `fun`, Klassen `fun-`, `KEYS.fun`): ohne Konto, nichts in die DB.
   Manager nur angemeldet und nur Spiele mit `mit_konto` (Migration 016, in `cleanGame` als `g.konto`; `mgGames()` in ui/manager.js).
+- Spielersuche (`js/services/spieler.js` Daten, `js/ui/suche.js` Ansichten `suche`/`sneu`, `css/suche.css`, Klassen `su-`, Migration 017):
+  Suchfeld oben auf der Liga-Seite, Reiter Alle/Spieler/Vereine, „Zuletzt“ (`KEYS.recent`). Spieler tragen angemeldete Nutzer ein (Tabelle `spieler`,
+  ID `sp` + 10 Hex, nur Herren/Frauen/AH, Häkchen „volljährig“), sonst „Nur für ein Spiel“ = Gastspieler am Verein. Kein fussball.de/FuPa.
+  Gefundene Spieler kommen per `addExtPlayer` nur in `PL` (nicht `PLAYER_LIST`), ihr Verein per `registerClub` in `CL` (generiertes Wappen, `lg: null`);
+  gemerkt in `KEYS.ext` und schon in `players.js` beim Start eingetragen (sonst verwirft `loadGame` ein laufendes Spiel). `loadGames` lädt unbekannte
+  Spieler/Vereine über `setRefLoader` nach. Datenschutz: „Ausblenden lassen“ im Profil (`rpc/spieler_ausblenden`, wirkt sofort), `hidden` blendet überall aus.
+  Neues Spiel: Suchfeld „Spieler suchen“ und „Gegner suchen“ (Vereinssuche); bei Mannschaften außerhalb der Kreisliga keine Kreisliga-Kacheln. Test: `tests/spielersuche.js`.
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Team (`manager`; die alte Ansicht `kader` ist noch registriert, aber ohne Menüpunkt), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
   `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.

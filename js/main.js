@@ -21,6 +21,7 @@ import { initManager } from './ui/manager.js';
 import { initLegal } from './ui/legal.js';
 import { initVereine } from './ui/vereine.js';
 import { initFun } from './ui/fun.js';
+import { initSuche } from './ui/suche.js';
 import { startTraffic } from './services/traffic.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
@@ -42,6 +43,7 @@ initManager();
 initLegal();
 initVereine();
 initFun();
+initSuche();
 
 /* Navigation über data-nav="…" (back = zur vorherigen Ansicht) */
 document.addEventListener('click', e => {

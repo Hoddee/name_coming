@@ -4,6 +4,8 @@ import { KEYS } from '../config.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_SHORT, POS_ORDER, fullName, guestId, isGuest } from '../data/players.js';
 import { CL, CLUB_LIST, LEAGUES, OWN_CLUBS, crestUrl, customClubId, isCustomClub } from '../data/clubs.js';
 import { suggestInto } from './vereine.js';
+import { vr, loadVereine, searchLocal as vLocal, vereinById } from '../services/vereine.js';
+import { searchDb as pDb, mergePlayers, useVerein, teamText, clubName } from '../services/spieler.js';
 import { TEAMS, nextFixture, lastFixture, pastFixtures } from '../data/schedule.js';
 import { store, replaceGame, freshGame, applyMatchNames, applyMedia, eachPlayer, isMulti, newSlot, MAX_SQUAD } from '../core/game.js';
 import { marketOf } from '../core/market.js';
@@ -17,6 +19,9 @@ import { prepareManual, resetTab } from './booking.js';
 /* p Spieler · team eigene Mannschaft · o Gegner · plan Gegner aus dem Spielplan · lg Liga der manuellen Auswahl
    pf/of hochgeladene Bilder für Gastspieler / eigenen Gegner */
 let sel = blank();
+/* Suchfelder: Spieler (ganz Deutschland) und Gegner (Vereinssuche) */
+const find = { q: '', db: [], dbFor: '', oq: '' };
+let findTimer = 0;
 /* Offene Formulare (Gastspieler, eigener Gegner) inkl. Eingaben und Bild */
 const forms = { guest: false, opp: false, err: '', busy: false, status: '', gname: '', gclub: 'vfr', oname: '', gimg: null, oimg: null };
 
@@ -71,6 +76,7 @@ export function openSetup(match = null, { manual = false, player = null, squad =
     if (match && !sel.plan) { sel.o = o; sel.home = home; }
   }
   Object.assign(forms, { guest: false, opp: false, err: '', busy: false, status: '', gimg: null, oimg: null });
+  Object.assign(find, { q: '', oq: '' });
   show('setup');
 }
 
@@ -137,8 +143,12 @@ function oppPicker() {
   let h = '';
   if (sel.fx) h += '<button type="button" class="back" data-pick="plan"><b aria-hidden="true">‹</b>Zurück zum Spielplan</button>';
   else if (sel.team) h += '<p class="muted small" style="margin:0 0 10px">Kein Spiel im Spielplan</p>';
-  h += '<div class="seg full lgseg">' + LEAGUES.map(lg => '<button type="button" data-pick="lg:' + lg + '" aria-pressed="' + (sel.lg === lg) + '">Kreisliga ' + lg + '</button>').join('') + '</div>';
-  const tiles = CLUB_LIST.filter(c => c.lg === sel.lg && c.id !== sel.team).map(c =>
+  h += '<div class="su-find"><input class="fi" id="soQ" type="search" placeholder="Gegner suchen" autocomplete="off" spellcheck="false" enterkeyhint="search" value="' + esc(find.oq) + '"><div class="su-list" id="soRes">' + oppResults() + '</div></div>';
+  if (isExtClub(sel.o)) h += '<div class="ogrid"><button type="button" class="otile" data-pick="o:' + esc(sel.o) + '" aria-pressed="true"><img src="' + esc(crestUrl(sel.o)) + '" alt=""><span>' + esc(CL[sel.o].n) + '</span></button></div>';
+  /* Eigene Mannschaft außerhalb der Kreisliga-Liste: Gegner nur über die Suche */
+  const far = isExtClub(sel.team);
+  if (!far) h += '<div class="seg full lgseg">' + LEAGUES.map(lg => '<button type="button" data-pick="lg:' + lg + '" aria-pressed="' + (sel.lg === lg) + '">Kreisliga ' + lg + '</button>').join('') + '</div>';
+  const tiles = (far ? [] : CLUB_LIST).filter(c => c.lg === sel.lg && c.id !== sel.team).map(c =>
     '<button type="button" class="otile" data-pick="o:' + c.id + '" aria-pressed="' + (sel.o === c.id) + '"><img src="' + esc(crestUrl(c.id)) + '" alt="" loading="lazy"><span>' + esc(c.n) + '</span></button>');
   if (isCustomClub(sel.o)) tiles.unshift('<button type="button" class="otile" data-pick="o:' + esc(sel.o) + '" aria-pressed="true"><img src="' + esc(crestUrl(sel.o)) + '" alt=""><span>' + esc(CL[sel.o].n) + '</span></button>');
   tiles.push('<button type="button" class="otile add" data-pick="add-opp" aria-expanded="' + forms.opp + '"><span class="plus">+</span><span>Mannschaft hinzufügen</span></button>');
@@ -153,8 +163,38 @@ function oppPicker() {
   return h;
 }
 
+const isExtClub = id => !!(id && CL[id] && CL[id].ext);
+function oppResults() {
+  const q = find.oq.trim();
+  if (q.length < 2 || !vr.list) return '';
+  return vLocal(q, 6).filter(v => v.id !== sel.team).map(v => '<button type="button" class="su-vopt" data-pick="ov:' + esc(v.id) + '"><b>' + esc(v.name) + '</b><small>' + esc(v.ort || '') + '</small></button>').join('');
+}
+/* Spielersuche in der Auswahl: Treffer als Zeilen, Antippen wählt wie in der Liste */
+function findResults() {
+  const q = find.q.trim();
+  if (q.length < 2) return '';
+  const l = mergePlayers(q, find.dbFor === q ? find.db : []).filter(p => !p.hidden).slice(0, 8);
+  if (!l.length) return '<p class="su-none">' + (find.dbFor === q ? 'Kein Spieler gefunden' : 'Suche …') + '</p>';
+  return l.map(p => '<button type="button" class="prow su-pick" data-pick="p:' + esc(p.id) + '" aria-pressed="' + isPicked(p.id) + '">' + avatar(p.id) +
+    '<span><b>' + esc(fullName(p)) + '</b><span class="ps">' + esc([clubName(p), p.ext ? teamText(p) : ''].filter(Boolean).join(' · ')) + '</span></span><span></span>' + checkMark(p.id) + '</button>').join('');
+}
+function onFind(q) {
+  find.q = q;
+  const box = $('stRes');
+  if (box) box.innerHTML = findResults();
+  clearTimeout(findTimer);
+  const t = q.trim();
+  if (t.length < 2) return;
+  findTimer = setTimeout(async () => {
+    const r = await pDb(t);
+    if (find.q.trim() !== t) return;
+    find.db = r; find.dbFor = t;
+    const b = $('stRes'); if (b) b.innerHTML = findResults();
+  }, 350);
+}
 function teamChips() {
-  const teams = [...new Set([...TEAMS, sel.team].filter(t => t && CL[t]))];
+  const ext = sel.p && PL[sel.p] && (PL[sel.p].ext || (PL[sel.p].guest && CL[PL[sel.p].c] && CL[PL[sel.p].c].ext));
+  const teams = [...new Set([...(ext ? [] : TEAMS), sel.team].filter(t => t && CL[t]))];
   return '<div class="tchips">' + teams.map(t => '<button type="button" class="tchip" data-pick="t:' + t + '" aria-pressed="' + (sel.team === t) + '"><img src="' + esc(crestUrl(t)) + '" alt=""><span><b>' + esc(CL[t].n) + '</b><small>' + (CL[t].lg ? 'Kreisliga ' + CL[t].lg : '') + '</small></span></button>').join('') + '</div>';
 }
 
@@ -169,6 +209,11 @@ function html() {
     h += '<div class="plist">' + (PL[sel.p] ? playerRow(PL[sel.p]) : '') + '</div>';
     return h + matchHtml();
   }
+  h += '<div class="su-find"><input class="fi" id="stQ" type="search" placeholder="Spieler suchen" autocomplete="off" spellcheck="false" enterkeyhint="search" value="' + esc(find.q) + '"><div class="plist" id="stRes">' + findResults() + '</div></div>';
+  /* Gesuchte Spieler (ganz Deutschland), die gerade gewählt sind */
+  const picked = (sel.multi ? sel.ps : [sel.p]).filter(id => id && PL[id] && PL[id].ext);
+  if (picked.length) h += '<div class="grp"><span>Gesucht</span></div><div class="plist">' + picked.map(id => '<button type="button" class="prow" data-pick="p:' + esc(id) + '" aria-pressed="true">' + avatar(id) +
+    '<span><b>' + esc(fullName(PL[id])) + '</b><span class="ps">' + esc(clubName(PL[id]) + ' · ' + teamText(PL[id])) + '</span></span><span></span>' + checkMark(id) + '</button>').join('') + '</div>';
   /* Gruppen: erst die eigenen Vereine, dann Vereine weiterer Stammspieler */
   const active = PLAYER_LIST.filter(p => p.active !== false);
   const clubIds = [...new Set([...OWN_CLUBS, ...active.map(p => p.c)])].filter(id => CL[id]);
@@ -311,6 +356,13 @@ async function uploadIfAny(which) {
 export function initSetup() {
   registerView('setup', { elements: ['setup'], render });
   $('setup').addEventListener('input', e => {
+    if (e.target.id === 'stQ') { onFind(e.target.value); return; }
+    if (e.target.id === 'soQ') {
+      find.oq = e.target.value;
+      const fill = () => { const b = $('soRes'); if (b) b.innerHTML = oppResults(); };
+      if (vr.list) fill(); else loadVereine().then(fill, () => {});
+      return;
+    }
     if (e.target.closest('#guestForm') && e.target.name === 'name') forms.gname = e.target.value;
     if (e.target.closest('#oppForm') && e.target.name === 'name') { forms.oname = e.target.value; suggestInto(e.target, $('oppDl')); }
   });
@@ -353,6 +405,11 @@ export function initSetup() {
     if (k === 'add-opp') { Object.assign(forms, { opp: !forms.opp, guest: false, err: '', status: '' }); render(); const i = document.querySelector('#oppForm [name=name]'); if (i) i.focus(); return; }
     if (k === 'close-forms') { if (!forms.busy) Object.assign(forms, { guest: false, opp: false, err: '', status: '', gimg: null, oimg: null }); render(); return; }
     if (k.startsWith('img-clear:')) { forms[k.slice(10)] = null; forms.status = ''; render(); return; }
+    if (k.startsWith('ov:')) {
+      const id = useVerein(vereinById(k.slice(3)));
+      if (id && id !== sel.team) { sel.o = id; sel.plan = false; find.oq = ''; }
+      render(); return;
+    }
     if (k === 'manual-opp') { sel.plan = false; sel.lg = CL[sel.team].lg || 'A2'; render(); return; }
     if (k === 'plan') { sel.plan = true; applyPlan(); render(); return; }
     if (k.startsWith('fx:')) {
@@ -372,9 +429,11 @@ export function initSetup() {
       render(); return;
     }
     if (k.startsWith('p:') && sel.multi && !sel.lock) {
+      if (b.classList.contains('su-pick')) find.q = '';
       if (togglePick(v)) render();
       return;
     }
+    if (k.startsWith('p:') && b.classList.contains('su-pick')) { find.q = ''; }
     if (k.startsWith('p:')) {
       const changed = sel.p !== v;
       sel.p = v; sel.pos = PL[v].pos || 'ABW';

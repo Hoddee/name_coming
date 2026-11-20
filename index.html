@@ -43,7 +43,8 @@ html, body { background: #0B0E17; }
 <link rel="stylesheet" href="css/kreo.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="css/manager.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="css/vereine.css" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/live.css"><link rel="stylesheet" href="css/booking.css"><link rel="stylesheet" href="css/views.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css"><link rel="stylesheet" href="css/profile.css"><link rel="stylesheet" href="css/sheet.css"><link rel="stylesheet" href="css/feel.css"><link rel="stylesheet" href="css/brand.css"><link rel="stylesheet" href="css/kreo.css"><link rel="stylesheet" href="css/manager.css"><link rel="stylesheet" href="css/vereine.css"></noscript>
+<link rel="stylesheet" href="css/suche.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/live.css"><link rel="stylesheet" href="css/booking.css"><link rel="stylesheet" href="css/views.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css"><link rel="stylesheet" href="css/profile.css"><link rel="stylesheet" href="css/sheet.css"><link rel="stylesheet" href="css/feel.css"><link rel="stylesheet" href="css/brand.css"><link rel="stylesheet" href="css/kreo.css"><link rel="stylesheet" href="css/manager.css"><link rel="stylesheet" href="css/vereine.css"><link rel="stylesheet" href="css/suche.css"></noscript>
 <script type="module" src="js/main.js"></script>
 <!-- Alle Module gleich parallel laden statt nacheinander (spart zwei Ladestufen) -->
 <link rel="modulepreload" href="js/core/game.js">
@@ -95,6 +96,8 @@ html, body { background: #0B0E17; }
 <link rel="modulepreload" href="js/services/vereine.js">
 <link rel="modulepreload" href="js/ui/vereine.js">
 <link rel="modulepreload" href="js/ui/fun.js">
+<link rel="modulepreload" href="js/services/spieler.js">
+<link rel="modulepreload" href="js/ui/suche.js">
 </head>
 <body>
 <!-- Startbildschirm, bis die App geladen ist -->
@@ -164,6 +167,8 @@ html, body { background: #0B0E17; }
 <section id="vereine" hidden><header class="ehead"><div class="wrap"><button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button><div class="etitle">Vereine</div><span></span></div></header><main class="wrap eb"><div class="vr-search"><input id="vrQ" class="fi" type="search" placeholder="Verein oder Ort" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Verein suchen"></div><div id="vrList"></div></main></section>
 <section id="verein" hidden><header class="ehead"><div class="wrap"><button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button><div class="etitle">Verein</div><span></span></div></header><main class="wrap eb"><div id="vrBody"></div></main></section>
 <section id="vneu" hidden><header class="ehead"><div class="wrap"><button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button><div class="etitle">Verein anlegen</div><span></span></div></header><main class="wrap eb"><div id="vrNeuBody"></div></main></section>
+<section id="suche" hidden><header class="ehead"><div class="wrap"><button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button><div class="etitle">Suche</div><span></span></div></header><main class="wrap eb"><div class="su-search"><div class="su-in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="suQ" class="fi" type="search" placeholder="Spieler oder Verein" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Suchen"><button type="button" id="suClear" class="su-x" aria-label="Leeren" hidden>×</button></div><div class="seg full su-tabs" id="suTabs" data-noswipe></div></div><div id="suList"></div></main></section>
+<section id="sneu" hidden><header class="ehead"><div class="wrap"><button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button><div class="etitle">Spieler eintragen</div><span></span></div></header><main class="wrap eb"><div id="snBody"></div></main></section>
 <section id="fun" hidden><header class="ehead"><div class="wrap"><button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button><div class="etitle">Fun-Punkte</div><span></span></div></header><main class="wrap eb"><div id="funBody"></div></main></section>
 <section id="legal" hidden><header class="ehead"><div class="wrap"><button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button><div class="etitle">Rechtliches</div><span></span></div></header><main class="wrap eb" id="legalBody"></main></section>
 

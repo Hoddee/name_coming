@@ -62,7 +62,7 @@ const L = require('./lib.js');
   await c('[data-fun="new"]'); await p.waitForTimeout(100);
   const fun = await p.evaluate(() => JSON.parse(localStorage.getItem('kreo-fun-v1')));
   ok(fun.hist.length === 1 && fun.hist[0].name === 'Kumpel' && fun.hist[0].t === 85 && !fun.cur.ev.length, 'Verlauf: ' + JSON.stringify(fun.hist));
-  const w = t.writes.filter(x => !/rpc\/vereine_suche/.test(x)); // Suche ist ein Lesen per POST
+  const w = t.writes.filter(x => !/rpc\/(vereine|spieler)_suche/.test(x)); // Suche ist ein Lesen per POST
   ok(!w.length, 'Nichts geschrieben: ' + w.join(', '));
   console.log('Fehler:', fails.length || t.errs.length ? fails.concat(t.errs) : 'keine'); await t.b.close();
 })();

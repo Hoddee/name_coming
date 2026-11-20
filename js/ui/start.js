@@ -19,6 +19,7 @@ import { spieltagCardHtml, maybeLaunch } from './mvp.js';
 import { byDate } from '../core/market.js';
 import { managerCardHtml } from './manager.js';
 import { myClub } from '../services/vereine.js';
+import { openSuche, openVerein } from './suche.js';
 import { onManagerChange } from '../services/manager.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
@@ -110,8 +111,11 @@ function latest() {
     '<ul class="glist">' + list.slice(0, 5).map(g => gameRow(g, 0)).join('') + '</ul>';
 }
 
+/* Suchfeld oben (öffnet die Suche) */
+const searchBar = () => '<button type="button" class="su-bar" data-st="suche"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Spieler oder Verein suchen</span></button>';
+
 function html() {
-  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + managerCardHtml() + extrasHtml() + spieltagCardHtml() + fixturesStrip() + latest();
+  return searchBar() + liveTilesHtml() + runningCard() + newGameBtn() + meCard() + managerCardHtml() + extrasHtml() + spieltagCardHtml() + fixturesStrip() + latest();
 }
 
 /* Kader: alle aktiven Spieler, nach Mannschaft */
@@ -155,7 +159,8 @@ export function initStart() {
     else if (k === 'me') show('me');
     else if (k === 'hof') { resetHof(); show('hof', { tab: true }); }
     else if (k === 'mgr') show('manager', { tab: true });
-    else if (k === 'vereine') show('vereine');
+    else if (k === 'vereine') { const my = myClub(); if (my) openVerein(my.id); else show('vereine'); }
+    else if (k === 'suche') openSuche('');
     else if (k === 'fun') show('fun');
   });
 }

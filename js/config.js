@@ -12,7 +12,7 @@ export const VAPID_PUBLIC = 'BPpdkr18TxFId_jZJ6A0qLOo3pkdTIdKzKqfSYsnChxvth3Oq3V
 export const SEASON = '2026/2027';
 
 /* Angezeigte Version (Konto-Seite) – zusammen mit VERSION in sw.js hochzählen */
-export const APP_VERSION = '2.2.0';
+export const APP_VERSION = '2.3.0';
 /* Name der App (Titel, Teilen-Bilder, Benachrichtigungen) */
 export const APP_NAME = 'Kreo';
 
@@ -24,5 +24,6 @@ export const KEYS = {
   roster: 'kl-roster-v1',
   auth: 'kl-auth-v1',
   manager: 'kreo-manager-v1', tourMgr: 'kreo-tour-mgr-v1',
-  club: 'kreo-club-v1', fun: 'kreo-fun-v1'
+  club: 'kreo-club-v1', fun: 'kreo-fun-v1',
+  ext: 'kreo-ext-v1', recent: 'kreo-recent-v1'
 };
