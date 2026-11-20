@@ -2,12 +2,12 @@
 // Laden eines gespeicherten Spiels mit gesuchtem Spieler (Hall of Fame), Spieler eintragen (Formular), Ausblenden, ohne Migration still
 const L = require('./lib.js');
 const SP = [
-  { id: 'sp0123456789', vorname: 'Lukas', nachname: 'Meier', verein_id: 'ow91603662', verein_name: '1. FC 08 Birkenfeld', team_id: null, team_art: 'herren', team_nr: 2, pos: 'ANG', nummer: 9, status: 'neu', doppelt_von: null },
-  { id: 'sp0123456788', vorname: 'Jonas', nachname: 'Maier', verein_id: 'ow91603662', verein_name: '1. FC 08 Birkenfeld', team_id: null, team_art: 'herren', team_nr: 1, pos: 'TW', nummer: 1, status: 'neu', doppelt_von: null },
-  { id: 'sp01234567zz', vorname: '<img src=x>', nachname: 'Böse', verein_id: 'ow91603662', verein_name: 'x', status: 'neu' }
+  { id: 'sp0123456789', vorname: 'Lukas', nachname: 'Meier', verein_id: 'q162195', verein_name: '1. FC 08 Birkenfeld', team_id: null, team_art: 'herren', team_nr: 2, pos: 'ANG', nummer: 9, status: 'neu', doppelt_von: null },
+  { id: 'sp0123456788', vorname: 'Jonas', nachname: 'Maier', verein_id: 'q162195', verein_name: '1. FC 08 Birkenfeld', team_id: null, team_art: 'herren', team_nr: 1, pos: 'TW', nummer: 1, status: 'neu', doppelt_von: null },
+  { id: 'sp01234567zz', vorname: '<img src=x>', nachname: 'Böse', verein_id: 'q162195', verein_name: 'x', status: 'neu' }
 ];
 const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', played_at: '2026-11-15T14:00:00Z', season: '2026/2027', player: 'sp0123456789', opp: 'ow93398679',
-  home: true, pos: 'ANG', us: 3, them: 1, minutes: 90, points: 245, goals: 2, assists: 0, manual: false, team: 'ow91603662', player_foto: null, opp_foto: null, erfasst_von: 'Test', mit_konto: true };
+  home: true, pos: 'ANG', us: 3, them: 1, minutes: 90, points: 245, goals: 2, assists: 0, manual: false, team: 'q162195', player_foto: null, opp_foto: null, erfasst_von: 'Test', mit_konto: true };
 (async () => {
   const t = await L.setup({ noGoto: true }); const { p, c } = t;
   const fails = [], ok = (cond, msg) => { if (!cond) fails.push(msg); };
@@ -47,7 +47,7 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   ok(!(await p.$eval('#goBtn', e => e.disabled)), 'Gegner gewählt, Start möglich');
   await c('#goBtn'); await p.waitForTimeout(500);
   const S = await t.S();
-  ok(S.match && S.match.p === 'sp0123456789' && S.match.team === 'ow91603662' && /^o/.test(S.match.o), 'Spiel: ' + JSON.stringify(S.match));
+  ok(S.match && S.match.p === 'sp0123456789' && S.match.team === 'q162195' && /^[oquvk]/.test(S.match.o), 'Spiel: ' + JSON.stringify(S.match));
   const head = await p.evaluate(() => document.getElementById('hName').textContent);
   ok(/Meier/.test(head), 'Spielerkarte: ' + head);
 
@@ -62,8 +62,8 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   await p.evaluate(async () => { const M = await import('./js/ui/suche.js'); M.openNeu({ name: 'Max Muster' }); });
   await p.waitForTimeout(500);
   ok(await p.$('[data-nav="admin"]') && !(await p.$('#snForm [type=submit]')), 'ohne Konto kein Eintragen');
-  await p.fill('#snVq', 'birkenfeld'); await p.waitForTimeout(300);
-  await c('#snVres [data-sn^="v:"]'); await p.waitForTimeout(300);
+  await p.fill('#snVq', 'fc 08 birkenfeld'); await p.waitForTimeout(300);
+  await c('#snVres [data-sn="v:q162195"]'); await p.waitForTimeout(300);
   await p.screenshot({ path: 'out/spieler-eintragen.png' });
   await c('[data-sn="guest"]'); await p.waitForTimeout(600);
   const gs = await p.evaluate(() => document.querySelector('#setup [aria-pressed="true"] b') && document.querySelector('#setup').textContent.includes('Max Muster'));
@@ -74,17 +74,17 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   await p.reload({ waitUntil: 'networkidle' }); await p.waitForTimeout(900);
   await p.evaluate(async () => { const M = await import('./js/ui/suche.js'); M.openNeu({ name: 'Tim Neu' }); });
   await p.waitForTimeout(400);
-  await p.fill('#snVq', 'birkenfeld'); await p.waitForTimeout(300);
-  await c('#snVres [data-sn^="v:"]'); await p.waitForTimeout(300);
+  await p.fill('#snVq', 'fc 08 birkenfeld'); await p.waitForTimeout(300);
+  await c('#snVres [data-sn="v:q162195"]'); await p.waitForTimeout(300);
   await c('#snForm [type=submit]'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => /bestätigen/.test(document.getElementById('snBody').textContent)), 'Bestätigung verlangt');
   await p.check('#snForm [name=ok]'); await c('#snForm [type=submit]'); await p.waitForTimeout(1200);
   const made = await p.evaluate(() => ({ v: document.querySelector('#profile:not([hidden]) .pnn') && document.querySelector('#profile .pnn').textContent }));
   ok(made.v === 'Neu', 'Nach Eintragen Profil offen: ' + JSON.stringify(made));
-  ok(posted && posted.vorname === 'Tim' && posted.bestaetigt === true && posted.verein_id === 'ow91603662' && !('user_id' in posted), 'Eintrag gesendet: ' + JSON.stringify(posted));
+  ok(posted && posted.vorname === 'Tim' && posted.bestaetigt === true && posted.verein_id === 'q162195' && !('user_id' in posted), 'Eintrag gesendet: ' + JSON.stringify(posted));
 
   // Vom Verein aus: mehrere hintereinander
-  await p.evaluate(async () => { const V = await import('./js/services/vereine.js'), M = await import('./js/ui/suche.js'); await V.loadVereine(); M.openNeu({ verein: V.vereinById('ow91603662') }); });
+  await p.evaluate(async () => { const V = await import('./js/services/vereine.js'), M = await import('./js/ui/suche.js'); await V.loadVereine(); M.openNeu({ verein: V.vereinById('q162195') }); });
   await p.waitForTimeout(400);
   await p.fill('#snForm [name=vn]', 'Ben'); await p.fill('#snForm [name=n]', 'Zwei'); await p.check('#snForm [name=ok]');
   await c('#snForm [type=submit]'); await p.waitForTimeout(900);
