@@ -16,8 +16,10 @@ import { history, podiumCard } from './mvp.js';
 
 const ui = { tab: 'ov', league: 'ALL', sort: 'new', more: 30, returnTo: null, player: null, game: null, eventsError: false, edit: false, confirmDelete: false, busy: false };
 
-const leagueOf = id => CL[PL[id].c].lg;
-const inLeague = g => ui.league === 'ALL' || (CL[recordTeam(g)] || {}).lg === ui.league;
+const leagueOf = id => (CL[PL[id].c] || {}).lg || 'OTHER';
+/* 'OTHER' = Mannschaften außerhalb der Kreisliga (über die Suche gefunden) */
+const lgOfGame = g => (CL[recordTeam(g)] || {}).lg || 'OTHER';
+const inLeague = g => ui.league === 'ALL' || lgOfGame(g) === ui.league;
 const gamesOf = id => byDate((games.list || []).filter(g => g.player === id));
 
 /* Form: die letzten fünf Spiele als farbige Punkte */
@@ -237,7 +239,7 @@ function allTab(list) {
 function overviewHtml() {
   let h = '<div class="htabs" role="tablist">' + TABS.map(([k, t]) =>
     '<button type="button" role="tab" data-hof="t:' + k + '" aria-pressed="' + (ui.tab === k) + '">' + t + '</button>').join('') + '</div>' +
-    (ui.tab === 'mvp' ? '' : '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2'], ['B5', 'B5']].map(([k, t]) =>
+    (ui.tab === 'mvp' ? '' : '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2'], ['B5', 'B5']].concat(ui.league === 'OTHER' || (games.list || []).some(g => lgOfGame(g) === 'OTHER') ? [['OTHER', 'Andere']] : []).map(([k, t]) =>
       '<button type="button" data-hof="l:' + k + '" aria-pressed="' + (ui.league === k) + '">' + t + '</button>').join('') + '</div>');
   if (games.busy && !games.list) return h + skeleton(6);
   if (!games.list) return h + '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="reload">Nochmal versuchen</button>';

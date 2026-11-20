@@ -60,11 +60,20 @@ export function loadVereine() {
     vr.quelle = str(d.quelle, 200); vr.stand = str(d.stand, 10);
     for (const v of list) byId.set(v.id, v);
     vr.list = list; vr.error = false;
+    fixMyClub(list);
     return list;
   }).catch(e => { vr.error = true; vr.list = null; throw e; }).finally(() => { vr.busy = null; });
   return vr.busy;
 }
 export const vereinById = id => byId.get(id) || null;
+/* „Mein Verein“ mit einer alten ID (Vereinsliste vor 2.4: o…) über Name + Ort neu zuordnen */
+function fixMyClub(list) {
+  const c = readJson(KEYS.club, null);
+  if (!c || !/^o[nwr]\d/.test(c.id || '') || byId.has(c.id)) return;
+  const n = simple(c.name), o = simple(c.ort);
+  const v = list.find(x => simple(x.name) === n && simple(x.ort) === o) || list.find(x => simple(x.name) === n);
+  if (v) setMyClub(v);
+}
 
 /* ---------- Suchen ---------- */
 const mineFirst = () => (readJson(KEYS.club, null) || {}).id;

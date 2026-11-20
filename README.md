@@ -17,6 +17,7 @@ mit eigenem Namen, eigenem Look und eigener Wertung.
   aktuellen Marktwert. Ein Spieler bringt die Punkte der Spiele, die er gespielt hat, während er im Team war.
   Manager-Liga mit allen angemeldeten Managern (Gesamt- und Wochenpunkte). Nur mit Anmeldung; es zählen nur Spiele, die mit Anmeldung gespeichert wurden.
 - **Vereinssuche:** alle Vereine in Deutschland, die OpenStreetMap kennt, unscharf gesucht („SC Vornspach“ findet SC Fornsbach), mit Mannschaften und Liga.
+- **Spielersuche:** Spieler aus ganz Deutschland suchen (Name, auch Teil oder Tippfehler), Profil öffnen und mit „+ Spiel“ sofort Punkte geben. Spieler tragen angemeldete Nutzer selbst ein (nur Erwachsene, ausblenden jederzeit möglich), ohne Konto geht „Nur für ein Spiel“. Gegner kommen aus der Vereinssuche. Migration 017.
   Fehlende Vereine und Mannschaften legen angemeldete Nutzer an (Ort wird geprüft, Doppelte vorher angezeigt). „Mein Verein“ merkt sich das Gerät.
   Daten und Rechtliches: [`tools/vereine/README.md`](tools/vereine/README.md).
 - **Fun-Punkte:** ohne Konto jemandem Punkte nach der Kreo-Tabelle geben und als Bild teilen. Zählt nirgends.

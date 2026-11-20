@@ -1,6 +1,7 @@
 /* Kader. Die Liste hier ist der Offline-Stand; die gepflegten Werte (Status, Position, Marktwert)
    kommen aus der Supabase-Tabelle "kader" und überschreiben diese Einträge (siehe services/roster.js). */
-import { storageUrl } from './clubs.js';
+import { storageUrl, registerClub } from './clubs.js';
+import { KEYS } from '../config.js';
 
 export const PLAYER_LIST = [
   { id: 'Barbano', vn: 'Mattia', n: 'Barbano', c: 'vfr', pos: 'ABW', mw: 11500000, status: 'fit' },
@@ -48,6 +49,25 @@ export function addPlayer(p) {
   playerBase[p.id] = p; PLAYER_LIST.push(p);
   return p;
 }
+
+/* Gesuchter Spieler aus der Tabelle „spieler“ (Migration 017): nur in PL, nicht in PLAYER_LIST (Auswahl/Kader bleiben schlank) */
+export function addExtPlayer(p) {
+  const old = playerBase[p.id];
+  if (old && !old.ext) return old;
+  playerBase[p.id] = old ? Object.assign(old, p) : p;
+  return playerBase[p.id];
+}
+
+/* Gemerkte gesuchte Spieler und ihre Vereine sofort beim Start eintragen – sonst ginge ein laufendes Spiel mit ihnen
+   beim Laden verloren (game.js prüft PL/CL). Gepflegt von services/spieler.js. */
+export const EXT_ID = /^sp[a-f0-9]{10}$/;
+try {
+  const ext = JSON.parse(localStorage.getItem(KEYS.ext) || 'null');
+  if (ext && typeof ext === 'object') {
+    for (const c of Array.isArray(ext.c) ? ext.c : []) if (c && typeof c.id === 'string' && /^[a-z0-9_-]{2,40}$/.test(c.id)) registerClub(c.id, typeof c.n === 'string' ? c.n : '');
+    for (const p of Array.isArray(ext.p) ? ext.p : []) if (p && EXT_ID.test(p.id) && typeof p.n === 'string') addExtPlayer(p);
+  }
+} catch (e) {}
 
 export const POS_NAME = { TW: 'Torwart', ABW: 'Abwehr', MIT: 'Mittelfeld', ANG: 'Angriff' };
 export const POS_SHORT = { TW: 'TW', ABW: 'ABW', MIT: 'MF', ANG: 'ANG' };

@@ -19,6 +19,8 @@ import { spieltagCardHtml, maybeLaunch } from './mvp.js';
 import { byDate } from '../core/market.js';
 import { managerCardHtml } from './manager.js';
 import { myClub } from '../services/vereine.js';
+import { openSuche, openVerein } from './suche.js';
+import { follows } from '../services/spieler.js';
 import { onManagerChange } from '../services/manager.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
@@ -97,7 +99,7 @@ const newGameBtn = () => (store.S.match && !(store.S.ended && allSaved()) ? '' :
 /* Vereinssuche (ganz Deutschland) und Fun-Punkte */
 function extrasHtml() {
   const my = myClub();
-  return '<div class="vr-start"><button type="button" data-st="vereine"><b>' + (my ? esc(my.name) : 'Verein suchen') + '</b><small>' + (my ? 'Mein Verein' : 'Ganz Deutschland') + '</small></button>' +
+  return '<div class="vr-start"><button type="button" data-st="vereine"><b>' + (my ? esc(my.name) : 'Mein Verein') + '</b><small>' + (my ? 'Mein Verein' : 'Festlegen') + '</small></button>' +
     '<button type="button" data-st="fun"><b>Fun-Punkte</b><small>Ohne Konto</small></button></div>';
 }
 
@@ -110,8 +112,24 @@ function latest() {
     '<ul class="glist">' + list.slice(0, 5).map(g => gameRow(g, 0)).join('') + '</ul>';
 }
 
+/* Gefolgte Spieler: letztes Spiel als Kachel (aus den geladenen Spielen) */
+function followHtml() {
+  const ids = follows();
+  if (!ids.length) return '';
+  const last = new Map();
+  for (const g of games.list || []) { const o = last.get(g.player); if (!o || g.played_at > o.played_at) last.set(g.player, g); }
+  return '<h2>Gefolgt</h2><div class="su-fol" data-noswipe>' + ids.map(id => {
+    const g = last.get(id), p = PL[id];
+    return '<button type="button" class="su-folc tc"' + (g ? ' data-tier="' + tierOf(g.points) + '"' : '') + ' data-open="p:' + esc(id) + '">' + avatar(id) +
+      '<b>' + esc(p.n) + '</b><span>' + (g ? g.points : '–') + '</span></button>';
+  }).join('') + '</div>';
+}
+
+/* Suchfeld oben (öffnet die Suche) */
+const searchBar = () => '<button type="button" class="su-bar" data-st="suche"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Spieler oder Verein suchen</span></button>';
+
 function html() {
-  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + managerCardHtml() + extrasHtml() + spieltagCardHtml() + fixturesStrip() + latest();
+  return searchBar() + liveTilesHtml() + runningCard() + newGameBtn() + meCard() + managerCardHtml() + extrasHtml() + followHtml() + spieltagCardHtml() + fixturesStrip() + latest();
 }
 
 /* Kader: alle aktiven Spieler, nach Mannschaft */
@@ -155,7 +173,8 @@ export function initStart() {
     else if (k === 'me') show('me');
     else if (k === 'hof') { resetHof(); show('hof', { tab: true }); }
     else if (k === 'mgr') show('manager', { tab: true });
-    else if (k === 'vereine') show('vereine');
+    else if (k === 'vereine') { const my = myClub(); if (my) openVerein(my.id); else openSuche('', 'clubs'); }
+    else if (k === 'suche') openSuche('');
     else if (k === 'fun') show('fun');
   });
 }

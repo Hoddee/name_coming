@@ -8,15 +8,21 @@ import { crestUrl } from '../data/clubs.js';
 import { LAENDER, VERBAENDE, verbaendeIn, verbandOf, KLASSEN, ARTEN, JUGEND } from '../data/verbaende.js';
 import { roman, score } from '../core/vsearch.js';
 import { vr, loadVereine, searchLocal, searchDb, merged, vereinById, fetchVerein, loadTeams, teamLiga, saveTeam, createVerein, report, checkOrt, myClub, setMyClub } from '../services/vereine.js';
-import { skeleton } from './components.js';
+import { skeleton, gameRow } from './components.js';
+import { games, loadGames } from '../services/api.js';
+import { recordTeam } from '../core/game.js';
+import { byDate } from '../core/market.js';
+import { vereinKader, addRecent, sp } from '../services/spieler.js';
+import { spielerRow, openNeu } from './suche.js';
 
-const ui = { q: '', db: [], dbFor: '', id: null, teams: null, teamsErr: false, form: '', busy: false, err: '', neu: null };
+const ui = { q: '', db: [], dbFor: '', id: null, teams: null, teamsErr: false, kader: null, kRev: 0, form: '', busy: false, err: '', neu: null };
 let timer = 0;
 
 /* ---------- Bausteine ---------- */
 const where = v => [v.ort, LAENDER[v.land]].filter(Boolean).join(' · ');
 const teamName = t => (t.art === 'jugend' ? t.jugend + (t.nr > 1 ? ' ' + roman(t.nr) : '') : ARTEN[t.art] + (t.nr > 1 ? ' ' + roman(t.nr) : ''));
 const ligaChip = v => { const t = v.teams.find(x => x.art === 'herren' && x.nr === 1) || v.teams[0]; return t ? '<i class="vr-lg">' + esc(t.nummer || teamLiga(t)) + '</i>' : ''; };
+export function vereinRow(v) { return row(v); }
 function row(v) {
   const mine = (myClub() || {}).id === v.id;
   return '<button type="button" class="vr-row" data-vr="v:' + esc(v.id) + '"><span class="vr-ic" aria-hidden="true">' + esc(initials(v.name)) + '</span>' +
@@ -112,6 +118,16 @@ function vereinHtml() {
   else h += '<div class="vr-list">' + ui.teams.map(t => '<div class="vr-team">' +
     (t.crest ? '<img src="' + esc(crestUrl(t.crest)) + '" alt="">' : '<span class="vr-ic sm" aria-hidden="true">' + esc(t.art === 'jugend' ? 'J' : roman(t.nr)) + '</span>') +
     '<span class="vr-t"><b>' + esc(teamName(t)) + '</b><small>' + esc([teamLiga(t), t.kreis].filter(Boolean).join(' · ') || 'Liga offen') + '</small></span></div>').join('') + '</div>';
+  /* Kader: Spieler, die Nutzer eingetragen haben, und Stammspieler der Kreisliga-Mannschaften */
+  h += '<h2>Spieler' + (ui.kader && ui.kader.length ? ' <small class="vr-season">' + ui.kader.length + '</small>' : '') + '</h2>';
+  if (ui.kader === null) h += skeleton(2, true);
+  else if (ui.kader.length) h += '<div class="su-list">' + ui.kader.map(p => spielerRow(p, 'data-open="p:' + esc(p.id) + '"')).join('') + '</div>';
+  /* Letzte Spiele von Spielern des Vereins (aus den schon geladenen Spielen, kein Extra-Traffic) */
+  const ids = new Set([v.id, ...(v.teams || []).map(t => t.crest).filter(Boolean)]);
+  const gl = games.list ? byDate(games.list.filter(g => ids.has(recordTeam(g)))).reverse().slice(0, 5) : [];
+  const gamesHtml = gl.length ? '<h2>Letzte Spiele</h2><ul class="glist">' + gl.map(g => gameRow(g, 0)).join('') + '</ul>' : '';
+  h += '<button type="button" class="su-add" data-vr="spieler"><span aria-hidden="true">+</span>Spieler eintragen</button>';
+  h += gamesHtml;
   if (ui.form === 'team') h += teamForm(v);
   else if (ui.form === 'report') h += reportForm();
   else if (isLoggedIn()) h += '<button type="button" class="btn full vr-add" data-vr="team">Mannschaft eintragen</button><button type="button" class="lnk vr-rep" data-vr="report">Fehler melden</button>';
@@ -120,6 +136,9 @@ function vereinHtml() {
 }
 function renderVerein() {
   applyTier(0);
+  if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'verein') renderVerein(); });
+  /* Zurück vom Eintragen: Spielerliste neu holen */
+  if (ui.kader && ui.kRev !== sp.rev) { ui.kRev = sp.rev; const v = vereinById(ui.id); if (v) vereinKader(v, true).then(k => { ui.kader = k; if (nav.current === 'verein') renderVerein(); }, () => {}); }
   $('vrBody').innerHTML = vereinHtml();
   const f = $('vrTeamForm');
   if (f) f.art.addEventListener('change', () => { f.querySelector('.vr-jg').hidden = f.art.value !== 'jugend'; });
@@ -127,9 +146,14 @@ function renderVerein() {
 export async function openVerein(id) {
   if (!vr.list) { try { await loadVereine(); } catch (e) { /* weiter, vielleicht ein DB-Verein */ } }
   if (!vereinById(id)) await fetchVerein(id);
-  Object.assign(ui, { id, teams: null, teamsErr: false, form: '', err: '' });
+  Object.assign(ui, { id, teams: null, teamsErr: false, kader: null, form: '', err: '' });
+  const v0 = vereinById(id);
+  if (v0) addRecent('v', id, v0.name);
   show('verein');
   try { ui.teams = await loadTeams(id); } catch (e) { ui.teamsErr = true; }
+  if (nav.current === 'verein' && ui.id === id) renderVerein();
+  const v = vereinById(id);
+  ui.kader = v ? await vereinKader(v).catch(() => []) : []; ui.kRev = sp.rev;
   if (nav.current === 'verein' && ui.id === id) renderVerein();
 }
 
@@ -182,6 +206,7 @@ async function submitNeu(f) {
 }
 
 /* ---------- Einstieg ---------- */
+export function openVereinNeu(name = '') { ui.neu = { name: String(name).trim().slice(0, 60) }; ui.err = ''; show('vneu'); }
 export function openVereine(q = '') { if (q) ui.q = q; show('vereine'); }
 
 /* Vorschläge für ein Textfeld (z. B. eigener Gegner beim neuen Spiel) über ein <datalist> */
@@ -206,6 +231,7 @@ export function initVereine() {
     const k = b.dataset.vr;
     if (k.startsWith('v:')) openVerein(k.slice(2));
     else if (k === 'reload') { vr.error = false; renderVereine(); loadVereine().then(renderSearch, renderSearch); }
+    else if (k === 'spieler') openNeu({ verein: vereinById(ui.id) });
     else if (k === 'neu') { ui.neu = { name: ui.q.trim().slice(0, 60) }; ui.err = ''; show('vneu'); }
     else if (k === 'mine') {
       const v = vereinById(ui.id);

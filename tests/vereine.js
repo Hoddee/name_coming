@@ -35,7 +35,7 @@ const L = require('./lib.js');
 
   // Oberfläche: Liga-Seite → Suche → Verein
   await c('[data-st="vereine"]'); await p.waitForTimeout(500);
-  await p.fill('#vrQ', 'sc vornspach'); await p.waitForTimeout(700);
+  await p.fill('#suQ', 'sc vornspach'); await p.waitForTimeout(700);
   const first = await p.evaluate(() => { const b = document.querySelector('.vr-row b'); return b && b.textContent; });
   ok(first === 'SC Fornsbach', 'Erster Treffer: ' + first);
   await p.screenshot({ path: 'out/vereine-suche.png' });
@@ -49,8 +49,8 @@ const L = require('./lib.js');
 
   // Verein anlegen ohne Konto: nur Anmelden
   await c('[data-nav="back"]'); await p.waitForTimeout(300);
-  await p.fill('#vrQ', 'FC Gibtsnichtdorf'); await p.waitForTimeout(600);
-  await c('[data-vr="neu"]'); await p.waitForTimeout(300);
+  await p.fill('#suQ', 'FC Gibtsnichtdorf'); await p.waitForTimeout(600);
+  await c('[data-su="vneu"]'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => !document.querySelector('#vrNeuForm') && !!document.querySelector('#vrNeuBody [data-nav="admin"]')), 'Anlegen nur angemeldet');
 
   // Fun-Punkte: buchen, zurücknehmen, Verlauf – nichts an die Datenbank
@@ -66,7 +66,7 @@ const L = require('./lib.js');
   await c('[data-fun="new"]'); await p.waitForTimeout(100);
   const fun = await p.evaluate(() => JSON.parse(localStorage.getItem('kreo-fun-v1')));
   ok(fun.hist.length === 1 && fun.hist[0].name === 'Kumpel' && fun.hist[0].t === 85 && !fun.cur.ev.length, 'Verlauf: ' + JSON.stringify(fun.hist));
-  const w = t.writes.filter(x => !/rpc\/vereine_suche/.test(x)); // Suche ist ein Lesen per POST
+  const w = t.writes.filter(x => !/rpc\/(vereine|spieler)_suche/.test(x)); // Suche ist ein Lesen per POST
   ok(!w.length, 'Nichts geschrieben: ' + w.join(', '));
   console.log('Fehler:', fails.length || t.errs.length ? fails.concat(t.errs) : 'keine'); await t.b.close();
 })();

@@ -68,7 +68,9 @@ function marketTab(st) {
   const chips = [['ALL', 'Alle'], ...POS_ORDER.map(p => [p, POS_SHORT[p]])];
   let h = '<div class="mg-bud"><span>Budget</span><b>' + eur(st.budget) + '</b></div>' +
     '<div class="lgs mg-pos">' + chips.map(([k, t]) => '<button type="button" data-mg="pos:' + k + '" aria-pressed="' + (ui.pos === k) + '">' + t + '</button>').join('') + '</div>';
-  const list = PLAYER_LIST.filter(p => p.active !== false && !p.guest && (ui.pos === 'ALL' || p.pos === ui.pos))
+  /* Gesuchte Spieler (ganz Deutschland) kommen auf den Markt, sobald sie ein zählendes Spiel haben */
+  const ext = [...new Set(mgGames().map(g => g.player))].map(id => PL[id]).filter(p => p && p.ext && !p.hidden);
+  const list = [...PLAYER_LIST, ...ext].filter(p => p.active !== false && !p.guest && (ui.pos === 'ALL' || p.pos === ui.pos))
     .map(p => ({ p, mw: marketOf(p.id, mgGames()) })).sort((a, b) => b.mw.v - a.mw.v);
   h += '<div class="mg-list">' + list.map(({ p, mw }) => {
     const l = mgGames().filter(g => g.player === p.id), avg = l.length ? Math.round(l.reduce((s, g) => s + g.points, 0) / l.length) : null;
@@ -193,7 +195,8 @@ export function initManager() {
 /* Zeile im Spielerprofil: kaufen bzw. verkaufen (data-pf="mg:buy|sell") */
 export function profileTradeHtml(id) {
   const pl = PL[id];
-  if (!pl || pl.guest || !games.list || !isLoggedIn()) return '';
+  if (!pl || pl.guest || pl.hidden || !games.list || !isLoggedIn()) return '';
+  if (pl.ext && !mgGames().some(g => g.player === id)) return '';
   if (!mgr.loaded) { if (!mgr.busy) loadManagers(); return ''; }
   const st = myState();
   if (!st) return '';

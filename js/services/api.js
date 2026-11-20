@@ -57,6 +57,9 @@ let kontoCol = true;
 const noKonto = e => /mit_konto/.test(e && e.message || '');
 
 export const games = { list: null, busy: false, error: false, failedAt: 0 };
+/* Gesuchte Spieler und Vereine (Spielersuche) vor dem Filtern nachladen – services/spieler.js setzt das */
+let refs = null;
+export const setRefLoader = fn => { refs = fn; };
 let backoff = null;
 const gameListeners = new Set();
 export const onGamesChange = fn => gameListeners.add(fn);
@@ -83,7 +86,9 @@ export async function loadGames(force = false) {
     const d = await r.json();
     /* Live gebuchte Spiele ohne Einsatzminuten (nur auf der Bank) zählen nirgends mit.
        Nachträge hat jemand bewusst eingetragen – die bleiben immer. */
-    games.list = (Array.isArray(d) ? d : []).map(cleanGame).filter(g => g && PL[g.player] && CL[g.opp] && (g.minutes > 0 || g.manual));
+    const rows = (Array.isArray(d) ? d : []).map(cleanGame).filter(Boolean);
+    if (refs) await refs(rows).catch(() => {});
+    games.list = rows.filter(g => PL[g.player] && !PL[g.player].hidden && CL[g.opp] && (g.minutes > 0 || g.manual));
     playerEventCache.clear();
     for (const g of games.list.slice().reverse()) applyMedia(g.player, g.opp, g.player_foto, g.opp_foto);
   } catch (e) { games.error = true; games.failedAt = Date.now(); }

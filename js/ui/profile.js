@@ -3,7 +3,7 @@
    Leistung: Balken je Spiel (gespielt + kommend), Antippen öffnet das Spiel-Detail.
    Marktwert: große Kurve (3M/1J), Antippen zeigt den Wert an einem Tag. */
 import { $, esc, eur, cleanSheet, trendClass, applyTier, tierOf, pad2 } from '../core/util.js';
-import { PL, POS_NAME, POS_SHORT, STATUS_NAME, photoUrl } from '../data/players.js';
+import { PL, POS_NAME, POS_SHORT, STATUS_NAME, photoUrl, fullName } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { upcomingFixtures, pastFixtures } from '../data/schedule.js';
 import { recordTeam, scoreText } from '../core/game.js';
@@ -17,8 +17,12 @@ import { requestNewGame } from './start.js';
 import { profileTradeHtml, trade } from './manager.js';
 import { onManagerChange } from '../services/manager.js';
 import { bindSheet } from './sheet.js';
+import { teamText, hideSpieler, reportSpieler, isFollowed, toggleFollow } from '../services/spieler.js';
+import { isLoggedIn } from '../services/auth.js';
+import { toast, buzz, shareLink } from '../core/util.js';
+import { APP_NAME } from '../config.js';
 
-const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null };
+const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null, ask: '' };
 const TABS = [['ov', 'Übersicht'], ['perf', 'Leistung'], ['mw', 'Marktwert']];
 const TAB_ICON = {
   ov: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>',
@@ -29,7 +33,7 @@ const TAB_ICON = {
 /* Profil öffnen (als Blatt über der aktuellen Ansicht) */
 export function openProfile(id, tab = 'ov') {
   if (!PL[id]) return;
-  if (state.id !== id) { state.ev = null; state.pick = null; }
+  if (state.id !== id) { state.ev = null; state.pick = null; state.ask = ''; }
   state.id = id; state.tab = tab;
   show('profile');
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'profile') render(); });
@@ -44,12 +48,15 @@ export const shortEur = n => { const a = Math.abs(n), s = n > 0 ? '+' : n < 0 ? 
 /* ---------- Kopfbereich ---------- */
 function hero(p, id, mw) {
   const status = p.status && p.status !== 'fit' ? '<span class="pchip st ' + p.status + '">' + statusIcon(id) + STATUS_NAME[p.status] + '</span>' : '';
-  return '<section class="phero"><div class="pphoto"><img src="' + esc(photoUrl(id)) + '" alt=""></div>' +
+  /* Ohne Foto: Monogramm statt großer Silhouette, Kopf kürzer */
+  const ini = ((p.vn || '')[0] || '') + ((p.n || '')[0] || '');
+  const pic = p.foto === '' ? '<div class="pphoto su-mono"><span>' + esc(ini.toUpperCase()) + '</span></div>' : '<div class="pphoto"><img src="' + esc(photoUrl(id)) + '" alt=""></div>';
+  return '<section class="phero' + (p.foto === '' ? ' su-noph' : '') + '">' + pic +
     '<div class="pnames">' + (p.vn ? '<div class="pvn">' + esc(p.vn) + '</div>' : '') + '<h1 class="pnn">' + esc(p.n) + '</h1>' +
-    '<div class="pchips"><span class="pchip">' + POS_SHORT[p.pos || 'ABW'] + '</span>' + status + '</div></div></section>';
+    '<div class="pchips"><span class="pchip">' + POS_SHORT[p.pos || 'ABW'] + '</span>' + (p.num ? '<span class="pchip">#' + p.num + '</span>' : '') + status + '</div></div></section>';
 }
-const clubRow = c => '<div class="pclub"><img src="' + esc(crestUrl(c.id)) + '" alt="' + esc(c.n) + '"><span class="psep"></span><span class="pcl"><b>' + esc(c.n) + '</b>' +
-  (c.lg ? '<small>Kreisliga ' + c.lg + '</small>' : '') + '</span><button type="button" class="pplay" data-pf="play"><span aria-hidden="true">+</span>Spiel</button></div>';
+const clubRow = (c, p) => '<div class="pclub"><img src="' + esc(crestUrl(c.id)) + '" alt="' + esc(c.n) + '"><span class="psep"></span><span class="pcl"' + (p.ext ? ' role="button" tabindex="0" data-pf="verein"' : '') + '><b>' + esc(p.ext ? p.vname : c.n) + '</b>' +
+  (c.lg ? '<small>Kreisliga ' + c.lg + '</small>' : p.ext ? '<small>' + esc(teamText(p)) + '</small>' : '') + '</span><button type="button" class="pplay" data-pf="play"><span aria-hidden="true">+</span>Spiel</button></div>';
 /* Kompakter Kopf für Leistung/Marktwert und beim Scrollen */
 const miniHead = p => '<div class="pmini"><b>' + esc(p.n) + '</b><button type="button" class="pplay sm" data-pf="play"><span aria-hidden="true">+</span>Spiel</button></div>';
 
@@ -127,12 +134,25 @@ function marketTab(id, played, mw) {
     mwChart(s) + '<div class="kb2"><div><b>' + eur(start) + '</b><span>Startwert</span></div><div><b class="' + trendClass(pct) + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(1).replace('.', ',') + ' %</b><span>seit Saisonstart</span></div></div>';
 }
 
+/* Eingetragene Spieler (Spielersuche): Fehler melden oder ausblenden lassen (Datenschutz) */
+function privacyHtml() {
+  if (state.ask === 'hide') return '<div class="card su-priv"><b>Spieler ausblenden?</b><p class="muted small">Profil und Spiele verschwinden für alle.</p>' +
+    (isLoggedIn() ? '<div class="duo"><button type="button" class="btn danger" data-pf="hide-yes">Ausblenden</button><button type="button" class="btn" data-pf="ask:">Abbrechen</button></div>'
+      : '<div class="duo"><button type="button" class="btn primary" data-nav="admin">Anmelden</button><button type="button" class="btn" data-pf="ask:">Abbrechen</button></div>') + '</div>';
+  if (state.ask === 'report') return '<div class="card su-priv"><b>Fehler melden</b><div class="seg full">' +
+    [['doppelt', 'Doppelt'], ['falsch', 'Falsch'], ['sonstiges', 'Sonstiges']].map(([k, l]) => '<button type="button" data-pf="rep:' + k + '">' + l + '</button>').join('') + '</div>' +
+    '<button type="button" class="lnk" data-pf="ask:">Abbrechen</button></div>';
+  return '<div class="su-plinks"><button type="button" class="lnk inline" data-pf="ask:report">Fehler melden</button><button type="button" class="lnk inline" data-pf="ask:hide">Ausblenden lassen</button></div>';
+}
+
 function html() {
   const id = state.id, p = PL[id];
-  if (!p) return '';
+  if (!p || p.hidden) return '<p class="hmsg">Spieler nicht gefunden.</p>';
   const c = CL[p.c], played = byDate((games.list || []).filter(g => g.player === id)), mw = marketOf(id, games.list || []);
   let h = '';
-  if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c) + overview(p, id, played, mw) + profileTradeHtml(id) + '</div>';
+  if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c, p) + overview(p, id, played, mw) + profileTradeHtml(id) +
+    (p.guest ? '' : '<div class="duo su-share"><button type="button" class="btn' + (isFollowed(id) ? ' on' : '') + '" data-pf="follow" aria-pressed="' + isFollowed(id) + '">' + (isFollowed(id) ? 'Gefolgt ✓' : 'Folgen') + '</button>' +
+      '<button type="button" class="btn" data-pf="share">Teilen</button></div>') + (p.ext ? privacyHtml() : '') + '</div>';
   else h += '<div class="pbody">' + miniHead(p) + (state.tab === 'perf' ? performance(id, played, p) : marketTab(id, played, mw)) + '</div>';
   if (games.busy && !games.list) h += skeleton(3);
   return h;
@@ -164,6 +184,18 @@ export function initProfile() {
     if (!b) return;
     const k = b.getAttribute('data-pf');
     if (k === 'play') requestNewGame({ player: state.id });
+    else if (k === 'follow') { const on = toggleFollow(state.id); buzz(12); toast(on ? 'Gefolgt' : 'Nicht mehr gefolgt'); render(); }
+    else if (k === 'share') { const p = PL[state.id]; shareLink(location.origin + location.pathname + '?p=' + encodeURIComponent(state.id), fullName(p) + ' – ' + APP_NAME, fullName(p) + ' bei ' + APP_NAME); }
+    else if (k === 'verein') import('./vereine.js').then(m => m.openVerein(PL[state.id].verein));
+    else if (k.startsWith('ask:')) { state.ask = k.slice(4); render(); }
+    else if (k.startsWith('rep:')) {
+      if (!isLoggedIn()) { show('admin'); return; }
+      reportSpieler(state.id, k.slice(4), '').then(() => toast('Danke, ist gemeldet'), err => toast(err.message, 'bad'));
+      state.ask = ''; render();
+    } else if (k === 'hide-yes') {
+      b.disabled = true;
+      hideSpieler(state.id, '').then(() => { buzz(20); toast('Ausgeblendet'); state.ask = ''; back(); }, err => { toast(err.message, 'bad'); state.ask = ''; render(); });
+    }
     else if (k.startsWith('mg:')) { if (!b.disabled) trade(state.id, k.slice(3)).then(() => { if (nav.current === 'profile') render(); }); }
     else if (k.startsWith('t:')) { state.tab = k.slice(2); state.pick = null; scroller.scrollTop = 0; render(); }
     else if (k.startsWith('r:')) { state.range = k.slice(2); state.pick = null; render(); }
