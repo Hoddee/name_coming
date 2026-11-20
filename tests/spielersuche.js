@@ -120,6 +120,10 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
     return { h: P.PL.sp0123456789.hidden, g: A.games.list.some(x => x.player === 'sp0123456789'), r: S.recent().some(x => x.id === 'sp0123456789') }; });
   ok(hidden && hid.h && !hid.g && !hid.r, 'Ausblenden: ' + JSON.stringify(hid));
 
+  // Vereins-Link ?v=
+  await p.goto('http://localhost:8123/?v=q162195', { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
+  ok(await p.evaluate(() => !document.getElementById('verein').hidden && /Birkenfeld/.test(document.querySelector('#verein h1').textContent) && !location.search), 'Vereins-Link öffnet Verein');
+
   console.log('Fehler:', fails.length ? fails : 'keine', t.errs.length ? t.errs : '');
   await t.b.close();
 })();

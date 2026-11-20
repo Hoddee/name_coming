@@ -1,7 +1,8 @@
 /* Vereinssuche: ganz Deutschland, Vereine mit Mannschaften und Liga.
    Ansichten: vereine (Suche), verein (ein Verein mit Mannschaften), vneu (Verein anlegen).
    Daten und Prüfung in services/vereine.js, Suchlogik in core/vsearch.js. Klassen mit vr-. */
-import { $, esc, toast, buzz, applyTier } from '../core/util.js';
+import { $, esc, toast, buzz, applyTier, shareLink } from '../core/util.js';
+import { APP_NAME } from '../config.js';
 import { registerView, show, nav } from '../router.js';
 import { isLoggedIn, onAuthChange } from '../services/auth.js';
 import { CL, crestUrl } from '../data/clubs.js';
@@ -129,7 +130,8 @@ function vereinHtml() {
   let h = '<div class="vr-head"><span class="vr-ic big" aria-hidden="true">' + esc(initials(v.name)) + '</span><h1>' + esc(v.name) + '</h1>' +
     '<p>' + esc(where(v)) + (vb ? ' · ' + esc(VERBAENDE[vb][0]) : '') + '</p>' +
     (v.web ? '<a class="vr-web" href="https://' + esc(v.web) + '" target="_blank" rel="noopener nofollow">' + esc(v.web.replace(/\/.*$/, '')) + '</a>' : '') + '</div>' +
-    '<button type="button" class="btn full' + (mine ? '' : ' primary') + '" data-vr="mine">' + (mine ? 'Mein Verein ✓' : 'Als mein Verein merken') + '</button>';
+    '<div class="duo vr-duo"><button type="button" class="btn' + (mine ? '' : ' primary') + '" data-vr="mine">' + (mine ? 'Mein Verein ✓' : 'Mein Verein') + '</button>' +
+    '<button type="button" class="btn" data-vr="share">Teilen</button></div>';
   h += '<h2>Mannschaften <small class="vr-season">2026/27</small></h2>';
   if (ui.teams === null) h += ui.teamsErr ? '<p class="hmsg">Keine Verbindung.</p>' : skeleton(2);
   else if (!ui.teams.length) h += '<p class="vr-none">Noch keine eingetragen.</p>';
@@ -250,6 +252,7 @@ export function initVereine() {
     if (k.startsWith('v:')) openVerein(k.slice(2));
     else if (k === 'reload') { vr.error = false; renderVereine(); loadVereine().then(renderSearch, renderSearch); }
     else if (k === 'spieler') openNeu({ verein: vereinById(ui.id) });
+    else if (k === 'share') { const v = vereinById(ui.id); if (v) shareLink(location.origin + location.pathname + '?v=' + encodeURIComponent(v.id), v.name + ' – ' + APP_NAME, v.name + ' bei ' + APP_NAME); }
     else if (k === 'neu') { ui.neu = { name: ui.q.trim().slice(0, 60) }; ui.err = ''; show('vneu'); }
     else if (k === 'mine') {
       const v = vereinById(ui.id);
