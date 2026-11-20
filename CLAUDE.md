@@ -104,10 +104,15 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   <0, 0–99, 100–199, 200–399, ab 400), Farben wie in Version 1 (Rot/Orange/Hellgrün/–/Gold), nur das frühere Dunkelgrün ist Kreo-Blau #3FD8E8 (Wunsch des Nutzers).
   Schriften: „Kreo Display“ = Sora (variabel, `assets/fonts/sora-var.woff2`) für Überschriften und Zahlen, Text in Inter Tight.
   Überschriften und Beschriftungen in normaler Schreibweise (keine Großbuchstaben-Zeilen).
-- Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Kader (`kader`, in `start.js`), Spiel (laufendes Spiel oder neues),
+- Manager (`js/core/manager.js` Regeln/Rechnung, `js/services/manager.js` Laden/Speichern, `js/ui/manager.js` + `css/manager.css`, Klassen `mg-`):
+  Reiter Mein Team / Markt / Liga, Karte auf der Liga-Seite. Wechsel = `{ t, p, a: 'buy'|'sell' }`; Preise werden nie gespeichert,
+  sondern aus den Spielen berechnet, die zum Zeitpunkt t schon gespeichert waren (`created_at`). Punkte zählen für Spiele mit
+  `played_at` in der Zeit im Team. Angemeldet + Migration 014: Tabelle `manager_moves` (nur anfügen, Zeit vom Server), sonst lokal (`KEYS.manager`).
+  Test: `tests/manager.js`. Impressum/Datenschutz-Entwurf: `js/ui/legal.js` (Ansicht `legal`, Link im Konto). Startplan: `docs/produkt-plan.md`.
+- Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Team (`manager`; die alte Ansicht `kader` ist noch registriert, aber ohne Menüpunkt), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
   `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.
-  Waagerecht wischen wechselt zwischen Liga ⇄ Kader ⇄ Ranking ⇄ Ich (`initSwipe` in `tabbar.js`, nur bei `tab-root`);
+  Waagerecht wischen wechselt zwischen Liga ⇄ Team ⇄ Ranking ⇄ Ich (`initSwipe` in `tabbar.js`, nur bei `tab-root`);
   Leisten, die selbst waagerecht scrollen, und `[data-noswipe]` sind ausgenommen.
 - Untere Leiste: iOS löst `position: fixed` manchmal beim Scrollen (Leiste läuft mit) – `.tabbar` hat `translateZ(0)`, `keepFixed()` in `tabbar.js` setzt sie nach dem Scrollen neu, falls sie verrutscht ist.
 - `css/` – `theme.css` muss nach den Basis-CSS eingebunden sein (Reihenfolge der `<link>` zählt); neue CSS-Dateien in `index.html` und `sw.js` eintragen.
