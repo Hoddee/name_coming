@@ -108,6 +108,7 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   const kh = await p.$$eval('#verein .vr-kh', l => l.map(e => e.textContent));
   ok(kh.length >= 2 && kh.some(x => /Herren II/.test(x)), 'Kader-Gruppen: ' + JSON.stringify(kh));
   ok(await p.$('#verein .lvh'), 'Live-Spiel auf der Vereinsseite');
+  ok(await p.evaluate(async () => { const V = await import('./js/services/vereine.js'); V.setMyClub(V.vereinById('q162195')); const R = await import('./js/router.js'); R.show('start', { tab: true }); await new Promise(r => setTimeout(r, 500)); const ok = !!document.querySelector('.vr-start .vr-live'); V.setMyClub(null); return ok; }), 'Mein Verein zeigt Live');
   await p.evaluate(async () => { const L = await import('./js/services/live.js'); L.live.map.delete('sp0123456789'); });
   await p.screenshot({ path: 'out/verein-kader.png' });
 

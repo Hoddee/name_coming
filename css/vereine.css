@@ -74,3 +74,7 @@
 #verein h2.lvh::before { display: none; }
 #verein .lvh .lv-live { font: 600 14px var(--font-head); color: var(--live) !important; gap: 8px; }
 #verein .lvh .lv-live i { width: 8px; height: 8px; }
+.vr-start small.vr-live { display: flex; align-items: center; gap: 6px; color: var(--live); }
+.vr-start small.vr-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: vrPulse 1.6s ease-in-out infinite; }
+@keyframes vrPulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .vr-start small.vr-live::before { animation: none; } }
