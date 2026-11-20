@@ -48,9 +48,9 @@ function chartHtml() {
 }
 function marketHtml() {
   const S = store.S, m = marketOf(S.match.p, games.list || []), e = matchEntry();
-  const g = { points: e.t, minutes: e.m, us: e.us, them: e.them }, r = rating(g);
+  const g = { points: e.t, minutes: e.m, us: e.us, them: e.them }, r = rating(g, S.saved ? null : m.prev);
   let v, d;
-  if (S.saved) { v = m.v; d = m.last; } else { v = nextValue(m.v, g, S.uid || 'x'); d = v - m.v; }
+  if (S.saved) { v = m.v; d = m.last; } else { v = nextValue(m.v, g, S.uid || 'x', m.prev); d = v - m.v; }
   const sign = n => (n > 0 ? '+' : '') + n;
   const parts = '<div class="mw-r"><b>Bewertung ' + sign(r.total) + '</b>' + r.parts.map(([l, n]) => '<span class="' + (n > 0 ? 'up' : n < 0 ? 'down' : '') + '">' + l + ' ' + sign(n) + '</span>').join('') + '</div>';
   return '<div class="mwc"><div class="mw-k">' + (S.saved ? 'Marktwert' : 'Marktwert nach diesem Spiel') + '</div><div class="mw-row"><span class="mw-v">' + eur(v) +

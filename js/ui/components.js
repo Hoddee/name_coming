@@ -62,7 +62,7 @@ function barHeight(t) {
 }
 export const toChartEntry = g => ({ pos: g.pos, tm: g.team, u: g.uid, t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 });
 
-/* Senkrechte Balken je Spiel wie im Kickbase-Spielerprofil */
+/* Senkrechte Balken je Spiel im Spielerprofil */
 export function seasonChart(list, title, { clickable = false, button = '' } = {}) {
   return '<div class="lh"><div><b>' + esc(title) + '</b><span>' + SEASON + '</span></div>' + button + '</div><div class="chart">' + list.map((x, i) => {
     const icons = ICON.ball.repeat(x.g || 0) + ICON.boot.repeat(x.a || 0) + (x.pos === 'TW' && cleanSheet({ them: x.them, minutes: x.m }) ? ICON.zero : '');
@@ -85,7 +85,7 @@ export function sparkline(series) {
   let min = Math.min(...vs), max = Math.max(...vs);
   if (max === min) { max += 1; min -= 1; }
   const pts = series.map((x, i) => [(i / (series.length - 1)) * W, H - 6 - (x.v - min) / (max - min) * (H - 12)]);
-  const up = vs[vs.length - 1] >= vs[0], c = up ? '#2FD673' : '#FF5A2A', id = 'sg' + (++sparkId);
+  const up = vs[vs.length - 1] >= vs[0], c = up ? '#B6F04A' : '#FF5C7A', id = 'sg' + (++sparkId);
   const line = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
   const last = pts[pts.length - 1];
   return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".28"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>' +
@@ -133,7 +133,7 @@ export function gameRow(g, rank, inProfile) {
     '<div class="gp"><span class="gv">' + g.points + '</span><span class="gd">' + dateShort(g.played_at) + ' · ' + POS_NAME[g.pos] + '</span></div></li>';
 }
 
-/* ---------- Saisonverlauf wie im Kickbase-Profil: gespielte Spiele + kommende Spiele laut Spielplan ---------- */
+/* ---------- Saisonverlauf im Profil: gespielte Spiele + kommende Spiele laut Spielplan ---------- */
 const MONTHS = ['JAN.', 'FEB.', 'MÄRZ', 'APR.', 'MAI', 'JUNI', 'JULI', 'AUG.', 'SEPT.', 'OKT.', 'NOV.', 'DEZ.'];
 const dayMonth = d => pad2(d.getDate()) + '. ' + MONTHS[d.getMonth()];
 /* played: gespeicherte Spiele (chronologisch), upcoming: [{at, team, o, home}] */
@@ -159,7 +159,7 @@ export function scrollToCurrent(root = document) {
   root.querySelectorAll('.kchart').forEach(c => {
     const last = [...c.querySelectorAll('.col.played')].pop();
     if (!last) { c.scrollLeft = 0; return; }
-    /* letztes Spiel als zweite Spalte, davor ein Stück vom vorletzten (wie bei Kickbase) */
+    /* letztes Spiel als zweite Spalte, davor ein Stück vom vorletzten */
     const x = last.getBoundingClientRect().left - c.getBoundingClientRect().left + c.scrollLeft;
     c.scrollLeft = Math.max(0, x - last.offsetWidth - 10);
   });

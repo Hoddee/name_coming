@@ -1,10 +1,6 @@
-/* Schriften (SIL Open Font License): Oxanium ersetzt "KB Pitch" (Zahlen), Inter Tight ersetzt "KB volksans" (Text) */
-@font-face { font-family: 'Oxanium'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/oxanium-latin-700-normal.woff2') format('woff2'); }
-@font-face { font-family: 'Oxanium'; font-style: normal; font-weight: 800; font-display: swap; src: url('../assets/fonts/oxanium-latin-800-normal.woff2') format('woff2'); }
+/* Schriften (SIL Open Font License, lokal): „Kreo Display“ = Sora (Überschriften und Zahlen), Inter Tight (Text) */
+@font-face { font-family: 'Kreo Display'; font-style: normal; font-weight: 100 800; font-display: swap; src: url('../assets/fonts/sora-var.woff2') format('woff2'); }
 @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/inter-tight-latin-400-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/inter-tight-latin-500-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/inter-tight-latin-600-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/inter-tight-latin-700-normal.woff2') format('woff2'); }
-/* „KL Pitch“ = Saira (SIL OFL) als variable Schrift, auf Breite 70–100 % und Stärke 500–800 gekürzt.
-   Nachbau von KB Pitch: Überschriften mit font-stretch 88 % und -0.02em, Zahlen in normaler Breite. */
-@font-face { font-family: 'KL Pitch'; font-style: normal; font-weight: 500 800; font-stretch: 70% 100%; font-display: swap; src: url('../assets/fonts/saira-kl-var.woff2') format('woff2'); }

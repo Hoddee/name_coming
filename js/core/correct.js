@@ -1,8 +1,8 @@
-/* Korrekturen an gespeicherten Spielen (nur Admin), wie bei Kickbase:
+/* Korrekturen an gespeicherten Spielen (nur Admin):
    - Entfernte Aktionen bleiben im Verlauf stehen, ausgegraut und ohne Punkte (Feld x: 1).
    - Nachgetragene Aktionen oder freie Punkte bekommen c: 1.
    Punkte, Tore und Vorlagen des Spiels werden danach aus den Aktionen neu gezählt. */
-import { GROUPS, GOAL_KEYS, ASSIST_KEYS, CLEAN_SHEET } from '../data/actions.js';
+import { GROUPS, GOAL_KEYS, ASSIST_KEYS, CLEAN_SHEET, AUTO, LEGACY } from '../data/actions.js';
 
 const MARK = { ht: 1, sub: 1 };
 const TEAM = { t: 'Team', a: [['tg', 'Team-Tor', 5], ['cg', 'Gegentor', -5]] };
@@ -58,8 +58,9 @@ export const goalCount = (ev, k) => ev.filter(e => isGoal(e, k)).length;
 /* Abweichung zwischen gespeichertem Ergebnis und den Tor-Aktionen (bei alten Spielen möglich) */
 export const scoreBase = (g, ev) => ({ us: g.us - goalCount(ev, 'tg'), them: g.them - goalCount(ev, 'cg') });
 
-/* War der Spieler überhaupt im Einsatz? (ohne Minutenbonus-Zeile saß er nur auf der Bank) */
-export const didPlay = ev => ev.some(e => e.l === 'Minutenbonus');
+/* War der Spieler überhaupt im Einsatz? (ohne Zeile „Einsatzzeit“ – bei alten Spielen „Minutenbonus“ – saß er nur auf der Bank) */
+const MIN_LINE = { Einsatzzeit: 1, Minutenbonus: 1 };
+export const didPlay = ev => ev.some(e => MIN_LINE[e.l]);
 /* Stand er zur Sekunde t auf dem Platz? Startelf ab Anpfiff, Eingewechselte erst ab ihrem Wechsel. */
 export function onField(ev, t) {
   if (!didPlay(ev)) return false;
@@ -69,7 +70,7 @@ export function onField(ev, t) {
   return on;
 }
 
-const END = { clean: ['Zu null'], result: ['Spiel gewonnen', 'Spiel verloren'] };
+const END = { clean: ['Zu null'], result: ['Spiel gewonnen', 'Unentschieden', 'Spiel verloren'] };
 /* Ergebnis, wie es ursprünglich gebucht wurde (ohne nachgetragene, mit später entfernten Toren) */
 export function scoreOrig(base, ev) {
   const n = k => ev.filter(e => e.k === k && !e.c).length;
@@ -81,13 +82,17 @@ export function settle(evIn, g, base, orig) {
   const us = Math.max(0, base.us + goalCount(ev, 'tg')), them = Math.max(0, base.them + goalCount(ev, 'cg'));
   /* Ergebnis wie ursprünglich gebucht: Schluss-Boni bleiben, wie sie damals gespeichert wurden */
   if (us === orig.us && them === orig.them) return { ev, us, them };
-  /* Nur wer gespielt hat, bekommt Schluss-Boni (dann gibt es immer die Zeile „Minutenbonus“) */
+  /* Nur wer gespielt hat, bekommt Schluss-Boni (dann gibt es immer die Zeile „Einsatzzeit“) */
   if (!didPlay(ev)) return { ev, us, them };
-  /* Minutenbonus zählt so, wie er gerade steht (eine Korrektur daran wirkt sich auf „Zu null“ aus) */
-  const mb = ev.reduce((s, e) => (!e.x && e.l === 'Minutenbonus' ? s + (e.p || 0) : s), 0);
+  /* Alte Spiele (Zeile „Minutenbonus“) behalten ihre damaligen Regeln */
+  const old = !ev.some(e => e.l === 'Einsatzzeit');
+  const R = old ? { line: 'Minutenbonus', per: 1, clean: LEGACY.clean, win: LEGACY.win, draw: LEGACY.draw, loss: LEGACY.loss }
+    : { line: 'Einsatzzeit', per: AUTO.minPts, clean: CLEAN_SHEET, win: AUTO.win, draw: AUTO.draw, loss: AUTO.loss };
+  /* Einsatzzeit zählt so, wie sie gerade steht (eine Korrektur daran wirkt sich auf „Zu null“ aus) */
+  const mb = Math.floor(ev.reduce((s, e) => (!e.x && e.l === R.line ? s + (e.p || 0) : s), 0) / R.per);
   const want = {
-    clean: them === 0 && mb > 0 ? { l: 'Zu null', p: mb * (CLEAN_SHEET[g.pos] || 2) } : null,
-    result: us > them ? { l: 'Spiel gewonnen', p: 15 } : us < them ? { l: 'Spiel verloren', p: -15 } : null
+    clean: them === 0 && mb > 0 ? { l: 'Zu null', p: mb * (R.clean[g.pos] || 2) } : null,
+    result: us > them ? { l: 'Spiel gewonnen', p: R.win } : us < them ? { l: 'Spiel verloren', p: R.loss } : R.draw ? { l: 'Unentschieden', p: R.draw } : null
   };
   for (const kind of ['clean', 'result']) {
     const w = want[kind];

@@ -1,10 +1,11 @@
-/* Marktwerte im Kickbase-Stil.
+/* Kreo-Marktwert.
    Startwert: individuell aus dem Kader (leicht "krumm" gemacht, fest pro Spieler, auf allen Geräten gleich).
-   Pro gespeichertem Spiel gibt es Bewertungspunkte (-5 bis +10); jeder Punkt = 1 % Marktwertänderung:
-     Kickbase-Punkte: 300+ +3 · 140–299 +2 · 70–139 +1 · 50–69 0 · 20–49 -1 · 0–19 -2 · unter 0 -3
-     Spielzeit:       90 Min. +3 · 60–89 +2 · 30–59 +1 · unter 30 0
-     Ergebnis:        Sieg +2 · Unentschieden 0 · Niederlage -2 (nur mit Einsatzminuten)
-     Zu null:         +2 (kein Gegentor und mindestens 10 Minuten gespielt – wie bei den Punkten)
+   Pro gespeichertem Spiel gibt es Bewertungspunkte; jeder Punkt = 1 % Marktwertänderung:
+     Leistung: (Punkte − 60) / 25, gerundet, von −4 bis +6
+     Einsatz:  90 Min. +2 · 45–89 +1 · darunter 0
+     Ergebnis: Sieg +1 · Niederlage −1 (nur mit Einsatzminuten)
+     Zu null:  +1 (kein Gegentor und mindestens 15 Minuten gespielt – wie bei den Punkten)
+     Form:     +1, wenn das Spiel mindestens 30 Punkte über dem bisherigen Schnitt des Spielers liegt (ab dem 3. Spiel)
    Dazu ein kleines Markt-Rauschen (±0,25 %), damit die Werte nicht glatt wirken.
    Grenzen: mindestens 500.000 €, höchstens 30.000.000 €.
    Alles wird aus den gespeicherten Spielen berechnet – Regeländerungen gelten rückwirkend für alle Spiele. */
@@ -24,34 +25,36 @@ export function startValue(id) {
   return clamp(base * (0.975 + hash01('mw:' + id) * 0.06));
 }
 
-/* Bewertung eines Spiels: g = { points, minutes, us, them } */
-export function rating(g) {
+/* Bewertung eines Spiels: g = { points, minutes, us, them }; prev = { n, avg } der Spiele davor (optional) */
+export function rating(g, prev) {
   const pts = g.points, m = g.minutes || 0;
-  const kb = pts >= 300 ? 3 : pts >= 140 ? 2 : pts >= 70 ? 1 : pts >= 50 ? 0 : pts >= 20 ? -1 : pts >= 0 ? -2 : -3;
-  const time = m >= 90 ? 3 : m >= 60 ? 2 : m >= 30 ? 1 : 0;
+  const perf = Math.max(-4, Math.min(6, Math.round((pts - 60) / 25)));
+  const time = m >= 90 ? 2 : m >= 45 ? 1 : 0;
   /* Ohne Einsatzminuten zählt das Ergebnis nicht (nicht eingesetzt = 0) */
-  const result = m <= 0 ? 0 : g.us > g.them ? 2 : g.us < g.them ? -2 : 0;
-  const clean = cleanSheet(g) ? 2 : 0;
+  const result = m <= 0 ? 0 : g.us > g.them ? 1 : g.us < g.them ? -1 : 0;
+  const clean = cleanSheet(g) ? 1 : 0;
+  const form = prev && prev.n >= 2 && pts >= prev.avg + 30 ? 1 : 0;
   return {
-    total: kb + time + result + clean,
-    parts: [['Kickbase-Punkte', kb], ['Spielzeit', time], ['Ergebnis', result], ['Zu null', clean]]
+    total: perf + time + result + clean + form,
+    parts: [['Leistung', perf], ['Einsatz', time], ['Ergebnis', result], ['Zu null', clean], ['Form', form]]
   };
 }
 
-export function nextValue(value, g, seed) {
-  const pct = rating(g).total * PCT_PER_POINT + (hash01(seed) - 0.5) * NOISE;
+export function nextValue(value, g, seed, prev) {
+  const pct = rating(g, prev).total * PCT_PER_POINT + (hash01(seed) - 0.5) * NOISE;
   return clamp(value * (1 + pct));
 }
 
 /* games: Liste aller Spiele (aufsteigend sortiert wird intern) */
 export function marketOf(id, games) {
-  let v = startValue(id), last = 0;
+  let v = startValue(id), last = 0, n = 0, sum = 0;
   const series = [{ v }];
   for (const g of byDate(games.filter(x => x.player === id))) {
-    const nv = nextValue(v, g, g.uid);
+    const nv = nextValue(v, g, g.uid, { n, avg: n ? sum / n : 0 });
     last = nv - v; v = nv; series.push({ v, g });
+    n++; sum += g.points;
   }
-  return { v, last, series };
+  return { v, last, series, prev: { n, avg: n ? sum / n : 0 } };
 }
 
 export const byDate = list => list.slice().sort((a, b) => (a.played_at < b.played_at ? -1 : 1));

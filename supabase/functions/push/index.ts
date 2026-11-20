@@ -5,7 +5,7 @@
 import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 
-const APP = 'https://hoddee.github.io/kickbase_kreisliga/';
+const APP = 'https://hoddee.github.io/name_coming/';
 const ANCHOR = { ws: '2026-11-09', n: 13 }; // wie in js/ui/mvp.js
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 webpush.setVapidDetails(APP, Deno.env.get('VAPID_PUBLIC')!, Deno.env.get('VAPID_PRIVATE')!);

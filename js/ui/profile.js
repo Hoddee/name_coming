@@ -1,4 +1,4 @@
-/* Spielerprofil wie bei Kickbase: Blatt von unten mit den Reitern Übersicht · Leistung · Marktwert.
+/* Spielerprofil: Blatt von unten mit den Reitern Übersicht · Leistung · Marktwert.
    Übersicht: Foto, Name, Formkurve, Zahlenraster, Einsätze, nächste Spieltage, Status.
    Leistung: Balken je Spiel (gespielt + kommend), Antippen öffnet das Spiel-Detail.
    Marktwert: große Kurve (3M/1J), Antippen zeigt den Wert an einem Tag. */
@@ -35,7 +35,7 @@ export function openProfile(id, tab = 'ov') {
 }
 
 const count = (evs, keys) => { let n = 0; for (const ev of evs) for (const e of ev) if (!e.x && (keys.includes(e.k) || (e.k === 'auto' && keys.includes(e.a)))) n++; return n; };
-/* Kurzform wie bei Kickbase: +41K, -1,2M */
+/* Kurzform: +41K, -1,2M */
 export const shortEur = n => { const a = Math.abs(n), s = n > 0 ? '+' : n < 0 ? '−' : '±';
   return s + (a >= 1e6 ? (a / 1e6).toFixed(1).replace('.', ',') + 'M' : a >= 1e3 ? Math.round(a / 1e3) + 'K' : a); };
 
@@ -109,10 +109,10 @@ function mwChart(s) {
   let lo = Math.min(...vs), hi = Math.max(...vs); if (hi === lo) { hi += 1; lo -= 1; }
   const X = t => ((t - t0) / Math.max(1, t1 - t0)) * W, Y = v => H - 10 - ((v - lo) / (hi - lo)) * (H - 20);
   const d = s.map((x, i) => (i ? 'L' : 'M') + X(x.t).toFixed(1) + ' ' + Y(x.v).toFixed(1)).join('');
-  const up = s[s.length - 1].v >= s[0].v, c = up ? '#2FD673' : '#FF5A2A';
+  const up = s[s.length - 1].v >= s[0].v, c = up ? '#B6F04A' : '#FF5C7A';
   const pick = state.pick != null && s[state.pick] ? s[state.pick] : null;
   return '<svg class="mwc" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" data-pf="mwchart"><path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>' +
-    (pick ? '<line x1="' + X(pick.t).toFixed(1) + '" x2="' + X(pick.t).toFixed(1) + '" y1="0" y2="' + H + '" stroke="#dee4ec" stroke-width="1" vector-effect="non-scaling-stroke"/>' : '') + '</svg>';
+    (pick ? '<line x1="' + X(pick.t).toFixed(1) + '" x2="' + X(pick.t).toFixed(1) + '" y1="0" y2="' + H + '" stroke="#F1F3FA" stroke-width="1" vector-effect="non-scaling-stroke"/>' : '') + '</svg>';
 }
 function marketTab(id, played, mw) {
   const s = mwSeries(mw, played), pick = state.pick != null && s[state.pick] ? s[state.pick] : null;

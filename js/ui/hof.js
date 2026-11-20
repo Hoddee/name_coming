@@ -20,7 +20,7 @@ const leagueOf = id => CL[PL[id].c].lg;
 const inLeague = g => ui.league === 'ALL' || (CL[recordTeam(g)] || {}).lg === ui.league;
 const gamesOf = id => byDate((games.list || []).filter(g => g.player === id));
 
-/* Form: die letzten fünf Spiele als farbige Punkte (wie Kickbase-Formkurve) */
+/* Form: die letzten fünf Spiele als farbige Punkte */
 function formDots(id) {
   const last = gamesOf(id).slice(-5);
   return '<span class="fdots" aria-label="Form der letzten Spiele">' + last.map(g => '<i class="tc" data-tier="' + tierOf(g.points) + '" title="' + g.points + '"></i>').join('') + '</span>';
@@ -144,7 +144,7 @@ function gameHtml() {
 /* ---------- Übersicht ---------- */
 const TABS = [['ov', 'Übersicht'], ['players', 'Tabelle'], ['mvp', 'MVP'], ['records', 'Rekorde'], ['all', 'Alle Spiele']];
 const more = (tab, sort) => '<button type="button" class="hb-more" data-hof="go:' + tab + (sort ? ':' + sort : '') + '">Alle ›</button>';
-/* Kurze Rangliste (Top 3) wie bei Kickbase: Titel, drei Zeilen, „Alle“ */
+/* Kurze Rangliste (Top 3): Titel, drei Zeilen, „Alle“ */
 function board(title, rows, link) {
   if (!rows.length) return '';
   return '<section class="hb-card"><div class="hb-h"><h3>' + esc(title) + '</h3>' + (link || '') + '</div><ol class="hb-list">' + rows.map((x, i) =>
@@ -186,9 +186,9 @@ function overview(list) {
 }
 /* ---------- Detaillierte Statistiken: Ranglisten je Aktion (aus allen gespeicherten Aktionen) ---------- */
 const STATS = [
-  ['Torschüsse aufs Tor', ['sot']], ['Großchancen kreiert', ['bcc']], ['Ballgewinne', ['icpt']], ['Gewonnene Zweikämpfe', ['duel', 'aerw', 'contest']],
-  ['Pässe ins letzte Drittel', ['pf3']], ['Flanken', ['cross']], ['Geklärt', ['clri', 'clro', 'line']], ['Schüsse geblockt', ['blk6', 'blk16', 'blko']],
-  ['Paraden', ['sv', 'shh', 'bcs']], ['Ballverluste', ['poss', 'lost']], ['Fouls', ['foul', 'danger']], ['Karten', ['yel', 'yel2']]
+  ['Schüsse aufs Tor', ['sot']], ['Großchancen aufgelegt', ['bcc']], ['Bälle erobert', ['icpt', 'pinti', 'pinto']], ['Gewonnene Zweikämpfe', ['duel', 'aerw', 'contest']],
+  ['Steilpässe', ['pf3']], ['Flanken', ['cross']], ['Geklärt', ['clri', 'clro', 'line']], ['Schüsse geblockt', ['blk6', 'blk16', 'blko']],
+  ['Paraden', ['sv', 'shh', 'bcs']], ['Ballverluste', ['poss', 'lost']], ['Fouls', ['foul', 'danger']], ['Karten', ['yel', 'yel2', 'red']]
 ];
 const statsUi = { busy: false, err: false, pick: '' };
 function statCounts(list, keys) {

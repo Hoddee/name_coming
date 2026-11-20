@@ -7,12 +7,12 @@ import { readJson, writeJson, esc, fmt, cls, setNum, reducedMotion } from '../co
 import { PL, photoUrl } from '../data/players.js';
 import { ACT } from '../core/game.js';
 import { qrSvg } from '../core/qr.js';
-import { KEYS, APP_URL } from '../config.js';
+import { KEYS, APP_URL, APP_NAME } from '../config.js';
 
 const IMG = 'assets/img/tut/', V = '.webp?v=3'; // neue Bilder: v hochzählen (der Service Worker hält Bilder sonst für immer)
 /* Folien: { s: Screenshot der App } oder { f: Foto von uns, chips: [[Aktion, Punkte]], inset: kleiner Screenshot, logo } */
 const APP = [
-  { f: 'f-duell', logo: 1, t: 'Willkommen bei Kickbase KL', x: 'Kickbase-Punkte für unsere Kreisliga – live vom Spielfeldrand.' },
+  { f: 'f-duell', logo: 1, t: 'Willkommen bei Kreo', x: 'Unsere Kreisliga mit Punkten, Marktwerten und Live-Ticker – direkt vom Spielfeldrand.' },
   { s: 'a-liga', t: 'Liga', x: 'Live-Spiele, nächste Spiele und der Spieler der Woche. Unten das Menü – oder einfach seitlich wischen.' },
   { s: 'a-profil', t: 'Jeder hat ein Profil', x: 'Punkte pro Spiel, Marktwert und Form. Ein Balken öffnet das Spiel mit allen Aktionen.' },
   { s: 'a-live', t: 'Live dabei', x: 'Läuft ein Spiel, siehst du jede Aktion sofort – auch ohne am Platz zu sein.' },
@@ -23,8 +23,8 @@ const APP = [
 const BOOK = [
   { s: 'b-start', t: 'So vergibst du Punkte', x: 'Oben den Spieler wählen, unten den Bereich. Aktion antippen – fertig.' },
   { s: 'b-tor', t: 'Tor? Erst fürs Team', x: 'Fällt ein Tor, tippe im Reiter Spiel auf „Tor“ für dein Team – nicht beim Spieler. So stimmt der Spielstand für alle.' },
-  { f: 'f-schuss', top: 1, chips: [['Tor', 'goal'], ['Schuss aufs Tor', 'sot'], ['Fernschuss', 'long']], t: 'Wer war’s?', x: 'Torschütze antippen, Fernschuss oder Schuss aufs Tor gleich mit dazu.' },
-  { s: 'b-vorlage', t: 'Vorlage mit Extras', x: 'Wer hat aufgelegt? Großchance, Flanke oder Pass des Todes geben extra Punkte. Alles freiwillig.' },
+  { f: 'f-schuss', top: 1, chips: [['Tor', 'goal'], ['Kopfball', 'head'], ['Distanzschuss', 'long']], t: 'Wer war’s?', x: 'Torschütze antippen, Kopfball, Distanzschuss oder Freistoß gleich mit dazu.' },
+  { s: 'b-vorlage', t: 'Vorlage mit Extras', x: 'Wer hat aufgelegt? Großchance, Schlüsselpass oder Flanke geben extra Punkte. Alles freiwillig.' },
   { s: 'b-gegentor', t: 'Gegentor', x: 'Zuerst „Tor“ für den Gegner. Danach den Schuldigen wählen – wenn es einen gibt.' },
   { s: 'b-einhand', t: 'Ein-Hand-Modus', x: 'Hand-Symbol neben der Suche: sechs große Kacheln im Daumenbereich. Wischen wechselt den Spieler.' },
   { f: 'f-team', qr: 1, crew: [['Ich', ['Klenk', 'Krauss']], ['Du', ['Reule', 'Sipala']]], t: 'Zusammen buchen', x: 'Bis zu 3 Handys scannen den QR-Code im Reiter Spiel. Jeder wählt seine Spieler – Tore darf jeder melden.' },
@@ -69,7 +69,7 @@ function playTag(st, tag) {
 function visual(sl) {
   if (sl.s) return '<div class="tour-shot"><img src="' + IMG + sl.s + V + '" alt="" width="600" height="676"></div>';
   return '<div class="tour-shot tour-photo"><img src="' + IMG + sl.f + V + '" alt="" width="600" height="676">' +
-    (sl.logo ? '<img class="tour-plogo" src="assets/icons/logo.svg" alt="Kickbase KL">' : '') +
+    (sl.logo ? '<img class="tour-plogo" src="assets/icons/logo.svg" alt="' + APP_NAME + '">' : '') +
     (sl.chips ? '<div class="tour-chips' + (sl.top ? ' top' : '') + '">' + sl.chips.map(([l, v], j) => '<span style="animation-delay:' + (0.25 + j * 0.22) + 's">' + esc(l) + chipPts(v) + '</span>').join('') + '</div>' : '') +
     (sl.tag ? '<div class="tour-tag"><img src="' + esc(photoUrl(sl.tag.p, true)) + '" alt=""><span><small>' + esc(PL[sl.tag.p].n) + '</small><b>0</b></span></div>' : '') +
     (sl.qr ? '<div class="tour-qr">' + qrSvg(APP_URL) + '</div>' : '') +

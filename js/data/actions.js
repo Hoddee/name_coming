@@ -1,120 +1,123 @@
-/* Aktionen laut Kickbase-Punktetabelle.
+/* Kreo-Punktetabelle (eigene Wertung, Stand 2.0).
    Wert: Zahl oder Objekt je Position {TW, ABW, MIT, ANG, SUB}; SUB gilt, wenn der Spieler eingewechselt wurde.
-   "only" begrenzt eine Gruppe auf eine Position (Torwart-Aktionen). */
+   "only" begrenzt eine Gruppe auf eine Position (Torwart-Aktionen).
+   Grundidee: Was am Spielfeldrand sicher zu sehen ist, zählt – keine Profi-Datenfeinheiten (Pässe ins Drittel,
+   Ballbesitz nach geblockter Flanke …). Tore von hinten zählen mehr, Patzer kosten spürbar.
+   Schlüssel alter Spiele, die es hier nicht mehr gibt, bleiben lesbar: Name und Punkte stehen im gespeicherten Spiel. */
 export const GROUPS = {
   att: [
-    { t: 'Tore & Vorlagen', a: [
-      ['goal', 'Tor', { TW: 120, ABW: 100, MIT: 90, ANG: 80, SUB: 80 }],
-      ['pen', 'Elfmeter verwandelt', 80],
-      ['long', 'Fernschusstor (Bonus)', 10],
-      ['ast', 'Torvorlage', { TW: 55, ABW: 45, MIT: 35, ANG: 35, SUB: 35 }],
-      ['setup', 'Tor eingeleitet', { TW: 45, ABW: 35, MIT: 25, ANG: 25, SUB: 25 }],
-      ['defl', 'Abgefälschte Torvorlage', 25],
-      ['reb', 'Abgeprallte Torvorlage', 15],
-      ['wood', 'Aluminium-Torvorlage', 15],
-      ['intent', 'Absichtliche Vorlage (Bonus)', 10],
+    { t: 'Tore', a: [
+      ['goal', 'Tor', { TW: 150, ABW: 110, MIT: 95, ANG: 85, SUB: 90 }],
+      ['pen', 'Elfmetertor', 65]
+    ]},
+    { t: 'Tor-Extras', a: [
+      ['head', 'Kopfballtor', 10],
+      ['long', 'Distanzschuss', 15],
+      ['solo', 'Solo-Lauf', 15],
+      ['fk', 'Direkter Freistoß', 20]
+    ]},
+    { t: 'Vorlagen', a: [
+      ['ast', 'Vorlage', { TW: 70, ABW: 55, MIT: 45, ANG: 40, SUB: 40 }],
+      ['reb', 'Abpraller-Vorlage', 20],
+      ['setup', 'Vorletzter Pass', 20],
       ['pwon', 'Elfmeter rausgeholt', 30],
-      ['ogf', 'Eigentor erzwungen', 25]
+      ['ogf', 'Eigentor erzwungen', 20]
     ]},
-    { t: 'Chancen & Schüsse', a: [
-      ['bcc', 'Großchance kreiert', 15],
-      ['deadly', 'Pass des Todes', 15],
-      ['sast', 'Torschussvorlage', 5],
-      ['sot', 'Torschuss (aufs Tor)', 12],
-      ['sjp', 'Torschuss (knapp vorbei)', 10],
-      ['sfar', 'Torschuss (weit vorbei)', 5],
-      ['sblk', 'Torschuss (geblockt)', 8],
-      ['post', 'Pfostentreffer', 10],
-      ['bar', 'Lattenkracher', 10]
+    { t: 'Chancen', a: [
+      ['sfar', 'Schuss daneben', 2],
+      ['sblk', 'Schuss geblockt', 3],
+      ['sjp', 'Knapp vorbei', 6],
+      ['sast', 'Schlüsselpass', 6],
+      ['sot', 'Schuss aufs Tor', 10],
+      ['post', 'Aluminium', 12],
+      ['bcc', 'Großchance aufgelegt', 15]
     ]},
-    { t: 'Aufbau & Standards', a: [
-      ['cross', 'Erfolgreiche Flanke', 3],
+    { t: 'Spielaufbau', a: [
       ['corner', 'Ecke rausgeholt', 1],
-      ['fouled3', 'Gefoult im letzten Drittel', 1],
-      ['lball', 'Präziser langer Pass', 1],
-      ['pf3', 'Pass vorderes Drittel', 2],
-      ['poh', 'Pass in die gegnerische Hälfte', 1]
+      ['fouled3', 'Foul gezogen', 2],
+      ['lball', 'Seitenwechsel', 2],
+      ['pf3', 'Steilpass', 3],
+      ['cross', 'Flanke angekommen', 4],
+      ['contest', 'Gegner ausgespielt', 5]
     ]}
   ],
   def: [
     { t: 'Torwart', only: 'TW', a: [
-      ['pgt', 'Elfmeter gehalten', 100],
-      ['sv', 'Parade', 15],
-      ['bcs', 'Großchance vereitelt', 15],
-      ['bw15', 'Ball weggeschnappt (bedrängt)', 15],
-      ['catch', 'Ball gefangen', 10],
-      ['rush', 'Erfolgreiches Rauslaufen', 10],
-      ['shh', 'Schuss gehalten', 10],
-      ['bw5', 'Ball weggeschnappt', 5],
-      ['stand', 'Ball im Stand abgewehrt', 5],
-      ['punch', 'Faustabwehr', 5],
-      ['lsh', 'Fernschuss gehalten', 5],
-      ['xcl', 'Flanke abgefangen', 5],
-      ['thr', 'Erfolgreicher Abwurf', 1]
+      ['thr', 'Schneller Abwurf', 3],
+      ['catch', 'Ball festgehalten', 4],
+      ['punch', 'Weggefaustet', 4],
+      ['xcl', 'Flanke runtergepflückt', 6],
+      ['shh', 'Schuss gehalten', 8],
+      ['rush', 'Rausgelaufen und geklärt', 8],
+      ['sv', 'Glanzparade', 15],
+      ['bcs', 'Eins gegen eins gewonnen', 20],
+      ['pgt', 'Elfmeter pariert', 90]
     ]},
-    { t: 'Ballgewinn & Zweikampf', a: [
-      ['duel', 'Gewonnener Zweikampf', 5],
-      ['contest', 'Gegner ausgedribbelt', 5],
-      ['icpt', 'Ballgewinn', 5],
-      ['aerw', 'Luftzweikampf gewonnen', 3],
-      ['pinti', 'Pass abgefangen (im 16er)', 3],
-      ['pinto', 'Pass abgefangen (außerhalb 16er)', 1]
+    { t: 'Zweikampf', a: [
+      ['aerw', 'Kopfballduell gewonnen', 3],
+      ['pinti', 'Pass abgefangen', 3],
+      ['duel', 'Zweikampf gewonnen', 4],
+      ['icpt', 'Ball erobert', 5]
     ]},
-    { t: 'Klären & Blocken', a: [
-      ['tackle', 'Zweikampf als letzter Mann (Bonus)', 15],
-      ['line', 'Auf der Linie geklärt', 15],
-      ['blk6', 'Schuss geblockt (im 5er)', 15],
-      ['blk16', 'Schuss geblockt (im 16er)', 10],
-      ['blko', 'Schuss geblockt (außerhalb 16er)', 5],
-      ['clri', 'Geklärt (im 16er)', 5],
-      ['clro', 'Geklärt (außerhalb 16er)', 3],
+    { t: 'Verteidigen', a: [
       ['xblk', 'Flanke geblockt', 2],
-      ['xblkp', 'Ballbesitz nach geblockter Flanke', 1]
+      ['clri', 'Ball geklärt', 3],
+      ['blk16', 'Schuss geblockt', 8],
+      ['tackle', 'Rettende Grätsche', 15],
+      ['line', 'Auf der Linie gerettet', 25]
     ]}
   ],
   err: [
-    { t: 'Torwart-Fehler', only: 'TW', a: [
-      ['xmiss', 'Flanke verpasst', -5],
-      ['bpf', 'Rückpass-Foul', -5],
-      ['six', 'Verstoß gegen 6-Sekunden-Regel', -5]
-    ]},
-    { t: 'Karten & Strafstöße', a: [
-      ['yel', 'Gelbe Karte', -10],
-      ['yel2', 'Gelb-Rote Karte', -50],
-      ['pcon', 'Elfmeter verschuldet', -45],
-      ['pmiss', 'Elfmeter verschossen', -60],
-      ['own', 'Eigentor', -60]
-    ]},
-    { t: 'Schwere Fehler', a: [
-      ['mgoal', 'Fehler vor Gegentor', -45],
-      ['mshot', 'Fehler vor Torschuss', -15],
-      ['bcm', 'Großchance vergeben', -15],
-      ['danger', 'Gefährliches Spiel', -5],
-      ['throw', 'Falscher Einwurf', -5]
+    { t: 'Torwart', only: 'TW', a: [
+      ['xmiss', 'Flanke unterlaufen', -8],
+      ['slip', 'Ball durchrutschen lassen', -20]
     ]},
     { t: 'Kleinkram', a: [
-      ['lost', 'Ausgespielt worden', -3],
-      ['off', 'Abseits', -3],
-      ['foul', 'Foul', -2],
-      ['hand', 'Handspiel', -2],
-      ['aerl', 'Luftzweikampf verloren', -1],
-      ['poss', 'Ballverlust', -1],
-      ['far', 'Ball zu weit vorgelegt', -1]
+      ['poss', 'Ballverlust', -2],
+      ['lost', 'Zweikampf verloren', -2],
+      ['off', 'Abseits', -2],
+      ['foul', 'Foul', -3],
+      ['hand', 'Handspiel', -3],
+      ['throw', 'Falscher Einwurf', -3],
+      ['moan', 'Meckern', -5],
+      ['danger', 'Rücksichtsloses Foul', -8]
+    ]},
+    { t: 'Patzer', a: [
+      ['mshot', 'Patzer vor Torschuss', -12],
+      ['bcm', 'Großchance versemmelt', -15],
+      ['mgoal', 'Patzer vor Gegentor', -40],
+      ['own', 'Eigentor', -50]
+    ]},
+    { t: 'Karten & Elfmeter', a: [
+      ['yel', 'Gelbe Karte', -10],
+      ['pcon', 'Elfmeter verursacht', -35],
+      ['yel2', 'Gelb-Rot', -40],
+      ['pmiss', 'Elfmeter verschossen', -40],
+      ['red', 'Rote Karte', -60]
     ]}
   ]
 };
 
-/* "Zu null" pro 10 Minuten je Position (Kickbase), dazu derselbe Wert bei voller Spielzeit */
-export const CLEAN_SHEET = { TW: 5, ABW: 3, MIT: 2, ANG: 1 };
+/* Automatische Zeilen (nach Abpfiff bzw. ab Anpfiff) */
+export const AUTO = {
+  start: 10, sub: 5,                  // Startelf / eingewechselt
+  per: 15, minPts: 2,                 // Einsatzzeit: +2 je 15 Minuten, +2 bei voller Spielzeit
+  win: 20, draw: 5, loss: -10,        // Ergebnis
+  goal: 4                             // Team-Tor +4, Gegentor −4 (nur auf dem Platz)
+};
+/* "Zu null" je 15 Minuten je Position, dazu derselbe Wert bei voller Spielzeit */
+export const CLEAN_SHEET = { TW: 8, ABW: 6, MIT: 3, ANG: 1 };
+/* Regeln alter Spiele (vor Kreo, Zeile „Minutenbonus“) – nur für Korrekturen an diesen Spielen */
+export const LEGACY = { clean: { TW: 5, ABW: 3, MIT: 2, ANG: 1 }, win: 15, draw: 0, loss: -15 };
 
-/* Aktionen, die als Tor bzw. Vorlage im Balkendiagramm gezählt werden */
+/* Aktionen, die als Tor bzw. Vorlage im Balkendiagramm gezählt werden (alte Schlüssel bleiben drin) */
 export const GOAL_KEYS = { goal: 1, pen: 1 };
-export const ASSIST_KEYS = { ast: 1, defl: 1, reb: 1, wood: 1 };
+export const ASSIST_KEYS = { ast: 1, reb: 1, defl: 1, wood: 1 };
 
 /* Vorschläge für die Schnellleiste, bevor etwas gebucht wurde */
 export const QUICK_DEFAULTS = {
-  TW: ['sv', 'catch', 'xcl', 'bw5', 'thr', 'poss', 'lball', 'stand'],
+  TW: ['shh', 'catch', 'xcl', 'punch', 'thr', 'poss', 'rush', 'sv'],
   ANG: ['sot', 'duel', 'lost', 'poss', 'bcc', 'sjp', 'sfar', 'fouled3'],
-  ABW: ['duel', 'icpt', 'lost', 'poss', 'pf3', 'clri', 'lball', 'poh'],
-  MIT: ['duel', 'icpt', 'lost', 'poss', 'pf3', 'lball', 'poh', 'sot']
+  ABW: ['duel', 'icpt', 'lost', 'poss', 'clri', 'pf3', 'aerw', 'blk16'],
+  MIT: ['duel', 'icpt', 'lost', 'poss', 'pf3', 'sast', 'lball', 'sot']
 };

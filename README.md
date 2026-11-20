@@ -1,10 +1,13 @@
-# Kickbase KL
+<p><img src="assets/icons/icon.svg" alt="Kreo" width="96"></p>
 
-Kickbase-Punkte für die Kreisliga (A2, B2, B5 · Saison 2026/2027). Am Spielfeldrand werden pro Spieler Aktionen
-nach der Kickbase-Punktetabelle gebucht – daraus entstehen Punkte, Profile, Marktwerte, die Hall of Fame und ein
-Live-Ticker für Zuschauer. Installierbar als App (Home-Bildschirm).
+# Kreo
 
-**Live:** https://hoddee.github.io/kickbase_kreisliga/ (GitHub Pages, Branch `main`)
+Punkte, Marktwerte und Live-Ticker für die Kreisliga. Am Spielfeldrand werden pro Spieler Aktionen nach der **Kreo-Punktetabelle**
+gebucht – daraus entstehen Punkte, Profile, Marktwerte, die Hall of Fame und ein Live-Ticker für Zuschauer.
+Installierbar als App (Home-Bildschirm). Version 2.0, hervorgegangen aus „Kickbase KL“ (Hoddee/kickbase_kreisliga),
+mit eigenem Namen, eigenem Look und eigener Wertung.
+
+**Stand:** Testversion, noch kein öffentlicher Start. Nutzt vorerst dieselbe Supabase-Datenbank wie die erste Version.
 
 ## Funktionen
 
@@ -23,6 +26,33 @@ Live-Ticker für Zuschauer. Installierbar als App (Home-Bildschirm).
 - **Teilen:** Spielerkarte und Team-Bild als Bild.
 - **Konten:** Registrieren, vom Admin freischalten lassen, eigene Spiele nachtragen; Admins korrigieren gespeicherte Spiele.
 - **Rundgänge:** mit App-Bildern und eigenen Fotos – Einführung beim ersten Start und „Punktevergabe erklärt“ beim ersten Punkte vergeben (im Konto erneut aufrufbar).
+
+## Kreo-Punkte
+
+Eigene Wertung (`js/data/actions.js`), ausgelegt auf das, was man am Spielfeldrand sicher sieht.
+
+| | Punkte |
+|---|---|
+| Tor | TW 150 · ABW 110 · MIT 95 · ANG 85 · eingewechselt 90 |
+| Tor-Extras | Kopfball +10 · Distanzschuss +15 · Solo-Lauf +15 · direkter Freistoß +20 |
+| Elfmetertor | 65 |
+| Vorlage | TW 70 · ABW 55 · MIT 45 · ANG 40 · eingewechselt 40 |
+| Vorletzter Pass / Abpraller-Vorlage | 20 |
+| Startelf / eingewechselt | +10 / +5 |
+| Einsatzzeit | +2 je 15 Minuten, +2 bei voller Spielzeit (max. 14) |
+| Zu null | je 15 Minuten TW 8 · ABW 6 · MIT 3 · ANG 1, dazu einmal bei voller Spielzeit |
+| Ergebnis | Sieg +20 · Unentschieden +5 · Niederlage −10 |
+| Team-Tor / Gegentor (auf dem Platz) | +4 / −4 |
+| Karten | Gelb −10 · Gelb-Rot −40 · Rot −60 |
+| Patzer | vor Torschuss −12 · Großchance versemmelt −15 · vor Gegentor −40 · Eigentor −50 |
+
+Dazu rund 40 kleinere Aktionen (Zweikampf, Ball erobert, Glanzparade, Meckern …).
+Punkte-Stufen: unter 0 · 0–79 · 80–159 · 160–299 · ab 300.
+
+**Marktwert:** je Spiel Bewertungspunkte (1 Punkt = 1 %): Leistung (Punkte − 60) / 25 (−4 bis +6), Einsatz (90′ +2, ab 45′ +1),
+Ergebnis (±1), Zu null (+1), Form (+1, wenn 30 Punkte über dem eigenen Schnitt). Wird aus allen Spielen neu berechnet.
+
+**Alte Spiele** aus der ersten Version behalten ihre gespeicherten Punkte. Korrekturen an ihnen rechnen mit den damaligen Regeln.
 
 ## Technik
 
@@ -47,9 +77,10 @@ index.html              alle Ansichten als Abschnitte, Startbildschirm-CSS inlin
 manifest.webmanifest    App-Manifest (Name, Icon, Farben)
 sw.js                   Service Worker (App-Dateien aus dem Cache, Bilder einmal laden)
 css/
-  fonts.css             KL Pitch (Saira, variabel), Oxanium, Inter Tight
+  fonts.css             Kreo Display (Sora, variabel), Inter Tight
   tokens.css, base.css, live.css, booking.css, views.css, theme.css, admin.css, profile.css, sheet.css, feel.css
-  brand.css             Kickbase-Look (Schwarz/Weiß), wird zuletzt geladen
+  brand.css             Grundlook (dunkel, ruhig)
+  kreo.css              Kreo-Marke (Violett, Limette, Pillen-Knöpfe), wird zuletzt geladen
 js/
   main.js               Einstieg, Klick-Delegation, Sekundentakt, Wake Lock
   config.js             Supabase, Saison, Version, Speicher-Schlüssel
@@ -74,7 +105,7 @@ assets/                 fonts, icons (Logo, App-Icons), img (p = Spielerfotos, p
 | `live_spiele` | Stand laufender Spiele für den Live-Ticker | alle lesen; schreiben per Geräte-Schlüssel (`x-live-key`, nur Hash gespeichert) |
 | `admins` | Benutzer-IDs mit Admin-Rechten | nur per SQL |
 
-Storage-Bucket `kickbase`: Spielerfotos (nur Admins) und Bilder von Gastspielern/eigenen Gegnern unter `gast/`
+Storage-Bucket `kickbase` (Name aus der ersten Version, gemeinsame Datenbank): Spielerfotos (nur Admins) und Bilder von Gastspielern/eigenen Gegnern unter `gast/`
 (nur neue Dateien). Feste Bilder liegen im Repo unter `assets/img`, um den Supabase-Traffic klein zu halten.
 
 **Schemaänderungen:** neue Datei `supabase/migrations/0NN_name.sql` (idempotent) und im Supabase-SQL-Editor ausführen.

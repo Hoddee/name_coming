@@ -3,14 +3,14 @@
    „gelauncht“: Die MVP-Stage (Top 3 mit Animation) öffnet sich einmal von selbst, danach über die Karte auf der Liga-Seite
    und den MVP-Verlauf in der Hall of Fame. Gezählt wird je Spieler sein bestes Spiel der Woche. */
 import { $, esc, tierOf, buzz, readJson, writeJson, pad2 } from '../core/util.js';
-import { KEYS } from '../config.js';
+import { KEYS, APP_NAME } from '../config.js';
 import { PL, POS_SHORT, photoUrl } from '../data/players.js';
 import { games } from '../services/api.js';
 import { TEAMS, allFixtures } from '../data/schedule.js';
 import { registerView, show, back, nav } from '../router.js';
 import { avatar } from './components.js';
 import { introSeen } from './intro.js';
-import { TIER_COLOR, loadImg, fontsReady, shareCanvas, roundRect, narrow } from './share.js';
+import { TIER_COLOR, loadImg, fontsReady, shareCanvas, roundRect, narrow, glow } from './share.js';
 
 const DAY = 864e5, REVEAL_H = 19;
 const weekStart = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; };
@@ -124,7 +124,7 @@ function countUp(el, ms) {
 /* Konfetti in Stufenfarben */
 function confetti(host, color) {
   if (reduced() || !host.animate) return;
-  const cols = [color, '#f4f6f9', '#E1BE38', '#28DE86'];
+  const cols = [color, '#F6F7FC', '#FFC83D', '#B6F04A'];
   for (let i = 0; i < 46; i++) {
     const c = document.createElement('i');
     c.className = 'mvp-cf'; c.style.background = cols[i % cols.length];
@@ -182,23 +182,23 @@ async function shareTop() {
   if (!top.length) return;
   const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const x = cv.getContext('2d'), photos = await Promise.all(top.map(g => loadImg(photoUrl(g.player)))); await fontsReady();
-  x.fillStyle = '#131417'; x.fillRect(0, 0, W, H);
-  for (let yy = 30; yy < 700; yy += 54) for (let xx = 27; xx < W; xx += 54) { x.fillStyle = 'rgba(255,255,255,' + (0.16 * (1 - yy / 700)).toFixed(3) + ')'; x.beginPath(); x.arc(xx, yy, 3, 0, 6.2832); x.fill(); }
-  x.textAlign = 'center'; x.fillStyle = '#a8adb4'; x.font = '600 30px "Inter Tight", Arial, sans-serif'; x.fillText(md.title.toUpperCase(), W / 2, 96);
-  x.fillStyle = '#f4f6f9'; x.font = '800 120px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText('MVP', W / 2, 220); narrow(x, false);
+  x.fillStyle = '#0B0E17'; x.fillRect(0, 0, W, H);
+  glow(x, W);
+  x.textAlign = 'center'; x.fillStyle = '#9AA2B8'; x.font = '600 30px "Inter Tight", Arial, sans-serif'; x.fillText(md.title, W / 2, 96);
+  x.fillStyle = '#F6F7FC'; x.font = '800 120px "Kreo Display", Arial, sans-serif'; narrow(x, true); x.fillText('MVP', W / 2, 220); narrow(x, false);
   /* [Index in top, Mitte x, Platz, Höhe] – Platz 1 zuletzt, damit sein Foto vorne liegt */
   const slot = [[1, W / 2 - 330, 2, 340], [2, W / 2 + 330, 3, 260], [0, W / 2, 1, 470]];
   for (const [i, cx, r, bh] of slot) {
     const g = top[i]; if (!g) continue;
     const col = TIER_COLOR[tierOf(g.points)], base = H - 120, w = r === 1 ? 330 : 290, ph = photos[i];
-    x.fillStyle = '#1f2125'; roundRect(x, cx - w / 2, base - bh, w, bh, 18); x.fill();
+    x.fillStyle = '#1A2032'; roundRect(x, cx - w / 2, base - bh, w, bh, 18); x.fill();
     x.fillStyle = col; x.fillRect(cx - w / 2, base - bh, w, 8);
     if (ph) { const pw = r === 1 ? 420 : 340, phh = pw * ph.height / ph.width; x.save(); x.beginPath(); x.rect(cx - 260, 240, 520, base - bh - 240 + 2); x.clip(); x.drawImage(ph, cx - pw / 2, base - bh - phh * 0.7, pw, phh); x.restore(); }
-    x.fillStyle = col; x.font = '800 ' + (r === 1 ? 96 : 76) + 'px "KL Pitch", Arial, sans-serif'; x.fillText(String(g.points), cx, base - bh + (r === 1 ? 120 : 100));
-    x.fillStyle = '#f4f6f9'; x.font = '800 ' + (r === 1 ? 52 : 44) + 'px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText(PL[g.player].n.toUpperCase(), cx, base - bh + (r === 1 ? 190 : 160)); narrow(x, false);
-    x.fillStyle = 'rgba(255,255,255,.14)'; x.font = '800 ' + (r === 1 ? 150 : 110) + 'px "KL Pitch", Arial, sans-serif'; x.fillText(String(r), cx, base - 24);
+    x.fillStyle = col; x.font = '800 ' + (r === 1 ? 96 : 76) + 'px "Kreo Display", Arial, sans-serif'; x.fillText(String(g.points), cx, base - bh + (r === 1 ? 120 : 100));
+    x.fillStyle = '#F6F7FC'; x.font = '800 ' + (r === 1 ? 52 : 44) + 'px "Kreo Display", Arial, sans-serif'; narrow(x, true); x.fillText(PL[g.player].n, cx, base - bh + (r === 1 ? 190 : 160)); narrow(x, false);
+    x.fillStyle = 'rgba(255,255,255,.14)'; x.font = '800 ' + (r === 1 ? 150 : 110) + 'px "Kreo Display", Arial, sans-serif'; x.fillText(String(r), cx, base - 24);
   }
-  x.fillStyle = '#7e8187'; x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillText('Kickbase KL', W / 2, H - 50);
+  x.fillStyle = '#6E7690'; x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillText(APP_NAME, W / 2, H - 50);
   shareCanvas(cv, 'mvp-' + md.id + '.png', 'MVP des Spieltags');
 }
 export function initMvp() {

@@ -3,7 +3,7 @@ const L = require('./lib.js');
   const t = await L.setup(); const { p, c } = t;
   await L.startGame(t, ['Klenk']);
   await c('.tabs [data-tab="att"]'); await p.waitForTimeout(150);
-  for (const k of ['sot', 'pf3', 'poh', 'cross', 'bcc']) { await c('#editBody [data-k="' + k + '"]'); await p.waitForTimeout(60); }
+  for (const k of ['sot', 'pf3', 'sast', 'cross', 'bcc']) { await c('#editBody [data-k="' + k + '"]'); await p.waitForTimeout(60); }
   await p.evaluate(() => { const S = JSON.parse(localStorage.getItem('matchday-punkte-v3')); S.clock.startedAt -= 5500e3; localStorage.setItem('matchday-punkte-v3', JSON.stringify(S)); });
   await p.reload({ waitUntil: 'networkidle' }); await p.waitForTimeout(900);
   await c('[data-nav="edit"]'); await p.waitForTimeout(300); await c('.tabs [data-tab="spiel"]'); await p.waitForTimeout(200);

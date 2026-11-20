@@ -1,0 +1,96 @@
+/* Kreo – Markenschicht (wird als letztes geladen).
+   Erkennungszeichen: Nachtblau statt Schwarz, Violett als Akzent (Knöpfe, Auswahl, aktives Menü),
+   Limette nur als kleiner „Ball“-Punkt (Logo, Überschriften-Punkt), Überschriften in Sora in normaler Schreibweise,
+   Knöpfe als Pillen, weiche Flächen mit leichtem Verlauf. Rot bleibt nur für „Live“. */
+:root {
+  --bg: #0B0E17;
+  --surface: #141A29;
+  --raised: #1D2438;
+  --line: rgba(225, 230, 245, .08);
+  --ink: #F1F3FA;
+  --muted: #9AA2B8;
+  --muted2: #6E7690;
+  --acc: #8B6CFF; --acc-rgb: 139, 108, 255;
+  --acc2: #C9FF4A;
+  --kb-red: #8B6CFF; --kb-red-rgb: 139, 108, 255;
+  --on-acc: #FFFFFF;
+  --live: #FF4D6D; --live-rgb: 255, 77, 109;
+  --font-head: 'Kreo Display', system-ui, sans-serif;
+  --font-display: 'Kreo Display', system-ui, sans-serif;
+}
+body { background: radial-gradient(120% 60% at 50% -10%, rgba(var(--acc-rgb), .16), transparent 60%) no-repeat, var(--bg); background-attachment: fixed; }
+:focus-visible { outline-color: var(--acc); }
+::selection { background: rgba(var(--acc-rgb), .45); }
+
+/* ---------- Überschriften: Sora, normale Schreibweise, eng gesetzt ---------- */
+#startBody > h2, #kaderBody h2, #hofBody > h2, #meBody h2, #adminBody h2,
+.gh .gname, .auth h3, .sheet h3, .corr-h, .tour h2, .mp-n b, .hb-h h3, .mdc-t, .hb-st, .trf-h b, .prow b, .gi b,
+.lh b, .pf h3, .pmini b, .lv-n b, .lv-gone b, .shead, .pnn, .lvh .lv-live {
+  text-transform: none !important; font-weight: 700 !important; letter-spacing: -.03em !important;
+}
+#startBody > h2, #kaderBody h2, #hofBody > h2, #meBody h2, #adminBody h2 { font-size: 25px; display: flex; align-items: center; gap: 10px; }
+/* Kreo-Punkt vor den großen Überschriften (wie der Ball im Logo) */
+#startBody > h2::before, #kaderBody h2::before, #hofBody > h2::before, #meBody h2::before, #adminBody h2::before {
+  content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--acc2); box-shadow: 0 0 12px rgba(201, 255, 74, .55);
+}
+.prow b, .gi b { font-size: 17.5px !important; }
+.etitle { font: 600 15px var(--font-head); letter-spacing: -.01em; text-transform: none; }
+.tseason { text-transform: none; letter-spacing: .02em; }
+.kl-logo { width: 64px; }
+
+/* ---------- Knöpfe: violette Pillen ---------- */
+.btn.primary, .go button:not([disabled]), .cta button, .newgame, .ga-done {
+  background: linear-gradient(135deg, #9B80FF, #6E4CF5); border-color: transparent; color: #fff;
+  font: 650 15px var(--font-head); letter-spacing: -.01em; text-transform: none; border-radius: 999px !important;
+  box-shadow: 0 10px 26px rgba(var(--acc-rgb), .35);
+}
+.btn.primary:active, .go button:not([disabled]):active, .cta button:active, .newgame:active { background: #6E4CF5; }
+.go button[disabled] { text-transform: none; letter-spacing: 0; border-radius: 999px; }
+.btn { border-radius: 999px; border-color: rgba(225, 230, 245, .14); }
+.obtn, .pplay { border-color: rgba(var(--acc-rgb), .6); color: var(--ink); border-radius: 999px; }
+.kb-new { border-radius: 999px; }
+.plus { color: #fff; background: rgba(var(--acc-rgb), .22); }
+.tag, .note-badge { background: rgba(var(--acc-rgb), .16); color: #CFC3FF; }
+
+/* Auswahl: violette Kante mit leichtem Schein */
+.prow[aria-pressed="true"], .sqb[aria-pressed="true"], .multibtn[aria-pressed="true"], .ga-p.on, .ga-c.on, .rbc.on, .apk[aria-pressed="true"], .fxpick button[aria-pressed="true"] {
+  border-color: var(--acc) !important; background: rgba(var(--acc-rgb), .12) !important;
+}
+.otile[aria-pressed="true"], .ptile[aria-pressed="true"], .tchip[aria-pressed="true"] { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc) inset, 0 6px 20px rgba(var(--acc-rgb), .25); }
+.act.on { border-color: var(--acc); }
+
+/* ---------- Flächen: weiche Karten ---------- */
+.fxc, .tile, .rec, .stats4 div, .mwc, .card, .runc, .mecard, .pcard { border-radius: 18px; background: linear-gradient(180deg, #171E2F, var(--surface)); box-shadow: inset 0 0 0 1px rgba(225, 230, 245, .05); }
+.row { border-radius: 14px; border-color: rgba(225, 230, 245, .08); background: rgba(20, 26, 41, .6); }
+.rp { font-weight: 700; letter-spacing: -.03em; }
+/* Statt Punkteraster: violetter Schein hinter Fotos und Kopfbereichen */
+.mhero::before, .phero::before, .hero::before, .tour::before, .potw::before {
+  background-image: radial-gradient(80% 60% at 50% 0%, rgba(var(--acc-rgb), .3), transparent 72%) !important; background-size: 100% 100% !important; background-position: center !important;
+}
+
+/* ---------- Reiter ---------- */
+.htabs button { text-transform: none !important; letter-spacing: 0 !important; font: 600 14px var(--font-body) !important; border-radius: 999px !important; padding: 8px 14px !important; }
+.htabs button[aria-pressed="true"], .htabs button[aria-selected="true"] { background: rgba(var(--acc-rgb), .18) !important; color: #fff !important; }
+.lgs button { text-transform: none; letter-spacing: 0; font-size: 13px; border-radius: 999px; }
+.lgs button[aria-pressed="true"] { border-color: var(--acc); background: rgba(var(--acc-rgb), .14); }
+.tabs button .tl, .sh-tabs span { text-transform: none; letter-spacing: 0; font-size: 11px; }
+.tabs button[aria-selected="true"], .sh-tabs button[aria-pressed="true"] { color: var(--acc2); }
+
+/* ---------- Menü unten: schwebende Leiste, aktiver Punkt violett hinterlegt ---------- */
+.tabbar { background: rgba(14, 18, 30, .92); box-shadow: 0 -1px 0 rgba(225, 230, 245, .06); }
+.tabbar span { text-transform: none; letter-spacing: 0; font-size: 10.5px; }
+.tabbar button.on { color: #fff; }
+.tabbar button.on svg { stroke: var(--acc2); }
+.tabbar [data-tb="start"].on svg { fill: var(--acc2); }
+.tabbar button::before { content: ""; position: absolute; top: 9px; left: 50%; width: 46px; height: 30px; margin-left: -23px; border-radius: 999px;
+  background: rgba(var(--acc-rgb), .22); opacity: 0; transform: scale(.6); transition: opacity .18s, transform .22s cubic-bezier(.2, .8, .2, 1); }
+.tabbar button.on::before { opacity: 1; transform: none; }
+.tabbar svg, .tabbar span { position: relative; }
+
+/* ---------- Kleine Beschriftungen in normaler Schreibweise ---------- */
+.lh2 .lnk, .hb-more, .mh-s small, .state, .tour-top span, .kl-rep-t small, .mvp-head small, .runc-t small, .mecard small, .me-t small, .pcard small { text-transform: none !important; letter-spacing: .01em !important; }
+.runc-t small, .mecard small, .me-t small, .pcard small { color: var(--acc2); }
+
+/* Zwischenüberschriften (Spieluhr, Spieler …): klein, normale Schreibweise, mit Kreo-Punkt */
+.eb h2, .sec { text-transform: none; letter-spacing: 0; font: 600 14px var(--font-head); color: var(--muted); }
+.eb h2::before, .sec::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--acc); vertical-align: 2px; }

@@ -1,4 +1,4 @@
-/* Blatt-Verhalten wie bei Kickbase: von oben am Griff (oder ganz oben im Inhalt) nach unten ziehen schließt das Blatt. */
+/* Blatt-Verhalten: von oben am Griff (oder ganz oben im Inhalt) nach unten ziehen schließt das Blatt. */
 export function bindSheet(sheet, scroller, onClose) {
   const panel = sheet.querySelector('.sh-panel');
   let y0 = null, dy = 0, drag = false;
