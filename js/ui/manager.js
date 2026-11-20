@@ -13,7 +13,7 @@ import { avatar, skeleton } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { introSeen, mgrTourSeen, showMgrTour } from './intro.js';
 
-const ui = { tab: 'team', pos: 'ALL', busy: false };
+const ui = { tab: 'team', pos: 'ALL', busy: false, week: false };
 const TABS = [['team', 'Mein Team'], ['markt', 'Markt'], ['liga', 'Liga']];
 const mio = v => (v / 1e6).toFixed(1).replace('.', ',') + ' Mio.';
 
@@ -81,10 +81,12 @@ function marketTab(st) {
 /* ---------- Liga ---------- */
 function leagueTab() {
   const rows = leagueTable(mgr.managers, games.list);
-  let h = '<div class="mg-league">' + rows.map((r, i) =>
+  if (ui.week) rows.sort((a, b) => b.week - a.week || b.pts - a.pts);
+  let h = '<div class="hb-sort">' + [[false, 'Gesamt'], [true, 'Diese Woche']].map(([k, t]) => '<button type="button" data-mg="w:' + (k ? 1 : 0) + '" aria-pressed="' + (ui.week === k) + '">' + t + '</button>').join('') +
+    '<span>' + rows.length + ' Manager</span></div><div class="mg-league">' + rows.map((r, i) =>
     '<div class="mg-lr' + (r.me ? ' me' : '') + '"><span class="rk' + (i < 3 ? ' r' + (i + 1) : '') + '">' + (i + 1) + '</span>' +
     '<span class="mg-lt"><b>' + esc(r.name) + '</b><span class="mg-stack">' + r.team.map(p => avatar(p)).join('') + '</span></span>' +
-    '<span class="mg-lw"><small>Woche</small>' + r.week + '</span><span class="mg-lp"><b>' + r.pts + '</b><small>' + mio(r.worth) + '</small></span></div>').join('') + '</div>';
+    '<span class="mg-lw"><small>' + (ui.week ? 'Gesamt' : 'Woche') + '</small>' + (ui.week ? r.pts : r.week) + '</span><span class="mg-lp"><b>' + (ui.week ? r.week : r.pts) + '</b><small>' + mio(r.worth) + '</small></span></div>').join('') + '</div>';
   if (!isLoggedIn()) h += '<button type="button" class="btn full mg-login" data-nav="admin">Anmelden für die Manager-Liga</button>';
   return h;
 }
@@ -164,6 +166,7 @@ export function initManager() {
     const k = b.dataset.mg;
     if (k.startsWith('t:')) { ui.tab = k.slice(2); window.scrollTo(0, 0); render(); }
     else if (k.startsWith('pos:')) { ui.pos = k.slice(4); render(); }
+    else if (k.startsWith('w:')) { ui.week = k === 'w:1'; render(); }
     else if (k.startsWith('buy:')) trade(k.slice(4), 'buy');
     else if (k.startsWith('sell:')) trade(k.slice(5), 'sell');
     else if (k === 'reload') { loadGames(true).then(rerenderIfOpen); render(); }
@@ -193,8 +196,9 @@ export function managerCardHtml() {
   if (!mgr.loaded && !mgr.busy) loadManagers();
   const st = myState();
   if (!st) return '';
-  const empty = !st.team.length;
-  return '<button type="button" class="mg-card" data-st="mgr"><span class="mg-c-t"><small>Mein Team</small><b>' + esc(st.name) + '</b></span>' +
+  const empty = !st.team.length, many = mgr.online && mgr.managers.length > 1;
+  const rank = many ? leagueTable(mgr.managers, games.list).findIndex(r => r.me) + 1 : 0;
+  return '<button type="button" class="mg-card" data-st="mgr"><span class="mg-c-t"><small>' + (rank ? 'Platz ' + rank + ' von ' + mgr.managers.length : 'Mein Team') + '</small><b>' + esc(st.name) + '</b></span>' +
     (empty ? '<span class="mg-c-go">Team aufstellen</span>' :
       '<span class="mg-stack">' + st.team.map(p => avatar(p)).join('') + '</span><span class="mg-c-v"><b>' + st.pts.sum + '</b><small>Punkte</small></span>') +
     '<span class="chev" aria-hidden="true">›</span></button>';

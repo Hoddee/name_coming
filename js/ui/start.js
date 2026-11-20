@@ -18,6 +18,7 @@ import { resetHof } from './hof.js';
 import { spieltagCardHtml, maybeLaunch } from './mvp.js';
 import { byDate } from '../core/market.js';
 import { managerCardHtml } from './manager.js';
+import { onManagerChange } from '../services/manager.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
 
@@ -136,6 +137,7 @@ function renderKader() {
 export function initStart() {
   registerView('start', { elements: ['start'], render });
   registerView('kader', { elements: ['kader'], render: renderKader });
+  onManagerChange(() => { if (nav.current === 'start') render(); });
   $('start').addEventListener('click', e => {
     const b = e.target.closest('[data-st]');
     if (!b) return;
