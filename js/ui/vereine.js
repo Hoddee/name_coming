@@ -204,6 +204,7 @@ async function submitNeu(f) {
 }
 
 /* ---------- Einstieg ---------- */
+export function openVereinNeu(name = '') { ui.neu = { name: String(name).trim().slice(0, 60) }; ui.err = ''; show('vneu'); }
 export function openVereine(q = '') { if (q) ui.q = q; show('vereine'); }
 
 /* Vorschläge für ein Textfeld (z. B. eigener Gegner beim neuen Spiel) über ein <datalist> */

@@ -25,5 +25,5 @@ export const KEYS = {
   auth: 'kl-auth-v1',
   manager: 'kreo-manager-v1', tourMgr: 'kreo-tour-mgr-v1',
   club: 'kreo-club-v1', fun: 'kreo-fun-v1',
-  ext: 'kreo-ext-v1', recent: 'kreo-recent-v1'
+  ext: 'kreo-ext-v1', recent: 'kreo-recent-v1', follow: 'kreo-follow-v1'
 };

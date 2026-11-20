@@ -17,7 +17,7 @@ import { requestNewGame } from './start.js';
 import { profileTradeHtml, trade } from './manager.js';
 import { onManagerChange } from '../services/manager.js';
 import { bindSheet } from './sheet.js';
-import { teamText, hideSpieler, reportSpieler } from '../services/spieler.js';
+import { teamText, hideSpieler, reportSpieler, isFollowed, toggleFollow } from '../services/spieler.js';
 import { isLoggedIn } from '../services/auth.js';
 import { toast, buzz, shareLink } from '../core/util.js';
 import { APP_NAME } from '../config.js';
@@ -151,7 +151,8 @@ function html() {
   const c = CL[p.c], played = byDate((games.list || []).filter(g => g.player === id)), mw = marketOf(id, games.list || []);
   let h = '';
   if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c, p) + overview(p, id, played, mw) + profileTradeHtml(id) +
-    (p.guest ? '' : '<button type="button" class="btn full su-share" data-pf="share">Profil teilen</button>') + (p.ext ? privacyHtml() : '') + '</div>';
+    (p.guest ? '' : '<div class="duo su-share"><button type="button" class="btn' + (isFollowed(id) ? ' on' : '') + '" data-pf="follow" aria-pressed="' + isFollowed(id) + '">' + (isFollowed(id) ? 'Gefolgt ✓' : 'Folgen') + '</button>' +
+      '<button type="button" class="btn" data-pf="share">Teilen</button></div>') + (p.ext ? privacyHtml() : '') + '</div>';
   else h += '<div class="pbody">' + miniHead(p) + (state.tab === 'perf' ? performance(id, played, p) : marketTab(id, played, mw)) + '</div>';
   if (games.busy && !games.list) h += skeleton(3);
   return h;
@@ -183,6 +184,7 @@ export function initProfile() {
     if (!b) return;
     const k = b.getAttribute('data-pf');
     if (k === 'play') requestNewGame({ player: state.id });
+    else if (k === 'follow') { const on = toggleFollow(state.id); buzz(12); toast(on ? 'Gefolgt' : 'Nicht mehr gefolgt'); render(); }
     else if (k === 'share') { const p = PL[state.id]; shareLink(location.origin + location.pathname + '?p=' + encodeURIComponent(state.id), fullName(p) + ' – ' + APP_NAME, fullName(p) + ' bei ' + APP_NAME); }
     else if (k === 'verein') import('./vereine.js').then(m => m.openVerein(PL[state.id].verein));
     else if (k.startsWith('ask:')) { state.ask = k.slice(4); render(); }

@@ -149,6 +149,17 @@ export function addRecent(t, id, name = '') {
 }
 export const clearRecent = () => writeJson(KEYS.recent, []);
 
+/* ---------- Gefolgte Spieler (nur auf dem Gerät) ---------- */
+export const follows = () => (readJson(KEYS.follow, []) || []).filter(id => typeof id === 'string' && PL[id] && !PL[id].hidden);
+export const isFollowed = id => follows().includes(id);
+export function toggleFollow(id) {
+  const l = (readJson(KEYS.follow, []) || []).filter(x => typeof x === 'string');
+  const i = l.indexOf(id);
+  if (i >= 0) l.splice(i, 1); else l.unshift(id);
+  writeJson(KEYS.follow, l.slice(0, 30));
+  return i < 0;
+}
+
 /* ---------- Eintragen, melden, ausblenden (nur angemeldet; Regeln prüft die DB) ---------- */
 const errText = e => {
   const m = (e && e.message) || '';

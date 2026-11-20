@@ -10,7 +10,7 @@ import { games, loadGames } from '../services/api.js';
 import { avatar, skeleton, playerStats } from './components.js';
 import { vr, loadVereine, searchLocal as vLocal, searchDb as vDb, merged as vMerged, vereinById, myClub } from '../services/vereine.js';
 import { loadModeration, setSpielerStatus, reportDone, fetchSpieler, searchDb, mergePlayers, recent, addRecent, clearRecent, createSpieler, useVerein, teamText, clubName, TEAM_ART, sp, searchLocal } from '../services/spieler.js';
-import { vereinRow, openVerein } from './vereine.js';
+import { vereinRow, openVerein, openVereinNeu } from './vereine.js';
 import { keyOf, score } from '../core/vsearch.js';
 import { openProfile } from './profile.js';
 import { requestNewGame } from './start.js';
@@ -42,6 +42,13 @@ function emptyHtml() {
   const my = myClub();
   let h = recentHtml();
   if (my) h += '<h2 class="su-h">Mein Verein</h2><div class="su-list">' + (vereinById(my.id) ? vereinRow(vereinById(my.id)) : '') + '</div>';
+  /* Top-Spieler aus den geladenen Spielen (kein Extra-Traffic) */
+  if (games.list && games.list.length) {
+    const sum = new Map();
+    for (const g of games.list) sum.set(g.player, (sum.get(g.player) || 0) + g.points);
+    const top = [...sum].filter(([id]) => PL[id] && !PL[id].hidden && !PL[id].guest).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if (top.length) h += '<h2 class="su-h">Top-Spieler</h2><div class="su-list">' + top.map(([id]) => spielerRow(PL[id])).join('') + '</div>';
+  }
   if (!h) h = '<div class="su-empty"><span class="su-big" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></span><b>Spieler oder Verein</b></div>';
   return h;
 }
@@ -63,6 +70,7 @@ function resultsHtml() {
     const n = ui.tab === 'all' ? 4 : 30;
     if (ui.tab === 'all') h += '<h2 class="su-h">Vereine' + (clubs.length > n ? '<button type="button" class="lnk inline" data-su="tab:clubs">Alle ' + clubs.length + '</button>' : '') + '</h2>';
     h += !vr.list ? skeleton(2, true) : clubs.length ? '<div class="su-list">' + clubs.slice(0, n).map(vereinRow).join('') + '</div>' : '<p class="su-none">Kein Verein gefunden</p>';
+    if (ui.tab === 'clubs' || !clubs.length) h += '<button type="button" class="su-add" data-su="vneu"><span aria-hidden="true">+</span>Verein anlegen</button>';
   }
   return h;
 }
@@ -225,7 +233,7 @@ document.addEventListener('click', async e => {
 });
 
 /* ---------- Einstieg ---------- */
-export function openSuche(q = null) { if (q != null) ui.q = q; show('suche'); setTimeout(() => { if (!ui.q) $('suQ').focus(); }, 60); }
+export function openSuche(q = null, tab = null) { if (q != null) ui.q = q; if (tab) ui.tab = tab; show('suche'); setTimeout(() => { if (!ui.q) $('suQ').focus(); }, 60); }
 
 export function initSuche() {
   registerView('suche', { elements: ['suche'], render });
@@ -245,6 +253,7 @@ export function initSuche() {
     else if (k.startsWith('tab:')) { ui.tab = k.slice(4); renderTabs(); renderList(); window.scrollTo(0, 0); }
     else if (k === 'clear') { clearRecent(); renderList(); }
     else if (k === 'neu') openNeu({ name: ui.q });
+    else if (k === 'vneu') openVereinNeu(ui.q);
   });
 
   $('sneu').addEventListener('click', e => {

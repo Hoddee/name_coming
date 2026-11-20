@@ -31,7 +31,7 @@ const L = require('./lib.js');
 
   // Oberfläche: Liga-Seite → Suche → Verein
   await c('[data-st="vereine"]'); await p.waitForTimeout(500);
-  await p.fill('#vrQ', 'sc vornspach'); await p.waitForTimeout(700);
+  await p.fill('#suQ', 'sc vornspach'); await p.waitForTimeout(700);
   const first = await p.evaluate(() => { const b = document.querySelector('.vr-row b'); return b && b.textContent; });
   ok(first === 'SC Fornsbach', 'Erster Treffer: ' + first);
   await p.screenshot({ path: 'out/vereine-suche.png' });
@@ -45,8 +45,8 @@ const L = require('./lib.js');
 
   // Verein anlegen ohne Konto: nur Anmelden
   await c('[data-nav="back"]'); await p.waitForTimeout(300);
-  await p.fill('#vrQ', 'FC Gibtsnichtdorf'); await p.waitForTimeout(600);
-  await c('[data-vr="neu"]'); await p.waitForTimeout(300);
+  await p.fill('#suQ', 'FC Gibtsnichtdorf'); await p.waitForTimeout(600);
+  await c('[data-su="vneu"]'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => !document.querySelector('#vrNeuForm') && !!document.querySelector('#vrNeuBody [data-nav="admin"]')), 'Anlegen nur angemeldet');
 
   // Fun-Punkte: buchen, zurücknehmen, Verlauf – nichts an die Datenbank
