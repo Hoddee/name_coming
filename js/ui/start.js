@@ -18,6 +18,7 @@ import { resetHof } from './hof.js';
 import { spieltagCardHtml, maybeLaunch } from './mvp.js';
 import { byDate } from '../core/market.js';
 import { managerCardHtml } from './manager.js';
+import { myClub } from '../services/vereine.js';
 import { onManagerChange } from '../services/manager.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
@@ -93,6 +94,13 @@ function meCard() {
 const newGameBtn = () => (store.S.match && !(store.S.ended && allSaved()) ? '' :
   '<button type="button" class="newgame kb-new" data-st="new"><span aria-hidden="true">+</span>Neues Spiel</button>');
 
+/* Vereinssuche (ganz Deutschland) und Fun-Punkte */
+function extrasHtml() {
+  const my = myClub();
+  return '<div class="vr-start"><button type="button" data-st="vereine"><b>' + (my ? esc(my.name) : 'Verein suchen') + '</b><small>' + (my ? 'Mein Verein' : 'Ganz Deutschland') + '</small></button>' +
+    '<button type="button" data-st="fun"><b>Fun-Punkte</b><small>Ohne Konto</small></button></div>';
+}
+
 /* Die letzten gespeicherten Spiele (Top 3 der Woche stehen in der Spieltag-Karte) */
 function latest() {
   if (!games.list) return games.busy ? '<h2>Letzte Spiele</h2>' + skeleton(3) : '';
@@ -103,7 +111,7 @@ function latest() {
 }
 
 function html() {
-  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + managerCardHtml() + spieltagCardHtml() + fixturesStrip() + latest();
+  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + managerCardHtml() + extrasHtml() + spieltagCardHtml() + fixturesStrip() + latest();
 }
 
 /* Kader: alle aktiven Spieler, nach Mannschaft */
@@ -147,5 +155,7 @@ export function initStart() {
     else if (k === 'me') show('me');
     else if (k === 'hof') { resetHof(); show('hof', { tab: true }); }
     else if (k === 'mgr') show('manager', { tab: true });
+    else if (k === 'vereine') show('vereine');
+    else if (k === 'fun') show('fun');
   });
 }

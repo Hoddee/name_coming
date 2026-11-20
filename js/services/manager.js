@@ -1,7 +1,7 @@
 /* Manager-Spiel: Wechsel laden und speichern.
    Angemeldet und mit Migration 014: Wechsel liegen in der Tabelle manager_moves (nur anfügen, Zeitpunkt setzt der Server
    per created_at – niemand kann rückdatieren), Teamnamen in manager_teams. Dann gibt es die Manager-Liga mit allen.
-   Sonst (nicht angemeldet oder Tabelle fehlt): Wechsel nur auf diesem Gerät (KEYS.manager), Liga zeigt nur das eigene Team.
+   Nicht angemeldet: kein Manager. Angemeldet, aber Tabelle fehlt: Wechsel nur auf diesem Gerät (KEYS.manager).
    Rechnen (Preis, Budget, Punkte) passiert immer in core/manager.js aus den gespeicherten Spielen. */
 import { KEYS, SEASON } from '../config.js';
 import { readJson, writeJson } from '../core/util.js';
@@ -39,7 +39,9 @@ function localOnly() {
 export async function loadManagers(force = false) {
   if (mgr.busy || (mgr.loaded && !force)) return;
   const user = currentUser();
-  if (!isLoggedIn() || !user || mgr.missing) { localOnly(); mgr.loaded = true; emit(); return; }
+  /* Ohne Anmeldung kein Manager (Fairness). Fehlt nur die Tabelle (Migration 014), bleibt es angemeldet lokal. */
+  if (!isLoggedIn() || !user) { mgr.online = false; mgr.managers = []; mgr.loaded = true; emit(); return; }
+  if (mgr.missing) { localOnly(); mgr.loaded = true; emit(); return; }
   mgr.busy = true; mgr.error = false;
   try {
     const s = encodeURIComponent(SEASON);

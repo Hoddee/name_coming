@@ -1,6 +1,7 @@
 /* Konto-Bereich: Anmelden, Registrieren (Spielerkonto), Passwort.
    Spieler: Freigabe-Status, eigene Spiele nachtragen. Admin: Anfragen freischalten, Spiel nachtragen, Kader pflegen. */
 import { $, esc, eur, toast, applyTier, readJson } from '../core/util.js';
+import { myClub } from '../services/vereine.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
 import { CL, CLUB_LIST, LEAGUES, crestUrl } from '../data/clubs.js';
 import { TEAMS, allFixtures } from '../data/schedule.js';
@@ -255,7 +256,7 @@ export function render() {
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
   else h = playerHtml();
-  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><button type="button" class="lnk" data-adm="tourmgr">Manager erklärt</button><button type="button" class="lnk" data-nav="legal">Impressum und Datenschutz</button><p class="appver">Version ' + APP_VERSION + '</p>';
+  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-nav="vereine">' + (myClub() ? 'Mein Verein · ' + esc(myClub().name) : 'Mein Verein wählen') + '</button><button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><button type="button" class="lnk" data-adm="tourmgr">Manager erklärt</button><button type="button" class="lnk" data-nav="legal">Impressum und Datenschutz</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
   if (isLoggedIn() && isAdmin() && !ui.passwordMode) loadTraffic();
   fillPush();

@@ -15,14 +15,21 @@ import { introSeen, mgrTourSeen, showMgrTour } from './intro.js';
 
 const ui = { tab: 'team', pos: 'ALL', busy: false, week: false };
 const TABS = [['team', 'Mein Team'], ['markt', 'Markt'], ['liga', 'Liga']];
+/* Für den Manager zählen nur Spiele, die mit Anmeldung gespeichert wurden (Migration 016, Spalte mit_konto) */
+let mgSrc = null, mgList = null;
+export function mgGames() {
+  if (!games.list) return null;
+  if (mgSrc !== games.list) { mgSrc = games.list; mgList = games.list.filter(g => g.konto !== false); }
+  return mgList;
+}
 const mio = v => (v / 1e6).toFixed(1).replace('.', ',') + ' Mio.';
 
 /* Aktueller Stand des eigenen Teams */
 export function myState() {
   const me = myManager();
   if (!me || !games.list) return null;
-  const st = replay(me.moves, games.list), [ws, we] = weekRange();
-  return Object.assign(st, { name: me.name, pts: teamPoints(st, games.list), week: teamPoints(st, games.list, ws, we).sum, worth: teamValue(st, games.list) });
+  const st = replay(me.moves, mgGames()), [ws, we] = weekRange();
+  return Object.assign(st, { name: me.name, pts: teamPoints(st, mgGames()), week: teamPoints(st, mgGames(), ws, we).sum, worth: teamValue(st, mgGames()) });
 }
 
 /* ---------- Mein Team ---------- */
@@ -33,7 +40,7 @@ function head(st) {
     '<span><b>' + mio(st.budget) + '</b><small>Budget</small></span><span><b>' + mio(st.worth) + '</b><small>Teamwert</small></span></div></div>';
 }
 function memberRow(p, st) {
-  const pl = PL[p], mw = marketOf(p, games.list), stint = st.stints.find(s => s.p === p && s.to === Infinity);
+  const pl = PL[p], mw = marketOf(p, mgGames()), stint = st.stints.find(s => s.p === p && s.to === Infinity);
   const pts = st.pts.per.get(p) || 0, diff = mw.v - (stint ? stint.paid : mw.v);
   return '<div class="mg-row">' +
     '<button type="button" class="mg-who" data-open="p:' + esc(p) + '">' + avatar(p) + '<span><b>' + esc(fullName(pl)) + '</b>' +
@@ -53,7 +60,6 @@ function teamTab(st) {
   h += sorted.map(p => memberRow(p, st)).join('');
   for (let i = st.team.length; i < TEAM_SIZE; i++) h += '<button type="button" class="mg-free" data-mg="t:markt"><span aria-hidden="true">+</span>Freier Platz</button>';
   h += '</div>';
-  if (!isLoggedIn()) h += '<button type="button" class="btn full mg-login" data-nav="admin">Anmelden für die Manager-Liga</button>';
   return h + historyHtml(st);
 }
 
@@ -63,10 +69,10 @@ function marketTab(st) {
   let h = '<div class="mg-bud"><span>Budget</span><b>' + eur(st.budget) + '</b></div>' +
     '<div class="lgs mg-pos">' + chips.map(([k, t]) => '<button type="button" data-mg="pos:' + k + '" aria-pressed="' + (ui.pos === k) + '">' + t + '</button>').join('') + '</div>';
   const list = PLAYER_LIST.filter(p => p.active !== false && !p.guest && (ui.pos === 'ALL' || p.pos === ui.pos))
-    .map(p => ({ p, mw: marketOf(p.id, games.list) })).sort((a, b) => b.mw.v - a.mw.v);
+    .map(p => ({ p, mw: marketOf(p.id, mgGames()) })).sort((a, b) => b.mw.v - a.mw.v);
   h += '<div class="mg-list">' + list.map(({ p, mw }) => {
-    const l = games.list.filter(g => g.player === p.id), avg = l.length ? Math.round(l.reduce((s, g) => s + g.points, 0) / l.length) : null;
-    const own = st.team.includes(p.id), block = own ? '' : buyBlock(st, p.id, games.list);
+    const l = mgGames().filter(g => g.player === p.id), avg = l.length ? Math.round(l.reduce((s, g) => s + g.points, 0) / l.length) : null;
+    const own = st.team.includes(p.id), block = own ? '' : buyBlock(st, p.id, mgGames());
     const btn = own ? '<button type="button" class="mg-act sell" data-mg="sell:' + esc(p.id) + '">Verkaufen</button>'
       : '<button type="button" class="mg-act buy" data-mg="buy:' + esc(p.id) + '"' + (block ? ' disabled' : '') + '>' + (block || 'Kaufen') + '</button>';
     return '<div class="mg-row' + (own ? ' own' : '') + '">' +
@@ -80,18 +86,24 @@ function marketTab(st) {
 
 /* ---------- Liga ---------- */
 function leagueTab() {
-  const rows = leagueTable(mgr.managers, games.list);
+  const rows = leagueTable(mgr.managers, mgGames());
   if (ui.week) rows.sort((a, b) => b.week - a.week || b.pts - a.pts);
   let h = '<div class="hb-sort">' + [[false, 'Gesamt'], [true, 'Diese Woche']].map(([k, t]) => '<button type="button" data-mg="w:' + (k ? 1 : 0) + '" aria-pressed="' + (ui.week === k) + '">' + t + '</button>').join('') +
     '<span>' + rows.length + ' Manager</span></div><div class="mg-league">' + rows.map((r, i) =>
     '<div class="mg-lr' + (r.me ? ' me' : '') + '"><span class="rk' + (i < 3 ? ' r' + (i + 1) : '') + '">' + (i + 1) + '</span>' +
     '<span class="mg-lt"><b>' + esc(r.name) + '</b><span class="mg-stack">' + r.team.map(p => avatar(p)).join('') + '</span></span>' +
     '<span class="mg-lw"><small>' + (ui.week ? 'Gesamt' : 'Woche') + '</small>' + (ui.week ? r.pts : r.week) + '</span><span class="mg-lp"><b>' + (ui.week ? r.week : r.pts) + '</b><small>' + mio(r.worth) + '</small></span></div>').join('') + '</div>';
-  if (!isLoggedIn()) h += '<button type="button" class="btn full mg-login" data-nav="admin">Anmelden für die Manager-Liga</button>';
   return h;
 }
 
+/* Ohne Anmeldung kein Manager (Fairness); stattdessen Anmelden oder Fun-Punkte */
+function gateHtml() {
+  return '<div class="mg-gate"><b>Manager</b><p>Nur mit Konto.</p>' +
+    '<button type="button" class="btn primary full" data-nav="admin">Anmelden</button>' +
+    '<button type="button" class="btn full" data-nav="fun">Fun-Punkte vergeben</button></div>';
+}
 function html() {
+  if (!isLoggedIn()) return gateHtml();
   let h = '<div class="htabs" role="tablist">' + TABS.map(([k, t]) =>
     '<button type="button" role="tab" data-mg="t:' + k + '" aria-pressed="' + (ui.tab === k) + '">' + t + '</button>').join('') + '</div>';
   if (!games.list || !mgr.loaded) {
@@ -99,6 +111,7 @@ function html() {
     return h + skeleton(5);
   }
   const st = myState();
+  if (!st) return h + skeleton(5);
   if (ui.tab === 'markt') return h + marketTab(st);
   if (ui.tab === 'liga') return h + leagueTab();
   return h + teamTab(st);
@@ -110,7 +123,7 @@ export function render() {
   $('mgrBody').innerHTML = html();
   applyTier(0);
   /* Beim ersten Öffnen einmal der kurze Rundgang */
-  if (introSeen() && !mgrTourSeen() && !document.querySelector('.tour')) setTimeout(() => { if (nav.current === 'manager' && !mgrTourSeen() && !document.querySelector('.tour')) showMgrTour(); }, 400);
+  if (isLoggedIn() && introSeen() && !mgrTourSeen() && !document.querySelector('.tour')) setTimeout(() => { if (nav.current === 'manager' && !mgrTourSeen() && !document.querySelector('.tour')) showMgrTour(); }, 400);
 }
 const rerenderIfOpen = () => { if (nav.current === 'manager') render(); };
 
@@ -143,9 +156,9 @@ function askName(cur) {
 }
 
 export async function trade(p, a) {
-  if (ui.busy) return;
-  const st = myState(), v = marketOf(p, games.list).v, n = fullName(PL[p]);
-  if (a === 'buy' && (buyBlock(st, p, games.list) || PL[p].active === false)) return;
+  if (ui.busy || !isLoggedIn()) return;
+  const st = myState(), v = marketOf(p, mgGames()).v, n = fullName(PL[p]);
+  if (a === 'buy' && (buyBlock(st, p, mgGames()) || PL[p].active === false)) return;
   if (a === 'sell' && !st.team.includes(p)) return;
   const ok = await ask(n + (a === 'buy' ? ' kaufen?' : ' verkaufen?'), eur(v), a === 'buy' ? 'Kaufen' : 'Verkaufen');
   if (!ok) return;
@@ -180,11 +193,11 @@ export function initManager() {
 /* Zeile im Spielerprofil: kaufen bzw. verkaufen (data-pf="mg:buy|sell") */
 export function profileTradeHtml(id) {
   const pl = PL[id];
-  if (!pl || pl.guest || !games.list) return '';
+  if (!pl || pl.guest || !games.list || !isLoggedIn()) return '';
   if (!mgr.loaded) { if (!mgr.busy) loadManagers(); return ''; }
   const st = myState();
   if (!st) return '';
-  const own = st.team.includes(id), block = own ? '' : (pl.active === false ? 'Nicht aktiv' : buyBlock(st, id, games.list));
+  const own = st.team.includes(id), block = own ? '' : (pl.active === false ? 'Nicht aktiv' : buyBlock(st, id, mgGames()));
   return '<div class="mg-pf"><span><small>' + esc(st.name) + '</small><b>' + (own ? 'Im Team' : mio(st.budget) + ' Budget') + '</b></span>' +
     (own ? '<button type="button" class="mg-act sell" data-pf="mg:sell">Verkaufen</button>'
       : '<button type="button" class="mg-act buy" data-pf="mg:buy"' + (block ? ' disabled' : '') + '>' + (block || 'Kaufen') + '</button>') + '</div>';
@@ -193,11 +206,13 @@ export function profileTradeHtml(id) {
 /* Karte auf der Liga-Seite */
 export function managerCardHtml() {
   if (!games.list) return '';
+  if (!isLoggedIn()) return '<button type="button" class="mg-card" data-st="mgr"><span class="mg-c-t"><small>Manager</small><b>Mein Team</b></span>' +
+    '<span class="mg-c-go">Anmelden</span><span class="chev" aria-hidden="true">›</span></button>';
   if (!mgr.loaded && !mgr.busy) loadManagers();
   const st = myState();
   if (!st) return '';
   const empty = !st.team.length, many = mgr.online && mgr.managers.length > 1;
-  const rank = many ? leagueTable(mgr.managers, games.list).findIndex(r => r.me) + 1 : 0;
+  const rank = many ? leagueTable(mgr.managers, mgGames()).findIndex(r => r.me) + 1 : 0;
   return '<button type="button" class="mg-card" data-st="mgr"><span class="mg-c-t"><small>' + (rank ? 'Platz ' + rank + ' von ' + mgr.managers.length : 'Mein Team') + '</small><b>' + esc(st.name) + '</b></span>' +
     (empty ? '<span class="mg-c-go">Team aufstellen</span>' :
       '<span class="mg-stack">' + st.team.map(p => avatar(p)).join('') + '</span><span class="mg-c-v"><b>' + st.pts.sum + '</b><small>Punkte</small></span>') +

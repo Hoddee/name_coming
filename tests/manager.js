@@ -1,5 +1,5 @@
 // Manager: Regeln (Budget, Teamgröße, ein Torwart, Preise aus gespeicherten Spielen, Punkte nur in der Zeit im Team)
-// und Kauf/Verkauf in der Oberfläche (nicht angemeldet = nur auf dem Gerät)
+// Oberfläche: ohne Anmeldung gesperrt, nur Spiele mit Konto zählen
 const L = require('./lib.js');
 (async () => {
   const t = await L.setup(); const { p, c } = t;
@@ -38,21 +38,22 @@ const L = require('./lib.js');
   ok(r.afterSell === 150 && r.budgetBack, 'Verkauf: ' + r.afterSell);
   ok(r.block === 'Im Team|Zu teuer', 'buyBlock: ' + r.block);
 
-  // Oberfläche (braucht echte Spiele)
-  await c('[data-tb="manager"]'); await p.waitForTimeout(1500);
-  const online = await p.evaluate(() => !!document.querySelector('.mg-head'));
-  if (online) {
-    await c('[data-mg="t:markt"]'); await p.waitForTimeout(300);
-    const id = await p.evaluate(() => { const b = document.querySelector('.mg-act.buy:not([disabled])'); return b && b.dataset.mg.slice(4); });
-    await c('.mg-act.buy:not([disabled])'); await p.waitForTimeout(200); await c('.sheet [data-sh="1"]'); await p.waitForTimeout(300);
-    const ls = await p.evaluate(() => JSON.parse(localStorage.getItem('kreo-manager-v1') || 'null'));
-    ok(ls && ls.moves.length === 1 && ls.moves[0].p === id, 'Kauf lokal gespeichert');
-    await c('[data-mg="t:team"]'); await p.waitForTimeout(300);
-    ok(await p.evaluate(id => !!document.querySelector('[data-mg="sell:' + id + '"]'), id), 'Spieler im Team');
-    await c('[data-mg="t:liga"]'); await p.waitForTimeout(300);
-    ok(await p.evaluate(() => document.querySelectorAll('.mg-lr').length === 1), 'Liga lokal = nur eigenes Team');
-    await p.screenshot({ path: 'out/manager-liga.png' });
-  } else console.log('Keine Spiele geladen – nur Regeln geprüft');
+  // Nur Spiele mit Anmeldung zählen (mit_konto = false fällt raus, ohne Spalte zählt alles)
+  const f = await p.evaluate(async () => {
+    const api = await import('./js/services/api.js'), ui = await import('./js/ui/manager.js');
+    const keep = api.games.list;
+    api.games.list = [{ uid: 'a', konto: true }, { uid: 'b', konto: false }, { uid: 'c' }];
+    const ids = ui.mgGames().map(g => g.uid).join(',');
+    api.games.list = keep;
+    return ids;
+  });
+  ok(f === 'a,c', 'Manager-Spiele gefiltert: ' + f);
+  // Ohne Anmeldung: kein Manager, nur Anmelden oder Fun-Punkte
+  await c('[data-tb="manager"]'); await p.waitForTimeout(1200);
+  ok(await p.evaluate(() => !!document.querySelector('.mg-gate [data-nav="admin"]') && !document.querySelector('.mg-head') && !document.querySelector('[data-mg="t:markt"]')), 'Sperre ohne Anmeldung');
+  await p.screenshot({ path: 'out/manager-gesperrt.png' });
+  await c('.mg-gate [data-nav="fun"]'); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => !document.getElementById('fun').hidden), 'Fun-Punkte aus der Sperre');
   ok(!t.writes.some(w => /manager_/.test(w)), 'Ohne Anmeldung nichts an die Datenbank');
   console.log('Fehler:', fails.length || t.errs.length ? fails.concat(t.errs) : 'keine'); await t.b.close();
 })();

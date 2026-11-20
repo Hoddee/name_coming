@@ -3,6 +3,7 @@ import { $, esc, eur, tierOf, trendClass, applyTier, readJson, writeJson, random
 import { KEYS } from '../config.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_SHORT, POS_ORDER, fullName, guestId, isGuest } from '../data/players.js';
 import { CL, CLUB_LIST, LEAGUES, OWN_CLUBS, crestUrl, customClubId, isCustomClub } from '../data/clubs.js';
+import { suggestInto } from './vereine.js';
 import { TEAMS, nextFixture, lastFixture, pastFixtures } from '../data/schedule.js';
 import { store, replaceGame, freshGame, applyMatchNames, applyMedia, eachPlayer, isMulti, newSlot, MAX_SQUAD } from '../core/game.js';
 import { marketOf } from '../core/market.js';
@@ -144,7 +145,7 @@ function oppPicker() {
   h += '<div class="ogrid">' + tiles.join('') + '</div>';
   if (forms.opp) {
     h += '<form class="card inline-form" id="oppForm"><div class="fl">Eigener Gegner</div>' +
-      '<label class="nf"><span>Name (nur für dieses Spiel, z. B. Pokal)</span><input class="fi" name="name" maxlength="30" required autocomplete="off" placeholder="z. B. TSV Musterstadt" value="' + esc(forms.oname) + '"></label>' +
+      '<label class="nf"><span>Name (nur für dieses Spiel, z. B. Pokal)</span><input class="fi" name="name" maxlength="30" required autocomplete="off" list="oppDl" placeholder="z. B. TSV Musterstadt" value="' + esc(forms.oname) + '"></label><datalist id="oppDl"></datalist>' +
       imageField('oimg', forms.oimg, 'Wappen hochladen') +
       (forms.err && forms.errFor === 'opp' ? '<div class="form-msg bad">' + esc(forms.err) + '</div>' : '') +
       '<div class="duo"><button type="submit" class="btn primary"' + (forms.busy ? ' disabled' : '') + '>' + (forms.busy ? 'Bitte warten …' : 'Übernehmen') + '</button><button type="button" class="btn" data-pick="close-forms">Abbrechen</button></div></form>';
@@ -311,7 +312,7 @@ export function initSetup() {
   registerView('setup', { elements: ['setup'], render });
   $('setup').addEventListener('input', e => {
     if (e.target.closest('#guestForm') && e.target.name === 'name') forms.gname = e.target.value;
-    if (e.target.closest('#oppForm') && e.target.name === 'name') forms.oname = e.target.value;
+    if (e.target.closest('#oppForm') && e.target.name === 'name') { forms.oname = e.target.value; suggestInto(e.target, $('oppDl')); }
   });
   $('setup').addEventListener('change', e => {
     if (e.target.matches('[data-img]')) onImage(e.target);

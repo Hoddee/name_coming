@@ -1,0 +1,64 @@
+/* Vereinssuche (vr-) und Fun-Punkte (fun-) */
+
+/* Liga-Seite: zwei Kacheln */
+.vr-start { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 4px; }
+.vr-start button { display: grid; gap: 2px; min-height: 68px; padding: 12px 14px; border: 0; border-radius: 18px; text-align: left; color: var(--ink);
+  background: linear-gradient(180deg, #171E2F, var(--surface)); box-shadow: inset 0 0 0 1px rgba(225, 230, 245, .05); }
+.vr-start b { font: 700 15px var(--font-head); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vr-start small { font: 600 12px var(--font-body); color: var(--acc2); }
+.vr-start button:active { transform: scale(.98); }
+
+/* Suche */
+.vr-search { position: sticky; top: calc(56px + env(safe-area-inset-top, 0px)); z-index: 3; padding: 8px 0 10px; background: var(--bg); }
+.vr-search .fi { min-height: 52px; border-radius: 26px; padding-inline: 20px; }
+.vr-list { display: grid; gap: 8px; }
+.vr-row, .vr-team { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 12px; align-items: center; gap: 12px; width: 100%; min-height: 62px; padding: 10px 12px;
+  border: 0; border-radius: 16px; background: var(--surface); color: var(--ink); text-align: left; }
+.vr-team { grid-template-columns: 40px minmax(0, 1fr); }
+.vr-row:active { background: var(--raised); }
+.vr-t { display: grid; gap: 2px; min-width: 0; }
+.vr-t b { font: 600 15px var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vr-t small { font: 500 13px var(--font-body); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vr-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(var(--acc-rgb), .22); color: #fff; font: 700 14px var(--font-head); text-transform: uppercase; }
+.vr-ic.big { width: 72px; height: 72px; font-size: 24px; margin: 0 auto 10px; }
+.vr-ic.sm { font-size: 13px; text-transform: none; }
+.vr-team img { width: 40px; height: 40px; object-fit: contain; }
+.vr-lg { font: 700 12px var(--font-body); font-style: normal; padding: 4px 8px; border-radius: 8px; background: rgba(var(--acc-rgb), .2); color: #fff; }
+.vr-row .chev { color: var(--muted); }
+.vr-add { margin-top: 14px; }
+.vr-cnt { margin: 18px 0 0; text-align: center; color: var(--muted); font-size: 14px; }
+.vr-src { margin: 22px 0 0; text-align: center; color: var(--muted2); font-size: 11px; }
+.vr-src a { color: inherit; }
+
+/* Ein Verein */
+.vr-head { text-align: center; padding: 8px 0 16px; }
+.vr-head h1 { margin: 0; font: 700 26px var(--font-head); }
+.vr-head p { margin: 4px 0 0; color: var(--muted); }
+.vr-web { display: inline-block; margin-top: 8px; color: var(--acc); font-weight: 600; }
+.vr-season { color: var(--muted); font-weight: 500; }
+.vr-rep { display: block; margin: 12px auto 0; }
+.vr-form { display: grid; gap: 12px; margin-top: 14px; }
+.vr-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Fun-Punkte */
+.fun-who { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.fun-pos { margin-top: 12px; }
+.fun-total { display: grid; justify-items: center; margin: 14px 0 6px; }
+.fun-total b { font: 800 72px/1 var(--font-display); color: var(--ct, var(--ink)); }
+.fun-total small { color: var(--muted); }
+.fun-last { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 10px; }
+.fun-last button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 0; border-radius: 14px; background: var(--surface); color: var(--ink); font: 500 13px var(--font-body); }
+.fun-last i { font-style: normal; color: var(--muted); }
+.fun-gh { margin: 16px 0 8px; font: 600 13px var(--font-body); color: var(--muted); }
+.fun-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fun-act { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 52px; padding: 8px 12px; border: 0; border-radius: 14px; background: var(--surface); color: var(--ink); text-align: left; font: 500 14px var(--font-body); }
+.fun-act:active { transform: scale(.97); background: var(--raised); }
+.fun-act b { font: 700 15px var(--font-display); }
+.fun-act b.pos { color: #9CE04A; }
+.fun-act b.neg { color: #E0343F; }
+.fun-end { margin-top: 18px; }
+.fun-hist { list-style: none; margin: 0; padding: 0; }
+.fun-hist li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.fun-hist span { display: grid; }
+.fun-hist small { color: var(--muted); }
+.fun-hist em { font: 700 18px var(--font-display); font-style: normal; color: var(--ct, var(--ink)); }
