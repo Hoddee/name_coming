@@ -7,7 +7,7 @@ export function esc(s) {
 /* Punkte mit Vorzeichen – immer als Zahl, damit nie fremder Text in die Seite gelangt */
 export const fmt = v => { const n = Number(v) || 0; return n > 0 ? '+' + n : String(n); };
 export const cls = n => (n < 0 ? 'neg' : n === 0 ? 'zero' : n >= 15 ? 'hi' : 'pos');
-export const tierOf = n => (n < 0 ? 'red' : n < 100 ? 'orange' : n < 200 ? 'lime' : n < 400 ? 'emerald' : 'gold');
+export const tierOf = n => (n < 0 ? 'neg' : n < 80 ? 'low' : n < 160 ? 'mid' : n < 300 ? 'high' : 'top');
 export const pad2 = n => (n < 10 ? '0' : '') + n;
 
 export function clock(sec) {
@@ -15,7 +15,7 @@ export function clock(sec) {
   const m = Math.floor(sec / 60), s = sec % 60;
   return m + ':' + pad2(s);
 }
-/* Spielminute im Kickbase-Format (1. Minute = 1’); negative Zeit = ohne Minute */
+/* Spielminute (1. Minute = 1’); negative Zeit = ohne Minute */
 export const minStamp = t => (t >= 0 ? (Math.floor(t / 60) + 1) + '’' : '');
 
 export function dateShort(iso) {
@@ -35,8 +35,8 @@ export function hash01(str) {
   return ((h >>> 0) % 100000) / 100000;
 }
 
-/* Zu null wie bei den Punkten: kein Gegentor und mindestens 10 Minuten (erster Minutenbonus) */
-export const cleanSheet = g => g.them === 0 && (g.minutes || 0) >= 10;
+/* Zu null wie bei den Punkten: kein Gegentor und mindestens 15 Minuten (erste Einsatzzeit-Stufe) */
+export const cleanSheet = g => g.them === 0 && (g.minutes || 0) >= 15;
 
 export function randomId(len = 20) {
   const a = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -49,7 +49,7 @@ export const reducedMotion = (() => {
   try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
 })();
 
-/* Zahl animiert hochzählen (Kickbase-Punktzahl) */
+/* Zahl animiert hochzählen (Punktzahl) */
 export function setNum(el, to) {
   const from = el._v == null ? to : el._v;
   el._v = to;

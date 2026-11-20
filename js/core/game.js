@@ -1,7 +1,7 @@
 /* Spielzustand (lokal gespeichert) und die komplette Punkteberechnung.
    Ein Spiel läuft immer nur auf dem Gerät, auf dem es gebucht wird. */
-import { KEYS } from '../config.js';
-import { GROUPS, CLEAN_SHEET, GOAL_KEYS, ASSIST_KEYS } from '../data/actions.js';
+import { KEYS, APP_NAME } from '../config.js';
+import { GROUPS, CLEAN_SHEET, GOAL_KEYS, ASSIST_KEYS, AUTO } from '../data/actions.js';
 import { PL, POS_NAME } from '../data/players.js';
 import { CL } from '../data/clubs.js';
 import { minStamp, randomId } from './util.js';
@@ -82,7 +82,7 @@ export function addToSquad(p, mode = 'start') {
     for (const e of S.events) {
       if (e.key !== 'tg' && e.key !== 'cg') continue;
       if (S.h2 && S.h2Id != null && slot.h2Id == null && e.id >= S.h2Id) slot.h2Id = slot.nextId;
-      slot.events.push({ id: slot.nextId++, key: e.key, label: e.label, pts: on ? (e.key === 'tg' ? 5 : -5) : 0, t: e.t, ts: e.ts, grp: e.grp });
+      slot.events.push({ id: slot.nextId++, key: e.key, label: e.label, pts: on ? (e.key === 'tg' ? AUTO.goal : -AUTO.goal) : 0, t: e.t, ts: e.ts, grp: e.grp });
     }
     if (S.h2 && slot.h2Id == null) slot.h2Id = slot.nextId;
     if (mode === 'in' && !S.ended) slot.subs.push({ o: 'in', at: slot.nextId, t: Math.floor(el) });
@@ -152,15 +152,15 @@ export function applyMatchNames() {
   const m = store.S.match;
   if (!m || !PL[m.p] || !CL[m.o]) return;
   names.player = PL[m.p].n; names.team = CL[teamOf(m)].n; names.opp = CL[m.o].n;
-  document.title = names.player + ' – Kickbase KL';
+  document.title = names.player + ' – ' + APP_NAME;
 }
 export const isHome = () => !!(store.S.match && store.S.match.home);
 export const scoreText = (sc, home) => (home ? sc.us + ' : ' + sc.them : sc.them + ' : ' + sc.us);
 
 /* ---------- Aktionskatalog ---------- */
 export const ACT = {
-  tg: { get l() { return 'Tor ' + names.team; }, s: 'Team-Tor', side: 'us', v: () => (onField() ? 5 : 0) },
-  cg: { get l() { return 'Tor ' + names.opp; }, s: 'Gegentor', side: 'them', v: () => (onField() ? -5 : 0) }
+  tg: { get l() { return 'Tor ' + names.team; }, s: 'Team-Tor', side: 'us', v: () => (onField() ? AUTO.goal : 0) },
+  cg: { get l() { return 'Tor ' + names.opp; }, s: 'Gegentor', side: 'them', v: () => (onField() ? -AUTO.goal : 0) }
 };
 export const CAT = { tg: 'Einsatz & Team', cg: 'Einsatz & Team' };
 for (const k of ['att', 'def', 'err']) {
@@ -204,22 +204,23 @@ export function score() {
 export function startLine() {
   const S = store.S;
   if (!started() || !S.stints.length) return null;
-  return S.startelf ? { l: 'Startelf', p: 5, r: '1’' } : { l: 'Eingewechselt', p: 2, r: minStamp(Math.floor(S.stints[0].from)) };
+  return S.startelf ? { l: 'Startelf', p: AUTO.start, r: '1’' } : { l: 'Eingewechselt', p: AUTO.sub, r: minStamp(Math.floor(S.stints[0].from)) };
 }
-/* Minutenbonus, Zu null und Sieg/Niederlage kommen erst nach Spielende dazu.
+/* Einsatzzeit, Zu null und Ergebnis kommen erst nach Spielende dazu.
    Zu null: nur wenn das eigene Team im ganzen Spiel kein Gegentor bekommt (auch nicht nach einer Auswechslung).
-   Er wächst wie der Minutenbonus mit der Spielzeit (je 10 Minuten), nur mal dem Wert der Position. */
+   Er wächst wie die Einsatzzeit (je 15 Minuten), nur mal dem Wert der Position. */
 export function endLines() {
   const S = store.S, out = [], m = minPlayed(), sc = score(), r = Math.ceil(playedSec() / 60) + '’';
   if (!S.ended || !S.stints.length) return out;
-  const mb = Math.floor(m / 10) + (m >= 90 ? 1 : 0);
+  const mb = Math.floor(m / AUTO.per) + (m >= 90 ? 1 : 0);
   if (sc.them === 0 && mb > 0) {
-    const v = CLEAN_SHEET[S.pos] || 2;
-    out.push({ l: 'Zu null', h: '+' + v + ' je 10 Minuten, +' + v + ' bei voller Spielzeit', p: mb * v, r });
+    const v = CLEAN_SHEET[S.pos] || 3;
+    out.push({ l: 'Zu null', h: '+' + v + ' je ' + AUTO.per + ' Minuten, +' + v + ' bei voller Spielzeit', p: mb * v, r });
   }
-  out.push({ l: 'Minutenbonus', h: '+1 je 10 Minuten, +1 bei voller Spielzeit', p: mb, r });
-  if (sc.us > sc.them) out.push({ l: 'Spiel gewonnen', p: 15, r });
-  else if (sc.us < sc.them) out.push({ l: 'Spiel verloren', p: -15, r });
+  out.push({ l: 'Einsatzzeit', h: '+' + AUTO.minPts + ' je ' + AUTO.per + ' Minuten, +' + AUTO.minPts + ' bei voller Spielzeit', p: mb * AUTO.minPts, r });
+  if (sc.us > sc.them) out.push({ l: 'Spiel gewonnen', p: AUTO.win, r });
+  else if (sc.us < sc.them) out.push({ l: 'Spiel verloren', p: AUTO.loss, r });
+  else out.push({ l: 'Unentschieden', p: AUTO.draw, r });
   return out;
 }
 export function total() {

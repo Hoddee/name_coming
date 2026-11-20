@@ -6,11 +6,11 @@ const L = require('./lib.js');
   await c('#edit [data-k="tg"]'); await p.waitForTimeout(300);
   const box = () => p.evaluate(() => { const f = document.querySelector('.ga-foot').getBoundingClientRect(), pnl = document.querySelector('.ga-panel').getBoundingClientRect(); return Math.round(pnl.top) + '/' + Math.round(f.bottom) + ' (Fenster ' + innerHeight + ')'; });
   await p.screenshot({ path: 'out/g1.png' }); console.log('Start Panel/Fuß:', await box());
-  await c('[data-ga="sc:0"]'); await p.waitForTimeout(150); await c('[data-ga="sb:sot"]'); await p.waitForTimeout(150);
+  await c('[data-ga="sc:0"]'); await p.waitForTimeout(150); await c('[data-ga="sb:head"]'); await p.waitForTimeout(150);
   await p.screenshot({ path: 'out/g2.png' }); console.log('nach Torschütze:', await box());
   await c('[data-ga="next"]'); await p.waitForTimeout(300);
   await c('[data-ga="as:1"]'); await p.waitForTimeout(150);
-  for (const k of ['intent', 'bcc', 'pf3']) { await c('[data-ga="ab:' + k + '"]'); await p.waitForTimeout(60); }
+  for (const k of ['sast', 'bcc', 'pf3']) { await c('[data-ga="ab:' + k + '"]'); await p.waitForTimeout(60); }
   await p.screenshot({ path: 'out/g3.png' }); console.log('nach Vorlage:', await box());
   await p.evaluate(() => { const b = document.querySelector('.ga-body'); b.scrollTop = b.scrollHeight; }); await p.waitForTimeout(150);
   await p.screenshot({ path: 'out/g4.png' });

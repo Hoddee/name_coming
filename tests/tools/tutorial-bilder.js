@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 const mk = (uid, i, p, nm, vn, t) => ({ uid, updated_at: new Date().toISOString(), data: { v: 1, gid: 'gameid12345', i, n: 3, p, nm, vn, team: 'vfrk', opp: 'tsc', home: true, us: 2, them: 1, t, ended: false, h2: true, ht: false, clock: { el: 3100, run: true, at: Date.now() }, rows: [{ p: 90, l: 'Tor', r: '52’', id: 3 }, { p: 12, l: 'Torschuss (aufs Tor)', r: '52’', id: 2 }, { p: 5, l: 'Ballgewinn', r: '40’', id: 1 }] } });
 const rows = [mk('abcdef123456', 0, 'Klenk', 'Klenk', 'Silas', 287), mk('abcdef123457', 1, 'Krauss', 'Krauss', 'Levin', 161), mk('abcdef123458', 2, 'Reule', 'Reule', 'Noah', 48)];
-const CSS = `.tut-hl{outline:3px solid #28de86!important;outline-offset:3px;box-shadow:0 0 0 9px rgba(40,222,134,.22)!important}
+const CSS = `.tut-hl{outline:3px solid #8B6CFF!important;outline-offset:3px;box-shadow:0 0 0 9px rgba(139,108,255,.25)!important}
 .tut-tap{position:fixed;z-index:999;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 0 0 8px rgba(255,255,255,.28),0 6px 18px rgba(0,0,0,.5);pointer-events:none}`;
 (async () => {
   const b = await chromium.launch();
@@ -49,8 +49,8 @@ const CSS = `.tut-hl{outline:3px solid #28de86!important;outline-offset:3px;box-
   await c('#editBody [data-k="tg"]'); await p.waitForTimeout(500); await c('[data-ga="sc:1"]'); await p.waitForTimeout(200); await c('[data-ga="sb:sot"]'); await p.waitForTimeout(200);
   await p.evaluate(() => { const b = document.querySelector('.ga-body'); b.scrollTop = 0; }); await hl('.ga-p.on', false); await shot('b-schuetze'); await hl(null);
   await c('[data-ga="next"]'); await p.waitForTimeout(400); await c('[data-ga="as:0"]'); await p.waitForTimeout(200);
-  for (const k of ['intent', 'bcc']) { await c('[data-ga="ab:' + k + '"]'); await p.waitForTimeout(100); }
-  await p.evaluate(() => { const b = document.querySelector('.ga-body'), e = b.querySelector('[data-ga="ab:intent"]'); b.scrollTop += e.getBoundingClientRect().top - b.getBoundingClientRect().top - 40; }); await p.waitForTimeout(200);
+  for (const k of ['sast', 'bcc']) { await c('[data-ga="ab:' + k + '"]'); await p.waitForTimeout(100); }
+  await p.evaluate(() => { const b = document.querySelector('.ga-body'), e = b.querySelector('[data-ga="ab:sast"]'); b.scrollTop += e.getBoundingClientRect().top - b.getBoundingClientRect().top - 40; }); await p.waitForTimeout(200);
   await hl('[data-ga="ab:bcc"]', true); await shot('b-vorlage'); await hl(null);
   await c('[data-ga="done"]'); await p.waitForTimeout(400);
   await c('#editBody [data-k="cg"]'); await p.waitForTimeout(500); await c('[data-ga="fx:2"]'); await p.waitForTimeout(200);

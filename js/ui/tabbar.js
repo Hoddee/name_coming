@@ -1,4 +1,4 @@
-/* Menü unten wie in der Kickbase-App: Liga, Kader, Spiel, Ranking (Hall of Fame), Ich.
+/* Menü unten: Liga, Kader, Spiel, Ranking (Hall of Fame), Ich.
    Sichtbar nur in den Hauptbereichen; der aktive Punkt zeigt seine Beschriftung.
    „Spiel“ öffnet das laufende Spiel oder legt ein neues an, „Ich“ führt zu Mein Bereich bzw. zum Konto. */
 import { $ } from '../core/util.js';

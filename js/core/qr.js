@@ -123,7 +123,7 @@ export function qrMatrix(text, mask = null) {
   return best;
 }
 /* Als SVG mit Ruhezone */
-export function qrSvg(text, { dark = '#131417', light = '#fff' } = {}) {
+export function qrSvg(text, { dark = '#0B0E17', light = '#fff' } = {}) {
   const m = qrMatrix(text), n = m.length, q = 4;
   let d = '';
   m.forEach((row, r) => row.forEach((v, c) => { if (v) d += 'M' + (c + q) + ' ' + (r + q) + 'h1v1h-1z'; }));

@@ -1,4 +1,4 @@
-/* Vereine der Kreisliga A2, B2 und B5 (Rems/Murr/Hall). In der B5 nutzen die Teams das Wappen des Stammvereins. Wappen liegen im Supabase-Bucket "kickbase". */
+/* Vereine der Kreisliga A2, B2 und B5 (Rems/Murr/Hall). In der B5 nutzen die Teams das Wappen des Stammvereins. Wappen liegen im Repo bzw. im Supabase-Storage. */
 import { STORAGE_BASE } from '../config.js';
 
 const FA = 'Wappen_KreisligaA2_Rems__Murr__Hall/';

@@ -1,10 +1,11 @@
-/* Spiel-Detail wie bei Kickbase (Balken im Profil antippen): großes Foto, Punktzahl, Endstand,
+/* Spiel-Detail (Balken im Profil antippen): großes Foto, Punktzahl, Endstand,
    darunter alle Aktionen mit Minute; beim Scrollen schrumpft der Kopf auf Name, Punkte und Ergebnis.
    Admins können hier korrigieren: Aktionen entfernen (bleiben ausgegraut stehen) oder nachtragen. */
 import { $, esc, fmt, cls, toast, buzz } from '../core/util.js';
 import { PL, photoUrl } from '../data/players.js';
 import { crestUrl } from '../data/clubs.js';
 import { ICON } from '../core/icons.js';
+import { AUTO } from '../data/actions.js';
 import { recordTeam, scoreText } from '../core/game.js';
 import { pickerGroups, pointsFor, wasSubbedIn, insertAction, recount, corrections, hasCorrections, settle, scoreBase, scoreOrig, onField, didPlay } from '../core/correct.js';
 import { games, loadEvents, cachedEvents, updateGame, rememberEvents, deleteGame, forgetEvents } from '../services/api.js';
@@ -35,7 +36,7 @@ function rowsHtml(ev, g) {
   return rows.map(rowLi).join('') + whistleLi();
 }
 
-/* „Korrekturen (n)“ wie bei Kickbase: Summe; Antippen öffnet ein eigenes Blatt mit allen Korrekturen */
+/* „Korrekturen (n)“: Summe; Antippen öffnet ein eigenes Blatt mit allen Korrekturen */
 function corrHtml(ev) {
   const list = corrections(ev);
   if (!list.length) return '';
@@ -126,7 +127,8 @@ function addAction(item) {
   if (item.k === 'tg' || item.k === 'cg') {
     const on = item.t < 0 ? didPlay(fix.ev) : onField(fix.ev, item.t);
     bench = !on;
-    item.p = on ? (item.k === 'tg' ? 5 : -5) : 0;
+    const v = fix.ev.some(e => e.l === 'Minutenbonus') ? 5 : AUTO.goal; // alte Spiele: alte Regel
+    item.p = on ? (item.k === 'tg' ? v : -v) : 0;
   }
   fix.ev = insertAction(fix.ev, item);
   resettle();

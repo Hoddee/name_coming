@@ -1,17 +1,20 @@
 /* Zentrale Konfiguration. Der Publishable Key ist öffentlich gedacht; die Rechte regelt Row Level Security in Supabase. */
 export const SUPABASE_URL = 'https://eewvsquscmflxdhkgvna.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_tWF4nhJLNDqHsuGSK07zmw_54ZiRmPU';
+/* Storage-Bucket heißt aus der ersten Version noch „kickbase“ (gemeinsame Datenbank) */
 export const STORAGE_BASE = SUPABASE_URL + '/storage/v1/object/public/kickbase/';
 
 /* Adresse der App, auf die Passwort-Links aus E-Mails zurückführen */
-export const APP_URL = 'https://hoddee.github.io/kickbase_kreisliga/';
+export const APP_URL = 'https://hoddee.github.io/name_coming/';
 /* Öffentlicher Schlüssel für Push-Benachrichtigungen (der private liegt nur als Secret bei der Edge Function „push“) */
 export const VAPID_PUBLIC = 'BPpdkr18TxFId_jZJ6A0qLOo3pkdTIdKzKqfSYsnChxvth3Oq3Vn4VzAdmfkCmEZEFQpB9aOw9omTvpAEto28Ms';
 
 export const SEASON = '2026/2027';
 
 /* Angezeigte Version (Konto-Seite) – zusammen mit VERSION in sw.js hochzählen */
-export const APP_VERSION = '4.9.2';
+export const APP_VERSION = '2.0.0';
+/* Name der App (Titel, Teilen-Bilder, Benachrichtigungen) */
+export const APP_NAME = 'Kreo';
 
 /* localStorage-Schlüssel (alte Namen bleiben, damit laufende Spiele ein Update überstehen) */
 export const KEYS = {

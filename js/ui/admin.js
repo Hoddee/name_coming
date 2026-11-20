@@ -172,7 +172,7 @@ function newPlayerHtml() {
     (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
     '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Speichere …' : 'Anlegen') + '</button><button type="button" class="btn" data-adm="add-cancel">Abbrechen</button></div></form>';
 }
-/* Foto freistellen (Hintergrund entfernen) und ins Kickbase-Format bringen */
+/* Foto freistellen (Hintergrund entfernen) und ins Kreo-Fotoformat bringen */
 /* Verständliche Meldung statt der Datenbank-Rohmeldung */
 function fehlertext(e) {
   if (/row-level security/i.test(e.message)) return 'keine Berechtigung. Bitte abmelden und neu anmelden.';

@@ -7,7 +7,7 @@ const LIB_URL = 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+e
 let libPromise = null;
 const loadLib = () => libPromise || (libPromise = import(LIB_URL).catch(e => { libPromise = null; throw e; }));
 
-/* Ausgabeformate: Spieler im Hochformat der Kickbase-Fotos (klein genug für wenig Datenvolumen), Wappen quadratisch */
+/* Ausgabeformate: Spieler im Hochformat (klein genug für wenig Datenvolumen), Wappen quadratisch */
 const FORMAT = {
   player: { w: 600, h: 830 },
   guest: { w: 480, h: 664 },
@@ -101,7 +101,7 @@ function trim(cv) {
   return out;
 }
 
-/* In das Zielformat einpassen: Personen unten bündig (wie die Kickbase-Fotos), Wappen mittig */
+/* In das Zielformat einpassen: Personen unten bündig, Wappen mittig */
 function fit(cv, kind) {
   const f = FORMAT[kind], out = canvasOf(f.w, f.h), ctx = out.getContext('2d');
   const pad = kind === 'crest' ? 0.06 : 0.03;

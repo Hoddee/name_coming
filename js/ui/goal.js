@@ -3,7 +3,7 @@
    Das Blatt hat eine feste Höhe: Kopf, Schritte und „Fertig“ bleiben stehen, nur der Inhalt scrollt.
    Das Team-Tor ist beim Öffnen schon gebucht. Jeder Tipp bucht sofort (Einträge mit gg = Tor-Gruppe, ga = 1),
    Schließen oder „Fertig“ verliert also nichts. Begleitaktionen werden nie automatisch gebucht – nur, was man antippt
-   (Opta/Kickbase vergeben sie nicht bei jedem Tor). */
+   (nicht jedes Tor hat sie). */
 import { esc, fmt, cls, minStamp, buzz } from '../core/util.js';
 import { PL } from '../data/players.js';
 import { store, saveGame, ACT, val, onField, eachPlayer, withPlayer, score, isHome, scoreText } from '../core/game.js';
@@ -11,13 +11,10 @@ import { avatar } from './components.js';
 
 /* [Schlüssel, Name] */
 const SCORE_KINDS = [['goal', 'Tor'], ['pen', 'Elfmeter']];
-const SCORE_EXTRAS = [['long', 'Fernschuss'], ['sot', 'Schuss aufs Tor']];
-const ASSIST_KINDS = [['ast', 'Torvorlage'], ['defl', 'Abgefälscht'], ['reb', 'Abgeprallt'], ['wood', 'Aluminium']];
-const ASSIST_EXTRAS = [['intent', 'Absichtlich'], ['bcc', 'Großchance kreiert'],
-  ['deadly', 'Pass des Todes'], ['cross', 'Flanke'],
-  ['pf3', 'Pass vorderes Drittel'], ['poh', 'Pass gegn. Hälfte'],
-  ['lball', 'Präziser langer Ball']];
-const FAULT_KINDS = [['mgoal', 'Fehler vor Gegentor'], ['own', 'Eigentor'], ['pcon', 'Elfmeter verschuldet']];
+const SCORE_EXTRAS = [['head', 'Kopfball'], ['long', 'Distanzschuss'], ['solo', 'Solo-Lauf'], ['fk', 'Direkter Freistoß']];
+const ASSIST_KINDS = [['ast', 'Vorlage'], ['reb', 'Abpraller']];
+const ASSIST_EXTRAS = [['bcc', 'Großchance aufgelegt'], ['sast', 'Schlüsselpass'], ['cross', 'Flanke'], ['pf3', 'Steilpass'], ['lball', 'Seitenwechsel']];
+const FAULT_KINDS = [['mgoal', 'Patzer vor Gegentor'], ['own', 'Eigentor'], ['pcon', 'Elfmeter verursacht']];
 
 let st = null, onChange = () => {};
 const wrap = () => document.getElementById('gaSheet');
@@ -46,7 +43,7 @@ const steps = () => {
 function picks() {
   const out = [];
   if (st.side === 'us') {
-    if (st.sc != null) { out.push([st.sc, st.sk]); for (const k of st.sb) if (k !== 'long' || st.sk === 'goal') out.push([st.sc, k]); }
+    if (st.sc != null) { out.push([st.sc, st.sk]); for (const k of st.sb) if (st.sk === 'goal') out.push([st.sc, k]); }
     if (st.as != null) {
       out.push([st.as, st.sk === 'pen' ? 'pwon' : st.ak]);
       if (st.sk !== 'pen') for (const k of st.ab) out.push([st.as, k]);
@@ -93,7 +90,7 @@ function stepHtml(s) {
     let h = '<h3>Wer hat das Tor geschossen?</h3>' + playerGrid('sc', st.sc, [], st.sk, 'Anderer');
     if (st.sc != null) {
       h += '<h3>Wie?</h3>' + optRows(SCORE_KINDS, 'sk', k => st.sk === k, st.sc, false) +
-        '<h3>Dazu</h3>' + optRows(SCORE_EXTRAS.filter(([k]) => k !== 'long' || st.sk === 'goal'), 'sb', k => st.sb.has(k), st.sc, true);
+        (st.sk === 'goal' ? '<h3>Dazu</h3>' + optRows(SCORE_EXTRAS, 'sb', k => st.sb.has(k), st.sc, true) : '');
     }
     return h;
   }

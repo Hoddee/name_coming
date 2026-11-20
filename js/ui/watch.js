@@ -1,7 +1,7 @@
 /* Live zuschauen: Kacheln auf der Startseite und die Live-Ansicht als Blatt.
    Die Daten kommen über services/live.js (Realtime); hier wird nur gezeichnet. */
 import { $, esc, fmt, cls, tierOf, shareLink, toast } from '../core/util.js';
-import { APP_URL } from '../config.js';
+import { APP_URL, APP_NAME } from '../config.js';
 import { PL, photoUrl } from '../data/players.js';
 import { CL, crestUrl, storageUrl } from '../data/clubs.js';
 import { live, onLive, ownLive, liveStatus } from '../services/live.js';
@@ -74,7 +74,7 @@ function render(keep) {
 export const liveUrl = gid => APP_URL + '?live=' + encodeURIComponent(gid);
 export function shareLiveGame(gid, d) {
   const score = d ? sides(d).score : '';
-  shareLink(liveUrl(gid), 'Live: ' + (d ? d.nm : 'Kickbase KL'), d ? (CL[d.team] ? CL[d.team].n : '') + ' ' + score + ' – live verfolgen' : 'Live verfolgen');
+  shareLink(liveUrl(gid), 'Live: ' + (d ? d.nm : APP_NAME), d ? (CL[d.team] ? CL[d.team].n : '') + ' ' + score + ' – live verfolgen' : 'Live verfolgen');
 }
 export async function openLiveLink(gid) {
   for (let i = 0; i < 40 && !live.ready; i++) await new Promise(r => setTimeout(r, 250));

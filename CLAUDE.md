@@ -1,12 +1,15 @@
-# CLAUDE.md – Kreisliga Kickbase
+# CLAUDE.md – Kreo
 
 Hinweise für Claude Code. Die README ist auf dem Stand v4.3 (Nov. 2026) – bei größeren Änderungen mitpflegen.
 Im Zweifel gilt der Code und die Merge-Historie (`git log --merges`).
 
 ## Was das ist
-„Kickbase KL“ (Logo `assets/icons/logo.svg`, „KL“ kursiv): PWA im Kickbase-Stil für Amateurfußball (Kreisliga A2/B2/B5, Saison 2026/2027). Am Spielfeldrand werden pro Spieler
-Aktionen nach der Kickbase-Punktetabelle gebucht; daraus entstehen Punkte, Spielerprofile, Marktwerte, Hall of Fame
-und eine Live-Ansicht für Zuschauer. Live: https://hoddee.github.io/kickbase_kreisliga/ (GitHub Pages, Branch `main`).
+„Kreo“ (Logo `assets/icons/logo.svg` = Schriftzug „kreo.“, App-Icon `icon.svg` = K-Monogramm mit Ball-Punkt): Version 2.0 von
+„Kickbase KL“ (Repo Hoddee/kickbase_kreisliga – **dort nichts ändern**). PWA für Amateurfußball (Kreisliga A2/B2/B5, Saison 2026/2027).
+Am Spielfeldrand werden pro Spieler Aktionen nach der eigenen Kreo-Punktetabelle gebucht; daraus entstehen Punkte, Spielerprofile,
+Marktwerte, Hall of Fame und eine Live-Ansicht für Zuschauer. Noch kein öffentlicher Start.
+Name zentral in `APP_NAME` (`config.js`); „Kickbase“ ist eine eingetragene Marke – Name, Look, Texte und Punktetabelle
+dürfen nicht wieder an Kickbase angelehnt werden (keine Vergleiche „wie bei Kickbase“ in UI oder Kommentaren).
 
 Nutzer und Sprache: deutsch. UI-Texte, Code-Kommentare, Commit-Messages und Antworten an den Nutzer auf Deutsch.
 Der Nutzer ist Azubi Fachinformatiker Anwendungsentwicklung: Technik darf benannt werden, aber kurz. Antworten knapp,
@@ -44,9 +47,9 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
 - `js/ui/` – start (Übersicht + Live-Kacheln), setup (Neues Spiel), live (Spielerkarte), booking (Punktevergabe), squad (Spielerleiste),
   match (Spiel-Detail-Blatt), profile (Spielerprofil-Blatt), hof (Hall of Fame), me (Mein Bereich), admin, watch (Zuschauer), share, intro, sheet, components.
 - `js/ui/goal.js` – Tor-Assistent: nach Team-Tor/Gegentor (oder „Tor“/„Elfmeter“ beim Spieler) Blatt mit Torschütze,
-  Vorlage (+ Art, Boni wie absichtlich/Großchance) und Tor eingeleitet bzw. Gegentor-Verursacher. Team-Tor ist schon gebucht;
+  Vorlage (+ Art, Boni wie Großchance/Schlüsselpass), Tor-Extras (Kopfball, Distanz, Solo, Freistoß) und Tor eingeleitet bzw. Gegentor-Verursacher. Team-Tor ist schon gebucht;
   jeder Tipp bucht sofort (`gg` = Tor-Gruppe, `ga: 1`), „Tor zurück“ entfernt die ganze Gruppe. Team-Tore haben jetzt immer `grp`.
-  Begleitaktionen nie automatisch buchen (nicht jedes Tor bekommt sie bei Kickbase/Opta).
+  Begleitaktionen nie automatisch buchen (nicht jedes Tor hat sie).
   Aufbau als Assistent in Schritten (Torschütze → Vorlage → Einleitung; Schritte ohne mögliche Auswahl fallen weg),
   Blatt mit fester Höhe: nur `.ga-body` scrollt, Fußzeile mit Zusammenfassung und „Fertig“ steht immer. Das `.ga-panel`
   wird nur einmal angelegt (sonst fährt es bei jedem Tipp neu ein). Optionen als Zeilen mit kurzer Erklärung.
@@ -93,12 +96,14 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Ziehen zum Aktualisieren (`REFRESH` je Ansicht), Service-Worker-Registrierung mit Update-Prüfung beim Zurückholen der App.
   Der Router merkt sich die Scrollposition je Ansicht und lässt Ansichten hereingleiten (`slideIn`); Ladezustände mit `skeleton()`.
 - Installierte App (Home-Bildschirm) testen: iOS weckt sie nur auf statt neu zu starten – Updates kommen über `feel.js`.
-- Look (seit v4.0): `css/brand.css` wird zuletzt geladen und setzt den Kickbase-Stil – Schwarz/Weiß, Knöpfe weiß,
-  Auswahl mit weißer Kante, Farbe nur für Punkte-Stufen/Trends, Rot (`--live`) nur für Live. `--kb-red` ist dort absichtlich
-  Weiß (alte Akzentfarbe). Schriften: „KL Pitch“ = Saira als variable Schrift (`assets/fonts/saira-kl-var.woff2`, Breite 70–100 %),
-  Nachbau von KB Pitch: Überschriften mit `font-stretch: 88%` + `-0.02em` (`--font-head`), Zahlen normal breit (`--font-display`).
-  Text, Spielernamen in Listen (normale Schreibweise, keine Großbuchstaben) und der kleine Name über der Punktzahl in Inter Tight (wie KB Volksans bei Kickbase).
-  Die Original-Schriften von Kickbase nicht einbauen (keine Lizenz zur Weitergabe).
+- Look (Kreo 2.0): `css/brand.css` ist die Grundschicht, `css/kreo.css` wird zuletzt geladen und setzt die Marke –
+  Nachtblau `#0B0E17` statt Schwarz, Violett `--acc` (#8B6CFF) für Knöpfe (Pillen mit Verlauf), Auswahl und aktives Menü,
+  Limette `--acc2` (#C9FF4A) nur als kleiner Ball-Punkt (Logo, vor Überschriften, aktives Menü-Symbol), Rot (`--live`, #FF4D6D) nur für Live.
+  Hinter Fotos/Kopfbereichen ein violetter Schein (`glow()` in `share.js` für die Teilen-Bilder) – kein Punkteraster.
+  `--kb-red` ist ein alter Variablenname und = Akzentfarbe. Punkte-Stufen `data-tier` = neg/low/mid/high/top (`tierOf` in util.js:
+  <0, 0–79, 80–159, 160–299, ab 300), Farben Koralle/Schiefer/Cyan/Limette/Gold.
+  Schriften: „Kreo Display“ = Sora (variabel, `assets/fonts/sora-var.woff2`) für Überschriften und Zahlen, Text in Inter Tight.
+  Überschriften und Beschriftungen in normaler Schreibweise (keine Großbuchstaben-Zeilen).
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Kader (`kader`, in `start.js`), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
   `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.
@@ -109,8 +114,10 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Vor neuen Klassennamen per `grep` prüfen, dass es sie noch nicht gibt – Kollisionen haben schon die Startseite verbreitert.
 
 ## Datenbank (Supabase)
+**Gemeinsame Datenbank mit der laufenden ersten Version** – keine destruktiven Migrationen ohne Rückfrage; vor einem Start
+eigenes Supabase-Projekt. Was Kreo speichert, sieht auch die alte App (gleiche Tabelle `spiele`).
 Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`, `spielplan`, `spieler_konten`, `live_spiele`
-(Schreibrecht per Geräte-Schlüssel im Header `x-live-key`, nur Hash gespeichert). Storage-Bucket `kickbase`.
+(Schreibrecht per Geräte-Schlüssel im Header `x-live-key`, nur Hash gespeichert). Storage-Bucket `kickbase` (Name aus Version 1).
 - Schemaänderungen als neue Datei `supabase/migrations/0NN_name.sql` (fortlaufend nummeriert, idempotent mit `if not exists` /
   `drop policy if exists`). Der Nutzer führt sie selbst im Supabase-SQL-Editor aus – im PR/Antwort ausdrücklich darauf hinweisen.
 - Supabase erlaubt kein direktes Löschen in `storage.objects` per SQL.
@@ -126,7 +133,7 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
   (`js/data/players.js`) eintragen und in der DB `foto` auf NULL lassen. Wird ein vorhandenes Bild ersetzt, `IMG` in `sw.js` hochzählen.
 
 ## Regeln bei jeder Änderung
-- **`sw.js`: `VERSION` bei jeder Änderung hochzählen** (z. B. `kl-v3.11.0` → `kl-v3.11.1`, größere Features Minor-Sprung).
+- **`sw.js`: `VERSION` bei jeder Änderung hochzählen** (z. B. `kreo-v2.0.0` → `kreo-v2.0.1`, größere Features Minor-Sprung).
   Der Service Worker liefert App-Dateien **aus dem Cache** (schneller Start) – ohne neue VERSION bekommt niemand das Update.
   **`APP_VERSION` in `config.js` gleich mitziehen** (wird im Konto angezeigt).
 - Neue JS-Datei: in `SHELL` (`sw.js`) und als `<link rel="modulepreload">` in `index.html`. Neue CSS-Datei: in `SHELL` und in
@@ -134,9 +141,10 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
   Das CSS des Startbildschirms steht inline in `index.html`; `main.js` blendet ihn erst aus, wenn alle Stylesheets geladen sind.
 - localStorage-Schlüssel in `config.js` nicht umbenennen (laufende Spiele müssen Updates überstehen); Formatänderungen
   am Spielzustand abwärtskompatibel laden (`loadGame`).
-- Punkte-/Marktwertregeln orientieren sich an Kickbase. Punkte werden beim Buchen gespeichert (neue Regeln gelten
-  nur für neue Spiele), Marktwert und Anzeige werden aus allen Spielen neu berechnet – vorher klären, ob rückwirkend gewollt.
-- Festgelegte Regeln: Zu null wächst wie der Minutenbonus (je 10 Min. × Positionswert, ohne 45-Min.-Grenze).
+- Punkte-/Marktwertregeln sind die eigene Kreo-Wertung (Übersicht in der README, Werte in `actions.js`: `GROUPS`, `AUTO`, `CLEAN_SHEET`).
+  Punkte werden beim Buchen gespeichert (neue Regeln gelten nur für neue Spiele), Marktwert und Anzeige werden aus allen Spielen
+  neu berechnet – vorher klären, ob rückwirkend gewollt. Alte Spiele (Zeile „Minutenbonus“) korrigiert `correct.js` mit `LEGACY`.
+- Festgelegte Regeln: Zu null wächst wie die Einsatzzeit (je 15 Min. × Positionswert, ohne 45-Min.-Grenze).
   Live gebuchte Spieler ohne Einsatzminuten werden nicht gespeichert und nicht angezeigt; Nachträge immer.
   Tore ohne Punkte (Spieler nicht auf dem Platz) erscheinen nirgends.
 - Code-Stil: kompakt, 2 Leerzeichen, einfache Anführungszeichen, deutsche Kommentare; HTML-Strings mit `esc()` escapen.
