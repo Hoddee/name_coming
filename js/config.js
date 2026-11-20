@@ -23,5 +23,5 @@ export const KEYS = {
   intro3: 'kl-intro-v3', tourBook2: 'kl-tour-book-v2', dev: 'kl-dev', mit: 'kl-mit',
   roster: 'kl-roster-v1',
   auth: 'kl-auth-v1',
-  manager: 'kreo-manager-v1'
+  manager: 'kreo-manager-v1', tourMgr: 'kreo-tour-mgr-v1'
 };

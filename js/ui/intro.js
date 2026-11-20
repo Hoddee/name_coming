@@ -31,7 +31,15 @@ const BOOK = [
   { s: 'b-zuletzt', t: 'Vertippt? Kein Problem', x: 'Unten stehen die letzten Buchungen. Antippen: löschen oder einem anderen Spieler geben.' }
 ];
 
+const MGR = [
+  { s: 'c-team', t: 'Dein Team', x: '50 Mio. Budget, 5 Spieler, höchstens ein Torwart. Deine Spieler bringen dir ihre Punkte, ab dem Kauf.' },
+  { s: 'c-markt', t: 'Transfermarkt', x: 'Kaufen und verkaufen zum aktuellen Marktwert. Gute Spiele machen deine Spieler teurer.' },
+  { s: 'c-liga', t: 'Manager-Liga', x: 'Angemeldet trittst du gegen alle anderen an – gesamt und jede Woche neu.' }
+];
+
 export const introSeen = () => !!readJson(KEYS.intro3, false);
+export const mgrTourSeen = () => !!readJson(KEYS.tourMgr, false);
+export const showMgrTour = () => tour(MGR, KEYS.tourMgr, 'Manager erklärt', 'Team aufstellen');
 export const bookingTourSeen = () => !!readJson(KEYS.tourBook2, false);
 export const showIntro = () => tour(APP, KEYS.intro3, 'Einführung', 'Los geht’s');
 export const showBookingTour = () => tour(BOOK, KEYS.tourBook2, 'Punktevergabe erklärt', 'Verstanden');

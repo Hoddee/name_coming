@@ -11,6 +11,7 @@ import { BUDGET, TEAM_SIZE, replay, teamPoints, teamValue, buyBlock, leagueTable
 import { mgr, loadManagers, onManagerChange, myManager, addMove, setTeamName, resetManagers } from '../services/manager.js';
 import { avatar, skeleton } from './components.js';
 import { registerView, show, nav } from '../router.js';
+import { introSeen, mgrTourSeen, showMgrTour } from './intro.js';
 
 const ui = { tab: 'team', pos: 'ALL', busy: false };
 const TABS = [['team', 'Mein Team'], ['markt', 'Markt'], ['liga', 'Liga']];
@@ -37,7 +38,7 @@ function memberRow(p, st) {
   return '<div class="mg-row">' +
     '<button type="button" class="mg-who" data-open="p:' + esc(p) + '">' + avatar(p) + '<span><b>' + esc(fullName(pl)) + '</b>' +
     '<small><i class="pbadge">' + POS_SHORT[pl.pos || 'ABW'] + '</i>' + eur(mw.v) + (diff ? ' <em class="' + trendClass(diff) + '">' + (diff > 0 ? '▲' : '▼') + '</em>' : '') + '</small></span></button>' +
-    '<span class="mg-pts tc" data-tier="' + tierOf(pts) + '"><b>' + pts + '</b><small>Punkte</small></span>' +
+    '<span class="mg-pts"><b>' + pts + '</b><small>Punkte</small></span>' +
     '<button type="button" class="mg-act sell" data-mg="sell:' + esc(p) + '">Verkaufen</button></div>';
 }
 function historyHtml(st) {
@@ -106,6 +107,8 @@ export function render() {
   if (!mgr.loaded && !mgr.busy) loadManagers();
   $('mgrBody').innerHTML = html();
   applyTier(0);
+  /* Beim ersten Öffnen einmal der kurze Rundgang */
+  if (introSeen() && !mgrTourSeen() && !document.querySelector('.tour')) setTimeout(() => { if (nav.current === 'manager' && !mgrTourSeen() && !document.querySelector('.tour')) showMgrTour(); }, 400);
 }
 const rerenderIfOpen = () => { if (nav.current === 'manager') render(); };
 

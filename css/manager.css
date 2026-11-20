@@ -7,9 +7,9 @@
 .mg-name { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mg-name b { font: 700 22px var(--font-head); letter-spacing: -.03em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mg-name .tag { font-style: normal; text-transform: none; letter-spacing: 0; font-size: 11px; padding: 3px 8px; border-radius: 999px; }
-.mg-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 14px; }
+.mg-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 10px; margin-top: 14px; }
 .mg-kpi span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.mg-kpi b { font: 700 18px var(--font-display); letter-spacing: -.02em; white-space: nowrap; }
+.mg-kpi b { font: 700 20px var(--font-display); letter-spacing: -.02em; white-space: nowrap; }
 .mg-kpi small { font-size: 11.5px; color: var(--muted); }
 
 .mg-list { display: flex; flex-direction: column; }
@@ -75,7 +75,7 @@
 .mg-c-v small { font-size: 11px; color: var(--muted); }
 .mg-c-go { font: 600 13px var(--font-body); color: #fff; padding: 8px 12px; border-radius: 999px; background: linear-gradient(135deg, #9B80FF, #6E4CF5); }
 .mg-in { width: 100%; min-height: 48px; margin: 6px 0 14px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(225, 230, 245, .16); background: var(--raised); color: var(--ink); font: 500 16px var(--font-body); }
-@media (max-width: 360px) { .mg-kpi { grid-template-columns: repeat(2, 1fr); row-gap: 12px; } .mg-act { min-width: 74px; } }
+@media (max-width: 360px) { .mg-act { min-width: 74px; } }
 
 /* Impressum und Datenschutz */
 .lg h2 { font: 700 22px var(--font-head); letter-spacing: -.03em; margin: 18px 0 8px; }

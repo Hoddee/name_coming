@@ -65,6 +65,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
 - Rundgänge (`js/ui/intro.js`): Einführung (`KEYS.intro3`) und „Punktevergabe erklärt“ (`KEYS.tourBook2`, beim ersten
   „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Folien `{ s }` = Screenshot, `{ f, chips, top, tag, qr, crew, logo }` =
   Foto von uns (`f-*.webp`) mit Punkte-Chips bzw. Spieler-Marke (`tag`: Aktionen fliegen hoch, Punkte zählen) – gesunder Mix, Screenshots wo die Bedienung gezeigt wird.
+  Dazu „Manager erklärt“ (`KEYS.tourMgr`, beim ersten Öffnen des Managers, Bilder `c-*` aus `node tests/tools/manager-bilder.js`).
   Bilder als WebP in `assets/img/tut/` (600×676); Screenshots erzeugt `node tests/tools/tutorial-bilder.js` (Fenster 390×440,
   danach PNG → WebP, `V` in intro.js hochzählen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.
 - Mitbuch-Modus (`js/services/mit.js` Logik/Übertragung, `js/ui/mit.js` Oberfläche, `js/core/qr.js` QR-Code ohne Bibliothek):
