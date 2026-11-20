@@ -4,6 +4,7 @@ const L = require('./lib.js');
 const SP = [
   { id: 'sp0123456789', vorname: 'Lukas', nachname: 'Meier', verein_id: 'q162195', verein_name: '1. FC 08 Birkenfeld', team_id: null, team_art: 'herren', team_nr: 2, pos: 'ANG', nummer: 9, status: 'neu', doppelt_von: null },
   { id: 'sp0123456788', vorname: 'Jonas', nachname: 'Maier', verein_id: 'q162195', verein_name: '1. FC 08 Birkenfeld', team_id: null, team_art: 'herren', team_nr: 1, pos: 'TW', nummer: 1, status: 'neu', doppelt_von: null },
+  { id: 'sp0123456787', vorname: 'Paul', nachname: 'Kern', verein_id: 'q162195', verein_name: '1. FC 08 Birkenfeld', team_id: null, team_art: 'herren', team_nr: 2, pos: 'ABW', nummer: 4, status: 'neu', doppelt_von: null },
   { id: 'sp01234567zz', vorname: '<img src=x>', nachname: 'Böse', verein_id: 'q162195', verein_name: 'x', status: 'neu' }
 ];
 const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', played_at: '2026-11-15T14:00:00Z', season: '2026/2027', player: 'sp0123456789', opp: 'ow93398679',
@@ -42,6 +43,13 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   ok(prof.pts === '245', 'Punkte aus dem gespeicherten Spiel: ' + prof.pts);
   await c('[data-pf="play"]'); await p.waitForTimeout(700);
   ok(await p.evaluate(() => !document.querySelector('.lgseg')), 'keine Kreisliga-Auswahl bei fremder Mannschaft');
+  // Mitspieler derselben Mannschaft (Herren II): Paul ja, Jonas (Herren I) nein
+  const mates = await p.$$eval('[data-pick^="pm:"]', l => l.map(e => e.getAttribute('data-pick')));
+  ok(mates.length === 1 && mates[0] === 'pm:sp0123456787', 'Mitspieler: ' + JSON.stringify(mates));
+  await p.evaluate(() => document.querySelector('[data-pick^="pm:"]').scrollIntoView({ block: 'center' })); await p.screenshot({ path: 'out/mitspieler.png' });
+  await c('[data-pick="pm:sp0123456787"]'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => /Mehrere · 2/.test(document.querySelector('[data-pick="multi"]').textContent)), 'Mitspieler dazu gewählt');
+  await c('[data-pick="multi"]'); await p.waitForTimeout(300);
   await p.fill('#soQ', 'weisskirchen'); await p.waitForTimeout(500);
   await c('#soRes [data-pick^="ov:"]'); await p.waitForTimeout(300);
   ok(!(await p.$eval('#goBtn', e => e.disabled)), 'Gegner gewählt, Start möglich');

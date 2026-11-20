@@ -20,7 +20,7 @@ import { prepareManual, resetTab } from './booking.js';
    pf/of hochgeladene Bilder für Gastspieler / eigenen Gegner */
 let sel = blank();
 /* Suchfelder: Spieler (ganz Deutschland) und Gegner (Vereinssuche) */
-const find = { q: '', db: [], dbFor: '', oq: '' };
+const find = { q: '', db: [], dbFor: '', oq: '', mates: [], matesFor: '' };
 let findTimer = 0;
 /* Offene Formulare (Gastspieler, eigener Gegner) inkl. Eingaben und Bild */
 const forms = { guest: false, opp: false, err: '', busy: false, status: '', gname: '', gclub: 'vfr', oname: '', gimg: null, oimg: null };
@@ -214,6 +214,7 @@ function html() {
   const picked = (sel.multi ? sel.ps : [sel.p]).filter(id => id && PL[id] && PL[id].ext);
   if (picked.length) h += '<div class="grp"><span>Gesucht</span></div><div class="plist">' + picked.map(id => '<button type="button" class="prow" data-pick="p:' + esc(id) + '" aria-pressed="true">' + avatar(id) +
     '<span><b>' + esc(fullName(PL[id])) + '</b><span class="ps">' + esc(clubName(PL[id]) + ' · ' + teamText(PL[id])) + '</span></span><span></span>' + checkMark(id) + '</button>').join('') + '</div>';
+  if (picked.length) h += matesHtml(PL[picked[0]], picked);
   /* Gruppen: erst die eigenen Vereine, dann Vereine weiterer Stammspieler */
   const active = PLAYER_LIST.filter(p => p.active !== false);
   const clubIds = [...new Set([...OWN_CLUBS, ...active.map(p => p.c)])].filter(id => CL[id]);
@@ -224,6 +225,17 @@ function html() {
   }
   h += guestHtml();
   return h + matchHtml();
+}
+/* Mitspieler: weitere eingetragene Spieler derselben Mannschaft (einmal je Verein geladen) */
+function matesHtml(p0, picked) {
+  if (find.matesFor !== p0.verein) {
+    find.matesFor = p0.verein; find.mates = [];
+    pDb('', p0.verein).then(l => { if (find.matesFor !== p0.verein) return; find.mates = l; if (l.length > 1 && !$('setup').hidden) render(); });
+  }
+  const l = find.mates.filter(p => p.art === p0.art && p.nr === p0.nr && !picked.includes(p.id) && !p.hidden);
+  if (!l.length) return '';
+  return '<div class="grp"><span>Mitspieler · ' + esc(teamText(p0)) + '</span></div><div class="plist">' + l.slice(0, 30).map(p => '<button type="button" class="prow" data-pick="pm:' + esc(p.id) + '" aria-pressed="false">' + avatar(p.id) +
+    '<span><b>' + esc(fullName(p)) + '</b><span class="ps">' + esc((p.num ? '#' + p.num + ' · ' : '') + POS_SHORT[p.pos]) + '</span></span><span></span>' + checkMark(p.id) + '</button>').join('') + '</div>';
 }
 function matchHtml() {
   let h = '';
@@ -427,6 +439,12 @@ export function initSetup() {
       const [, id, pos] = k.split(':').length > 3 ? [null, k.slice(3, k.lastIndexOf(':')), k.slice(k.lastIndexOf(':') + 1)] : k.split(':');
       sel.poss[id] = pos; if (id === sel.p) sel.pos = pos;
       render(); return;
+    }
+    /* Mitspieler antippen = automatisch mehrere Spieler */
+    if (k.startsWith('pm:') && PL[k.slice(3)] && !sel.lock) {
+      if (!sel.multi) { sel.multi = true; sel.ps = sel.p ? [sel.p] : []; sel.poss = sel.p ? { [sel.p]: sel.pos } : {}; }
+      if (togglePick(k.slice(3))) render();
+      return;
     }
     if (k.startsWith('p:') && sel.multi && !sel.lock) {
       if (b.classList.contains('su-pick')) find.q = '';

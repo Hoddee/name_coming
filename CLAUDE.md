@@ -121,7 +121,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Gefundene Spieler kommen per `addExtPlayer` nur in `PL` (nicht `PLAYER_LIST`), ihr Verein per `registerClub` in `CL` (generiertes Wappen, `lg: null`);
   gemerkt in `KEYS.ext` und schon in `players.js` beim Start eingetragen (sonst verwirft `loadGame` ein laufendes Spiel). `loadGames` lädt unbekannte
   Spieler/Vereine über `setRefLoader` nach. Datenschutz: „Ausblenden lassen“ im Profil (`rpc/spieler_ausblenden`, wirkt sofort), `hidden` blendet überall aus.
-  Neues Spiel: Suchfeld „Spieler suchen“ und „Gegner suchen“ (Vereinssuche); bei Mannschaften außerhalb der Kreisliga keine Kreisliga-Kacheln. Test: `tests/spielersuche.js`.
+  Neues Spiel: Suchfeld „Spieler suchen“ und „Gegner suchen“ (Vereinssuche), „Mitspieler“ = weitere Eingetragene derselben Mannschaft (`pm:` schaltet „Mehrere“ an); bei Mannschaften außerhalb der Kreisliga keine Kreisliga-Kacheln. Test: `tests/spielersuche.js`.
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Team (`manager`; die alte Ansicht `kader` ist noch registriert, aber ohne Menüpunkt), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
   `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.
