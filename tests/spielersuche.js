@@ -41,6 +41,8 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   const prof = await p.evaluate(() => ({ n: (document.querySelector('#profile .pnn') || {}).textContent, club: (document.querySelector('#profile .pcl b') || {}).textContent, pts: (document.querySelector('#profile .kb-g b') || {}).textContent }));
   ok(prof.n === 'Meier' && prof.club === '1. FC 08 Birkenfeld', 'Profil: ' + JSON.stringify(prof));
   ok(prof.pts === '245', 'Punkte aus dem gespeicherten Spiel: ' + prof.pts);
+  await p.waitForTimeout(400);
+  ok(await p.$('#profile .su-fol [data-open="p:sp0123456787"]') && !(await p.$('#profile .su-fol [data-open="p:sp0123456788"]')), 'Profil: Mitspieler Paul (nicht Jonas)');
   await c('[data-pf="play"]'); await p.waitForTimeout(700);
   ok(await p.evaluate(() => !document.querySelector('.lgseg')), 'keine Kreisliga-Auswahl bei fremder Mannschaft');
   // Mitspieler derselben Mannschaft (Herren II): Paul ja, Jonas (Herren I) nein

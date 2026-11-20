@@ -10,19 +10,19 @@ import { recordTeam, scoreText } from '../core/game.js';
 import { marketOf, byDate } from '../core/market.js';
 import { statusIcon } from '../core/icons.js';
 import { games, loadGames, loadPlayerEvents } from '../services/api.js';
-import { profileChart, scrollToCurrent, playerStats, skeleton } from './components.js';
+import { profileChart, scrollToCurrent, playerStats, skeleton, avatar } from './components.js';
 import { registerView, show, back, nav } from '../router.js';
 import { SEASON } from '../config.js';
 import { requestNewGame } from './start.js';
 import { profileTradeHtml, trade } from './manager.js';
 import { onManagerChange } from '../services/manager.js';
 import { bindSheet } from './sheet.js';
-import { teamText, hideSpieler, reportSpieler, isFollowed, toggleFollow } from '../services/spieler.js';
+import { searchDb as pDb, teamText, hideSpieler, reportSpieler, isFollowed, toggleFollow } from '../services/spieler.js';
 import { isLoggedIn } from '../services/auth.js';
 import { toast, buzz, shareLink } from '../core/util.js';
 import { APP_NAME } from '../config.js';
 
-const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null, ask: '' };
+const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null, ask: '', mates: [], matesFor: '' };
 const TABS = [['ov', 'Übersicht'], ['perf', 'Leistung'], ['mw', 'Marktwert']];
 const TAB_ICON = {
   ov: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>',
@@ -145,6 +145,21 @@ function privacyHtml() {
   return '<div class="su-plinks"><button type="button" class="lnk inline" data-pf="ask:report">Fehler melden</button><button type="button" class="lnk inline" data-pf="ask:hide">Ausblenden lassen</button></div>';
 }
 
+/* Mitspieler eines eingetragenen Spielers (gleiche Mannschaft), einmal je Verein geladen */
+function matesHtml(p) {
+  if (state.matesFor !== p.verein) {
+    state.matesFor = p.verein; state.mates = [];
+    pDb('', p.verein).then(l => { if (state.matesFor !== p.verein) return; state.mates = l; if (nav.current === 'profile' && l.length > 1) render(); }, () => {});
+  }
+  const l = state.mates.filter(o => o.id !== p.id && o.art === p.art && o.nr === p.nr && !o.hidden);
+  if (!l.length) return '';
+  return '<h2>Mitspieler</h2><div class="su-fol" data-noswipe>' + l.slice(0, 20).map(o => {
+    const a = playerStats(o.id).avg;
+    return '<button type="button" class="su-folc tc"' + (a != null ? ' data-tier="' + tierOf(a) + '"' : '') + ' data-open="p:' + esc(o.id) + '">' + avatar(o.id) +
+      '<b>' + esc(o.n) + '</b><span>' + (a != null ? a : '–') + '</span></button>';
+  }).join('') + '</div>';
+}
+
 function html() {
   const id = state.id, p = PL[id];
   if (!p || p.hidden) return '<p class="hmsg">Spieler nicht gefunden.</p>';
@@ -152,7 +167,7 @@ function html() {
   let h = '';
   if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c, p) + overview(p, id, played, mw) + profileTradeHtml(id) +
     (p.guest ? '' : '<div class="duo su-share"><button type="button" class="btn' + (isFollowed(id) ? ' on' : '') + '" data-pf="follow" aria-pressed="' + isFollowed(id) + '">' + (isFollowed(id) ? 'Gefolgt ✓' : 'Folgen') + '</button>' +
-      '<button type="button" class="btn" data-pf="share">Teilen</button></div>') + (p.ext ? privacyHtml() : '') + '</div>';
+      '<button type="button" class="btn" data-pf="share">Teilen</button></div>') + (p.ext ? matesHtml(p) + privacyHtml() : '') + '</div>';
   else h += '<div class="pbody">' + miniHead(p) + (state.tab === 'perf' ? performance(id, played, p) : marketTab(id, played, mw)) + '</div>';
   if (games.busy && !games.list) h += skeleton(3);
   return h;
