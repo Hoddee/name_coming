@@ -7,7 +7,8 @@
 .su-bar:active { background: var(--raised); }
 
 /* Suche */
-.su-search { position: sticky; top: calc(56px + env(safe-area-inset-top, 0px)); z-index: 3; padding: 8px 0 10px; background: var(--bg); }
+.su-search { position: sticky; top: calc(56px + env(safe-area-inset-top, 0px)); z-index: 3; margin: 0 -16px; padding: 8px 16px 10px;
+  background: radial-gradient(120% 60% at 50% -10%, rgba(var(--acc-rgb), .16), transparent 60%) no-repeat, var(--bg); background-attachment: fixed; }
 .su-in { position: relative; display: flex; align-items: center; }
 .su-in svg { position: absolute; left: 18px; color: var(--muted); pointer-events: none; }
 .su-in .fi { min-height: 52px; border-radius: 26px; padding: 0 46px 0 48px; }
