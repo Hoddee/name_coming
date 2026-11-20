@@ -2,6 +2,8 @@
 -- Nur anlegen, nichts an bestehenden Tabellen ändern (gemeinsame Datenbank mit Version 1).
 -- Wechsel werden nur angefügt: kein Ändern, kein Löschen. Der Zeitpunkt (created_at) kommt vom Server,
 -- Preise werden nie gespeichert – die App rechnet sie aus den Spielen nach, die zu diesem Zeitpunkt schon gespeichert waren.
+-- Mehrfach ausführen schadet nicht. Rückgängig machen (löscht alle Manager-Daten):
+--   drop table if exists public.manager_moves, public.manager_teams; drop function if exists public.manager_moves_limit();
 
 create table if not exists public.manager_moves (
   id bigint generated always as identity primary key,
@@ -22,10 +24,11 @@ create policy manager_moves_read on public.manager_moves for select using (true)
 drop policy if exists manager_moves_insert on public.manager_moves;
 create policy manager_moves_insert on public.manager_moves for insert to authenticated
   with check (user_id = auth.uid());
--- created_at darf beim Einfügen nicht mitgeschickt werden (sonst könnte man rückdatieren)
-revoke insert on public.manager_moves from anon, authenticated;
-grant insert (season, p, a) on public.manager_moves to authenticated;
+-- Supabase gibt neuen Tabellen alle Rechte (auch Ändern/Löschen/Leeren) – erst alles weg, dann nur Lesen und Einfügen.
+-- Einfügen nur mit season, p, a: created_at und user_id kann niemand mitschicken (sonst könnte man rückdatieren).
+revoke all on public.manager_moves from anon, authenticated;
 grant select on public.manager_moves to anon, authenticated;
+grant insert (season, p, a) on public.manager_moves to authenticated;
 
 -- Höchstens 40 Wechsel pro Tag und Nutzer (Schutz vor Spam)
 create or replace function public.manager_moves_limit() returns trigger
@@ -38,6 +41,7 @@ begin
   return new;
 end $$;
 drop trigger if exists manager_moves_limit on public.manager_moves;
+revoke all on function public.manager_moves_limit() from public, anon, authenticated;
 create trigger manager_moves_limit before insert on public.manager_moves for each row execute function public.manager_moves_limit();
 
 create table if not exists public.manager_teams (
@@ -58,5 +62,7 @@ create policy manager_teams_insert on public.manager_teams for insert to authent
 drop policy if exists manager_teams_update on public.manager_teams;
 create policy manager_teams_update on public.manager_teams for update to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+revoke all on public.manager_teams from anon, authenticated;
 grant select on public.manager_teams to anon, authenticated;
-grant insert, update on public.manager_teams to authenticated;
+-- update auch auf season: das Upsert der App (on_conflict) setzt alle mitgeschickten Spalten
+grant insert (season, name), update (season, name) on public.manager_teams to authenticated;
