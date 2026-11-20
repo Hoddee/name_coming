@@ -3,7 +3,7 @@ const L = require('./lib.js');
 (async () => {
   const t = await L.setup(); const { p, c } = t;
   const st = () => p.evaluate(() => ({ view: [...document.querySelectorAll('body > section, body > div[id]')].filter(e => !e.hidden && e.id).map(e => e.id).join(','), bar: !document.getElementById('tabbar').hidden, cls: document.body.className }));
-  await c('[data-tb="kader"]'); await p.waitForTimeout(300); console.log('Kader:', await st());
+  await c('[data-tb="manager"]'); await p.waitForTimeout(300); console.log('Team:', await st());
   await c('[data-tb="hof"]'); await p.waitForTimeout(300); console.log('HoF:', await st());
   await p.evaluate(() => history.back()); await p.waitForTimeout(400); console.log('Zurück-Taste:', await st());
   await c('[data-tb="me"]'); await p.waitForTimeout(300); console.log('Ich:', await st());
