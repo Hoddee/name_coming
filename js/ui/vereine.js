@@ -29,7 +29,7 @@ function initials(n) {
   return main.slice(0, 2);
 }
 const credit = () => '<p class="vr-src">Vereinsdaten: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap-Mitwirkende</a> (ODbL)' +
-  (/wikidata/i.test(vr.quelle) ? ', Wikidata' : '') + '</p>';
+  (/wikidata/i.test(vr.quelle) ? ', Wikidata' : '') + (/overture/i.test(vr.quelle) ? ', <a href="https://docs.overturemaps.org/attribution/" target="_blank" rel="noopener">Overture Maps</a>' : '') + '</p>';
 
 /* ---------- Suche ---------- */
 function searchHtml() {
