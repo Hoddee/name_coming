@@ -85,7 +85,7 @@ export function sparkline(series) {
   let min = Math.min(...vs), max = Math.max(...vs);
   if (max === min) { max += 1; min -= 1; }
   const pts = series.map((x, i) => [(i / (series.length - 1)) * W, H - 6 - (x.v - min) / (max - min) * (H - 12)]);
-  const up = vs[vs.length - 1] >= vs[0], c = up ? '#B6F04A' : '#FF5C7A', id = 'sg' + (++sparkId);
+  const up = vs[vs.length - 1] >= vs[0], c = up ? '#3FD8E8' : '#FF5A2A', id = 'sg' + (++sparkId);
   const line = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
   const last = pts[pts.length - 1];
   return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".28"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>' +

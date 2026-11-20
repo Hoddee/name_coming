@@ -47,7 +47,7 @@ Eigene Wertung (`js/data/actions.js`), ausgelegt auf das, was man am Spielfeldra
 | Patzer | vor Torschuss −12 · Großchance versemmelt −15 · vor Gegentor −40 · Eigentor −50 |
 
 Dazu rund 40 kleinere Aktionen (Zweikampf, Ball erobert, Glanzparade, Meckern …).
-Punkte-Stufen: unter 0 · 0–79 · 80–159 · 160–299 · ab 300.
+Punkte-Stufen wie in Version 1: unter 0 rot · 0–99 orange · 100–199 hellgrün · 200–399 Kreo-Blau · ab 400 gold.
 
 **Marktwert:** je Spiel Bewertungspunkte (1 Punkt = 1 %): Leistung (Punkte − 60) / 25 (−4 bis +6), Einsatz (90′ +2, ab 45′ +1),
 Ergebnis (±1), Zu null (+1), Form (+1, wenn 30 Punkte über dem eigenen Schnitt). Wird aus allen Spielen neu berechnet.

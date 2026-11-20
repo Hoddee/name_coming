@@ -7,7 +7,7 @@ export function esc(s) {
 /* Punkte mit Vorzeichen – immer als Zahl, damit nie fremder Text in die Seite gelangt */
 export const fmt = v => { const n = Number(v) || 0; return n > 0 ? '+' + n : String(n); };
 export const cls = n => (n < 0 ? 'neg' : n === 0 ? 'zero' : n >= 15 ? 'hi' : 'pos');
-export const tierOf = n => (n < 0 ? 'neg' : n < 80 ? 'low' : n < 160 ? 'mid' : n < 300 ? 'high' : 'top');
+export const tierOf = n => (n < 0 ? 'neg' : n < 100 ? 'low' : n < 200 ? 'mid' : n < 400 ? 'high' : 'top');
 export const pad2 = n => (n < 10 ? '0' : '') + n;
 
 export function clock(sec) {

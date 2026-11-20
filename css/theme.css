@@ -93,7 +93,7 @@ body { font-size: 15px; }
 .pw-m img { width: 22px; height: 22px; object-fit: contain; }
 .gr { grid-template-columns: 30px 48px minmax(0, 1fr) auto; }
 .rk { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: rgba(225, 230, 245, .07); font: 800 15px var(--font-display); color: var(--muted); }
-.rk.r1 { background: rgba(255, 200, 61, .16); color: #FFC83D; } .rk.r2 { background: rgba(201, 209, 217, .14); color: #C9D1D9; } .rk.r3 { background: rgba(205, 139, 80, .16); color: #CD8B50; }
+.rk.r1 { background: rgba(225, 190, 56, .16); color: #E1BE38; } .rk.r2 { background: rgba(201, 209, 217, .14); color: #C9D1D9; } .rk.r3 { background: rgba(205, 139, 80, .16); color: #CD8B50; }
 .gi b { font-family: var(--font-body); font-weight: 600; font-size: 16px; }
 .gs { font-family: var(--font-body); }
 .gv { font: 800 24px/1 var(--font-display); letter-spacing: -.02em; }
