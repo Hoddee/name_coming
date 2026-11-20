@@ -15,7 +15,7 @@
 /* Toast */
 .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); z-index: 60; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 12px; background: #e9edf2; color: #0B0E17; font: 600 14px var(--font-body); box-shadow: 0 12px 30px rgba(0, 0, 0, .5); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
-.toast.bad { background: #FF5C7A; color: #fff; }
+.toast.bad { background: #FF5A2A; color: #fff; }
 
 /* Formulare */
 .form { display: grid; gap: 12px; }
@@ -27,8 +27,8 @@
 .fi:focus { outline: none; border-color: var(--kb-red); box-shadow: 0 0 0 3px rgba(var(--kb-red-rgb), .2); }
 select.fi { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 36px; }
 input[type="date"].fi { color-scheme: dark; }
-.form-msg { padding: 10px 12px; border-radius: 10px; background: rgba(182, 240, 74, .12); color: var(--hi); font-size: 14px; }
-.form-msg.bad { background: rgba(255, 92, 122, .12); color: var(--neg); }
+.form-msg { padding: 10px 12px; border-radius: 10px; background: rgba(63, 216, 232, .12); color: var(--hi); font-size: 14px; }
+.form-msg.bad { background: rgba(255, 90, 42, .12); color: var(--neg); }
 .chk { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink); }
 .chk input { width: 22px; height: 22px; accent-color: var(--kb-red); }
 .segl { flex: 1; position: relative; }

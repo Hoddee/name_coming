@@ -101,7 +101,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Limette `--acc2` (#C9FF4A) nur als kleiner Ball-Punkt (Logo, vor Überschriften, aktives Menü-Symbol), Rot (`--live`, #FF4D6D) nur für Live.
   Hinter Fotos/Kopfbereichen ein violetter Schein (`glow()` in `share.js` für die Teilen-Bilder) – kein Punkteraster.
   `--kb-red` ist ein alter Variablenname und = Akzentfarbe. Punkte-Stufen `data-tier` = neg/low/mid/high/top (`tierOf` in util.js:
-  <0, 0–79, 80–159, 160–299, ab 300), Farben Koralle/Schiefer/Cyan/Limette/Gold.
+  <0, 0–99, 100–199, 200–399, ab 400), Farben wie in Version 1 (Rot/Orange/Hellgrün/–/Gold), nur das frühere Dunkelgrün ist Kreo-Blau #3FD8E8 (Wunsch des Nutzers).
   Schriften: „Kreo Display“ = Sora (variabel, `assets/fonts/sora-var.woff2`) für Überschriften und Zahlen, Text in Inter Tight.
   Überschriften und Beschriftungen in normaler Schreibweise (keine Großbuchstaben-Zeilen).
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Kader (`kader`, in `start.js`), Spiel (laufendes Spiel oder neues),

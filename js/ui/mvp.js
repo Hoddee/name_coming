@@ -124,7 +124,7 @@ function countUp(el, ms) {
 /* Konfetti in Stufenfarben */
 function confetti(host, color) {
   if (reduced() || !host.animate) return;
-  const cols = [color, '#F6F7FC', '#FFC83D', '#B6F04A'];
+  const cols = [color, '#F6F7FC', '#E1BE38', '#3FD8E8'];
   for (let i = 0; i < 46; i++) {
     const c = document.createElement('i');
     c.className = 'mvp-cf'; c.style.background = cols[i % cols.length];

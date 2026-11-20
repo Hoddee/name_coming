@@ -109,7 +109,7 @@ function mwChart(s) {
   let lo = Math.min(...vs), hi = Math.max(...vs); if (hi === lo) { hi += 1; lo -= 1; }
   const X = t => ((t - t0) / Math.max(1, t1 - t0)) * W, Y = v => H - 10 - ((v - lo) / (hi - lo)) * (H - 20);
   const d = s.map((x, i) => (i ? 'L' : 'M') + X(x.t).toFixed(1) + ' ' + Y(x.v).toFixed(1)).join('');
-  const up = s[s.length - 1].v >= s[0].v, c = up ? '#B6F04A' : '#FF5C7A';
+  const up = s[s.length - 1].v >= s[0].v, c = up ? '#3FD8E8' : '#FF5A2A';
   const pick = state.pick != null && s[state.pick] ? s[state.pick] : null;
   return '<svg class="mwc" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" data-pf="mwchart"><path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>' +
     (pick ? '<line x1="' + X(pick.t).toFixed(1) + '" x2="' + X(pick.t).toFixed(1) + '" y1="0" y2="' + H + '" stroke="#F1F3FA" stroke-width="1" vector-effect="non-scaling-stroke"/>' : '') + '</svg>';

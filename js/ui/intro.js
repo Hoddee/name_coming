@@ -9,7 +9,7 @@ import { ACT } from '../core/game.js';
 import { qrSvg } from '../core/qr.js';
 import { KEYS, APP_URL, APP_NAME } from '../config.js';
 
-const IMG = 'assets/img/tut/', V = '.webp?v=4'; // neue Bilder: v hochzählen (der Service Worker hält Bilder sonst für immer)
+const IMG = 'assets/img/tut/', V = '.webp?v=5'; // neue Bilder: v hochzählen (der Service Worker hält Bilder sonst für immer)
 /* Folien: { s: Screenshot der App } oder { f: Foto von uns, chips: [[Aktion, Punkte]], inset: kleiner Screenshot, logo } */
 const APP = [
   { f: 'f-duell', logo: 1, t: 'Willkommen bei Kreo', x: 'Unsere Kreisliga mit Punkten, Marktwerten und Live-Ticker – direkt vom Spielfeldrand.' },

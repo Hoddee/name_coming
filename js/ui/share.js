@@ -7,7 +7,7 @@ import { CL, crestUrl } from '../data/clubs.js';
 import { tierOf, dateLong } from '../core/util.js';
 import { APP_NAME } from '../config.js';
 
-export const TIER_COLOR = { neg: '#FF5C7A', low: '#8A93B0', mid: '#3FD8E8', high: '#B6F04A', top: '#FFC83D' };
+export const TIER_COLOR = { neg: '#E0343F', low: '#ED8928', mid: '#9CE04A', high: '#3FD8E8', top: '#E1BE38' };
 const imgCache = new Map();
 
 /* Namen etwas schmaler (nur wenn die Schrift es kann); ältere Browser zeichnen normal breit */
