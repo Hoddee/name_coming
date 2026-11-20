@@ -14,6 +14,8 @@ import { profileChart, scrollToCurrent, playerStats, skeleton } from './componen
 import { registerView, show, back, nav } from '../router.js';
 import { SEASON } from '../config.js';
 import { requestNewGame } from './start.js';
+import { profileTradeHtml, trade } from './manager.js';
+import { onManagerChange } from '../services/manager.js';
 import { bindSheet } from './sheet.js';
 
 const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null };
@@ -130,7 +132,7 @@ function html() {
   if (!p) return '';
   const c = CL[p.c], played = byDate((games.list || []).filter(g => g.player === id)), mw = marketOf(id, games.list || []);
   let h = '';
-  if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c) + overview(p, id, played, mw) + '</div>';
+  if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c) + overview(p, id, played, mw) + profileTradeHtml(id) + '</div>';
   else h += '<div class="pbody">' + miniHead(p) + (state.tab === 'perf' ? performance(id, played, p) : marketTab(id, played, mw)) + '</div>';
   if (games.busy && !games.list) h += skeleton(3);
   return h;
@@ -149,6 +151,7 @@ export function render() {
 export function initProfile() {
   $('profileBack').addEventListener('click', () => back());
   registerView('profile', { elements: ['profile'], render, overlay: true });
+  onManagerChange(() => { if (nav.current === 'profile') render(); });
   const scroller = $('profileScroll');
   bindSheet($('profile'), scroller, () => back());
   /* Kompakter Kopf erscheint, sobald das Foto aus dem Bild gescrollt ist */
@@ -161,6 +164,7 @@ export function initProfile() {
     if (!b) return;
     const k = b.getAttribute('data-pf');
     if (k === 'play') requestNewGame({ player: state.id });
+    else if (k.startsWith('mg:')) { if (!b.disabled) trade(state.id, k.slice(3)).then(() => { if (nav.current === 'profile') render(); }); }
     else if (k.startsWith('t:')) { state.tab = k.slice(2); state.pick = null; scroller.scrollTop = 0; render(); }
     else if (k.startsWith('r:')) { state.range = k.slice(2); state.pick = null; render(); }
     else if (k === 'mwchart') {

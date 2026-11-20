@@ -84,3 +84,8 @@
 .lg b { color: var(--ink); font-weight: 600; }
 .lg ul { padding-left: 18px; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .lg-st { margin-top: 24px; font-size: 12px !important; color: var(--muted2) !important; }
+/* Kaufen/Verkaufen im Spielerprofil */
+.mg-pf { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(var(--acc-rgb), .22), rgba(var(--acc-rgb), .05)), var(--surface); }
+.mg-pf > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mg-pf small { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mg-pf b { font: 700 16px var(--font-head); letter-spacing: -.02em; }

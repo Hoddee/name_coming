@@ -137,10 +137,10 @@ function askName(cur) {
   });
 }
 
-async function trade(p, a) {
+export async function trade(p, a) {
   if (ui.busy) return;
   const st = myState(), v = marketOf(p, games.list).v, n = fullName(PL[p]);
-  if (a === 'buy' && buyBlock(st, p, games.list)) return;
+  if (a === 'buy' && (buyBlock(st, p, games.list) || PL[p].active === false)) return;
   if (a === 'sell' && !st.team.includes(p)) return;
   const ok = await ask(n + (a === 'buy' ? ' kaufen?' : ' verkaufen?'), eur(v), a === 'buy' ? 'Kaufen' : 'Verkaufen');
   if (!ok) return;
@@ -169,6 +169,19 @@ export function initManager() {
       if (n && n.trim()) { try { await setTeamName(n); } catch (err) { toast('Nicht gespeichert', 'bad'); } render(); }
     }
   });
+}
+
+/* Zeile im Spielerprofil: kaufen bzw. verkaufen (data-pf="mg:buy|sell") */
+export function profileTradeHtml(id) {
+  const pl = PL[id];
+  if (!pl || pl.guest || !games.list) return '';
+  if (!mgr.loaded) { if (!mgr.busy) loadManagers(); return ''; }
+  const st = myState();
+  if (!st) return '';
+  const own = st.team.includes(id), block = own ? '' : (pl.active === false ? 'Nicht aktiv' : buyBlock(st, id, games.list));
+  return '<div class="mg-pf"><span><small>' + esc(st.name) + '</small><b>' + (own ? 'Im Team' : mio(st.budget) + ' Budget') + '</b></span>' +
+    (own ? '<button type="button" class="mg-act sell" data-pf="mg:sell">Verkaufen</button>'
+      : '<button type="button" class="mg-act buy" data-pf="mg:buy"' + (block ? ' disabled' : '') + '>' + (block || 'Kaufen') + '</button>') + '</div>';
 }
 
 /* Karte auf der Liga-Seite */
