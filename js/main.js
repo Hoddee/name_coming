@@ -19,7 +19,7 @@ import { initTabbar } from './ui/tabbar.js';
 import { initMvp } from './ui/mvp.js';
 import { initManager } from './ui/manager.js';
 import { initLegal } from './ui/legal.js';
-import { initVereine } from './ui/vereine.js';
+import { initVereine, openVerein } from './ui/vereine.js';
 import { initFun } from './ui/fun.js';
 import { initSuche, openPlayerLink } from './ui/suche.js';
 import { startTraffic } from './services/traffic.js';
@@ -90,6 +90,13 @@ const pParam = new URLSearchParams(location.search).get('p');
 if (pParam) {
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (/^[A-Za-z0-9_-]{1,64}$/.test(pParam)) openPlayerLink(pParam);
+}
+
+/* Vereins-Link: ?v=<Vereins-ID> */
+const vParam = new URLSearchParams(location.search).get('v');
+if (vParam) {
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (/^[a-z0-9_-]{2,40}$/.test(vParam)) openVerein(vParam);
 }
 
 /* Startbildschirm ausblenden (mindestens kurz sichtbar, damit er nicht flackert); beim ersten Mal die Einführung */

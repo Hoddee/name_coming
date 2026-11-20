@@ -367,6 +367,8 @@ async function uploadIfAny(which) {
 
 export function initSetup() {
   registerView('setup', { elements: ['setup'], render });
+  /* Enter in den Suchfeldern schließt nur die Tastatur */
+  $('setup').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.target.id === 'stQ' || e.target.id === 'soQ')) { e.preventDefault(); e.target.blur(); } });
   $('setup').addEventListener('input', e => {
     if (e.target.id === 'stQ') { onFind(e.target.value); return; }
     if (e.target.id === 'soQ') {

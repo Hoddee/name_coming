@@ -94,7 +94,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
 - Live-Link: `?live=<Spiel-ID>` (= uid des ersten Spielers) öffnet den Live-Ticker, nach dem Abpfiff das gespeicherte Spiel.
   Team-Bild (`shareTeamCard` in `share.js`) bei Spielen mit mehreren Spielern.
 - `js/ui/feel.js` + `css/feel.css` – App-Gefühl: Druck-Rückmeldung, Rand-Wischen = Zurück (nur iOS-Home-Bildschirm),
-  Ziehen zum Aktualisieren (`REFRESH` je Ansicht), Service-Worker-Registrierung mit Update-Prüfung beim Zurückholen der App.
+  Ziehen zum Aktualisieren (`REFRESH` je Ansicht), Blätter schließen per Ziehen oder schnellem Wisch (`sheet.js`), Service-Worker-Registrierung mit Update-Prüfung beim Zurückholen der App.
   Der Router merkt sich die Scrollposition je Ansicht und lässt Ansichten hereingleiten (`slideIn`); Ladezustände mit `skeleton()`.
 - Installierte App (Home-Bildschirm) testen: iOS weckt sie nur auf statt neu zu starten – Updates kommen über `feel.js`.
 - Look (Kreo 2.0): `css/brand.css` ist die Grundschicht, `css/kreo.css` wird zuletzt geladen und setzt die Marke –
@@ -121,6 +121,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Gefundene Spieler kommen per `addExtPlayer` nur in `PL` (nicht `PLAYER_LIST`), ihr Verein per `registerClub` in `CL` (generiertes Wappen, `lg: null`);
   gemerkt in `KEYS.ext` und schon in `players.js` beim Start eingetragen (sonst verwirft `loadGame` ein laufendes Spiel). `loadGames` lädt unbekannte
   Spieler/Vereine über `setRefLoader` nach. Datenschutz: „Ausblenden lassen“ im Profil (`rpc/spieler_ausblenden`, wirkt sofort), `hidden` blendet überall aus.
+  Vereinsseite: Live-Spiele des Vereins (`liveTilesHtml(filter)`), Kader nach Mannschaft (`kaderHtml`), Teilen-Link `?v=<Vereins-ID>` (main.js); Profil: Leiste „Mitspieler“.
   Neues Spiel: Suchfeld „Spieler suchen“ und „Gegner suchen“ (Vereinssuche), „Mitspieler“ = weitere Eingetragene derselben Mannschaft (`pm:` schaltet „Mehrere“ an); bei Mannschaften außerhalb der Kreisliga keine Kreisliga-Kacheln. Test: `tests/spielersuche.js`.
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Team (`manager`; die alte Ansicht `kader` ist noch registriert, aber ohne Menüpunkt), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.

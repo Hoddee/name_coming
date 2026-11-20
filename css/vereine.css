@@ -62,3 +62,19 @@
 .fun-hist span { display: grid; }
 .fun-hist small { color: var(--muted); }
 .fun-hist em { font: 700 18px var(--font-display); font-style: normal; color: var(--ct, var(--ink)); }
+
+/* Kader auf der Vereinsseite nach Mannschaft */
+.vr-kh { margin: 14px 0 8px; font: 600 13px var(--font-body); color: var(--muted); }
+.vr-kh:first-of-type { margin-top: 2px; }
+.vr-kh small { margin-left: 4px; font-weight: 500; opacity: .7; }
+.vr-none { margin: 2px 0 6px; color: var(--muted); font-size: 14px; }
+
+/* Live-Spiele auf der Vereinsseite: Überschrift wie die anderen Abschnitte, nur in Live-Rot */
+#verein h2.lvh { margin-top: 22px !important; }
+#verein h2.lvh::before { display: none; }
+#verein .lvh .lv-live { font: 600 14px var(--font-head); color: var(--live) !important; gap: 8px; }
+#verein .lvh .lv-live i { width: 8px; height: 8px; }
+.vr-start small.vr-live { display: flex; align-items: center; gap: 6px; color: var(--live); }
+.vr-start small.vr-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: vrPulse 1.6s ease-in-out infinite; }
+@keyframes vrPulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .vr-start small.vr-live::before { animation: none; } }

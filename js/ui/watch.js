@@ -36,8 +36,8 @@ function tile(x, wide) {
     (last ? '<em><i class="' + cls(last.p) + '">' + fmt(last.p) + '</i> ' + esc(last.l) + ' · ' + esc(last.r) + '</em>' : '<em>Noch keine Aktion</em>') + '</span>' +
     '<span class="lv-p"><b>' + d.t + '</b><small>Punkte</small></span></span></button>';
 }
-export function liveTilesHtml() {
-  const list = liveList();
+export function liveTilesHtml(filter = null) {
+  const list = filter ? liveList().filter(x => filter(x.d)) : liveList();
   if (!list.length) return '';
   return '<h2 class="lvh"><span class="lv-live"><i></i>Jetzt live</span>' + (list.length > 1 ? '<em>' + list.length + ' Spieler</em>' : '') + '</h2>' +
     (list.length === 1 ? tile(list[0], true) : '<div class="lvs">' + list.map(x => tile(x, false)).join('') + '</div>');

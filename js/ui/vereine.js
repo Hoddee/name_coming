@@ -1,18 +1,22 @@
 /* Vereinssuche: ganz Deutschland, Vereine mit Mannschaften und Liga.
    Ansichten: vereine (Suche), verein (ein Verein mit Mannschaften), vneu (Verein anlegen).
    Daten und Prüfung in services/vereine.js, Suchlogik in core/vsearch.js. Klassen mit vr-. */
-import { $, esc, toast, buzz, applyTier } from '../core/util.js';
+import { $, esc, toast, buzz, applyTier, shareLink } from '../core/util.js';
+import { APP_NAME } from '../config.js';
 import { registerView, show, nav } from '../router.js';
 import { isLoggedIn, onAuthChange } from '../services/auth.js';
-import { crestUrl } from '../data/clubs.js';
+import { CL, crestUrl } from '../data/clubs.js';
+import { fullName } from '../data/players.js';
 import { LAENDER, VERBAENDE, verbaendeIn, verbandOf, KLASSEN, ARTEN, JUGEND } from '../data/verbaende.js';
 import { roman, score } from '../core/vsearch.js';
 import { vr, loadVereine, searchLocal, searchDb, merged, vereinById, fetchVerein, loadTeams, teamLiga, saveTeam, createVerein, report, checkOrt, myClub, setMyClub } from '../services/vereine.js';
-import { skeleton, gameRow } from './components.js';
+import { skeleton, gameRow, playerStats } from './components.js';
 import { games, loadGames } from '../services/api.js';
 import { recordTeam } from '../core/game.js';
 import { byDate } from '../core/market.js';
-import { vereinKader, addRecent, sp } from '../services/spieler.js';
+import { vereinKader, addRecent, sp, teamText } from '../services/spieler.js';
+import { liveTilesHtml } from './watch.js';
+import { onLive } from '../services/live.js';
 import { spielerRow, openNeu } from './suche.js';
 
 const ui = { q: '', db: [], dbFor: '', id: null, teams: null, teamsErr: false, kader: null, kRev: 0, form: '', busy: false, err: '', neu: null };
@@ -104,6 +108,23 @@ function reportForm() {
     (ui.err ? '<div class="form-msg bad">' + esc(ui.err) + '</div>' : '') +
     '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>Senden</button><button type="button" class="btn" data-vr="close">Abbrechen</button></div></form>';
 }
+/* Kader nach Mannschaft gruppiert, darin nach Punkteschnitt (ohne Spiele unten, dann nach Name) */
+const ART_ORDER = { herren: 0, frauen: 1, ah: 2 };
+function kaderHtml(list) {
+  const groups = new Map();
+  for (const p of list) {
+    const key = p.ext ? (ART_ORDER[p.art] || 0) * 10 + p.nr : -1, label = p.ext ? teamText(p) : ((CL[p.c] || {}).n || 'Herren');
+    const k = key + '|' + label;
+    if (!groups.has(k)) groups.set(k, { key, label, l: [] });
+    groups.get(k).l.push(p);
+  }
+  const gs = [...groups.values()].sort((a, b) => a.key - b.key);
+  /* „Herren“ wird zu „Herren I“, sobald es auch eine „Herren II“ gibt */
+  for (const g of gs) if (g.key >= 0 && g.key % 10 === 1 && gs.some(o => o !== g && Math.floor(o.key / 10) === Math.floor(g.key / 10) && o.key >= 0)) g.label += ' I';
+  const avgOf = p => { const a = playerStats(p.id).avg; return a == null ? -1e9 : a; };
+  return gs.map(g => (gs.length > 1 ? '<div class="vr-kh">' + esc(g.label) + ' <small>' + g.l.length + '</small></div>' : '') +
+    '<div class="su-list">' + g.l.sort((a, b) => avgOf(b) - avgOf(a) || fullName(a).localeCompare(fullName(b), 'de')).map(p => { const n = playerStats(p.id).n; return spielerRow(p, 'data-open="p:' + esc(p.id) + '"', n ? n + (n === 1 ? ' Spiel' : ' Spiele') : 'Noch kein Spiel'); }).join('') + '</div>').join('');
+}
 function vereinHtml() {
   const v = vereinById(ui.id);
   if (!v) return '<p class="hmsg">Verein nicht gefunden.</p>';
@@ -111,17 +132,22 @@ function vereinHtml() {
   let h = '<div class="vr-head"><span class="vr-ic big" aria-hidden="true">' + esc(initials(v.name)) + '</span><h1>' + esc(v.name) + '</h1>' +
     '<p>' + esc(where(v)) + (vb ? ' · ' + esc(VERBAENDE[vb][0]) : '') + '</p>' +
     (v.web ? '<a class="vr-web" href="https://' + esc(v.web) + '" target="_blank" rel="noopener nofollow">' + esc(v.web.replace(/\/.*$/, '')) + '</a>' : '') + '</div>' +
-    '<button type="button" class="btn full' + (mine ? '' : ' primary') + '" data-vr="mine">' + (mine ? 'Mein Verein ✓' : 'Als mein Verein merken') + '</button>';
+    '<div class="duo vr-duo"><button type="button" class="btn' + (mine ? '' : ' primary') + '" data-vr="mine">' + (mine ? 'Mein Verein ✓' : 'Mein Verein') + '</button>' +
+    '<button type="button" class="btn" data-vr="share">Teilen</button></div>';
+  /* Live-Spiele des Vereins (eigene Mannschaft oder Gegner) */
+  const ids0 = new Set([v.id, ...(v.teams || []).map(t => t.crest).filter(Boolean)]);
+  const lv = liveTilesHtml(d => ids0.has(d.team) || ids0.has(d.opp));
+  ui.liveSig = lv; h += lv;
   h += '<h2>Mannschaften <small class="vr-season">2026/27</small></h2>';
   if (ui.teams === null) h += ui.teamsErr ? '<p class="hmsg">Keine Verbindung.</p>' : skeleton(2);
-  else if (!ui.teams.length) h += '<p class="hmsg">Noch keine eingetragen.</p>';
+  else if (!ui.teams.length) h += '<p class="vr-none">Noch keine eingetragen.</p>';
   else h += '<div class="vr-list">' + ui.teams.map(t => '<div class="vr-team">' +
     (t.crest ? '<img src="' + esc(crestUrl(t.crest)) + '" alt="">' : '<span class="vr-ic sm" aria-hidden="true">' + esc(t.art === 'jugend' ? 'J' : roman(t.nr)) + '</span>') +
     '<span class="vr-t"><b>' + esc(teamName(t)) + '</b><small>' + esc([teamLiga(t), t.kreis].filter(Boolean).join(' · ') || 'Liga offen') + '</small></span></div>').join('') + '</div>';
   /* Kader: Spieler, die Nutzer eingetragen haben, und Stammspieler der Kreisliga-Mannschaften */
   h += '<h2>Spieler' + (ui.kader && ui.kader.length ? ' <small class="vr-season">' + ui.kader.length + '</small>' : '') + '</h2>';
   if (ui.kader === null) h += skeleton(2, true);
-  else if (ui.kader.length) h += '<div class="su-list">' + ui.kader.map(p => spielerRow(p, 'data-open="p:' + esc(p.id) + '"')).join('') + '</div>';
+  else if (ui.kader.length) h += kaderHtml(ui.kader);
   /* Letzte Spiele von Spielern des Vereins (aus den schon geladenen Spielen, kein Extra-Traffic) */
   const ids = new Set([v.id, ...(v.teams || []).map(t => t.crest).filter(Boolean)]);
   const gl = games.list ? byDate(games.list.filter(g => ids.has(recordTeam(g)))).reverse().slice(0, 5) : [];
@@ -222,6 +248,14 @@ export function initVereine() {
   registerView('verein', { elements: ['verein'], render: renderVerein });
   registerView('vneu', { elements: ['vneu'], render: renderNeu });
   onAuthChange(() => { if (nav.current === 'verein') renderVerein(); if (nav.current === 'vneu') renderNeu(); });
+  /* Live: nur neu zeichnen, wenn sich etwas an den Spielen dieses Vereins geändert hat */
+  onLive(() => {
+    if (nav.current !== 'verein') return;
+    const v = vereinById(ui.id);
+    if (!v) return;
+    const ids = new Set([v.id, ...(v.teams || []).map(t => t.crest).filter(Boolean)]);
+    if (liveTilesHtml(d => ids.has(d.team) || ids.has(d.opp)) !== (ui.liveSig || '')) renderVerein();
+  });
   $('vrQ').addEventListener('input', e => onInput(e.target.value));
   $('vrQ').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 
@@ -232,6 +266,7 @@ export function initVereine() {
     if (k.startsWith('v:')) openVerein(k.slice(2));
     else if (k === 'reload') { vr.error = false; renderVereine(); loadVereine().then(renderSearch, renderSearch); }
     else if (k === 'spieler') openNeu({ verein: vereinById(ui.id) });
+    else if (k === 'share') { const v = vereinById(ui.id); if (v) shareLink(location.origin + location.pathname + '?v=' + encodeURIComponent(v.id), v.name + ' – ' + APP_NAME, v.name + ' bei ' + APP_NAME); }
     else if (k === 'neu') { ui.neu = { name: ui.q.trim().slice(0, 60) }; ui.err = ''; show('vneu'); }
     else if (k === 'mine') {
       const v = vereinById(ui.id);

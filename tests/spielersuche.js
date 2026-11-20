@@ -41,6 +41,8 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   const prof = await p.evaluate(() => ({ n: (document.querySelector('#profile .pnn') || {}).textContent, club: (document.querySelector('#profile .pcl b') || {}).textContent, pts: (document.querySelector('#profile .kb-g b') || {}).textContent }));
   ok(prof.n === 'Meier' && prof.club === '1. FC 08 Birkenfeld', 'Profil: ' + JSON.stringify(prof));
   ok(prof.pts === '245', 'Punkte aus dem gespeicherten Spiel: ' + prof.pts);
+  await p.waitForTimeout(400);
+  ok(await p.$('#profile .su-fol [data-open="p:sp0123456787"]') && !(await p.$('#profile .su-fol [data-open="p:sp0123456788"]')), 'Profil: Mitspieler Paul (nicht Jonas)');
   await c('[data-pf="play"]'); await p.waitForTimeout(700);
   ok(await p.evaluate(() => !document.querySelector('.lgseg')), 'keine Kreisliga-Auswahl bei fremder Mannschaft');
   // Mitspieler derselben Mannschaft (Herren II): Paul ja, Jonas (Herren I) nein
@@ -99,6 +101,17 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   const ser = await p.evaluate(() => ({ done: document.querySelectorAll('.su-done .su-row').length, vn: document.querySelector('#snForm [name=vn]').value, ok: document.querySelector('#snForm [name=ok]').checked, view: !document.getElementById('sneu').hidden }));
   ok(ser.done === 1 && ser.vn === '' && ser.ok && ser.view, 'Serie: ' + JSON.stringify(ser));
 
+  // Vereinsseite: Kader nach Mannschaft gruppiert, Live-Spiel des Vereins
+  await p.evaluate(async () => { const L = await import('./js/services/live.js'); L.live.map.set('sp0123456789', { data: { gid: 'sp0123456789', i: 0, nm: 'Meier', p: 'sp0123456789', t: 57, team: 'q162195', opp: 'ow93398679', home: true, us: 1, them: 0, rows: [], tn: '1. FC 08 Birkenfeld', on: 'Gegner', st: Date.now() - 1800000 } });
+    const M = await import('./js/ui/vereine.js'); await M.openVerein('q162195'); });
+  await p.waitForTimeout(900);
+  const kh = await p.$$eval('#verein .vr-kh', l => l.map(e => e.textContent));
+  ok(kh.length >= 2 && kh.some(x => /Herren II/.test(x)), 'Kader-Gruppen: ' + JSON.stringify(kh));
+  ok(await p.$('#verein .lvh'), 'Live-Spiel auf der Vereinsseite');
+  ok(await p.evaluate(async () => { const V = await import('./js/services/vereine.js'); V.setMyClub(V.vereinById('q162195')); const R = await import('./js/router.js'); R.show('start', { tab: true }); await new Promise(r => setTimeout(r, 500)); const ok = !!document.querySelector('.vr-start .vr-live'); V.setMyClub(null); return ok; }), 'Mein Verein zeigt Live');
+  await p.evaluate(async () => { const L = await import('./js/services/live.js'); L.live.map.delete('sp0123456789'); });
+  await p.screenshot({ path: 'out/verein-kader.png' });
+
   // Hall of Fame: Chip „Andere“ für Mannschaften außerhalb der Kreisliga
   await p.evaluate(async () => { const A = await import('./js/services/api.js'); await A.loadGames(true); const R = await import('./js/router.js'); R.show('hof'); });
   await p.waitForTimeout(700);
@@ -110,6 +123,10 @@ const GAME = { uid: 'testspiel-ext-0001', created_at: '2026-11-15T15:00:00Z', pl
   const hid = await p.evaluate(async () => { const A0 = await import('./js/services/api.js'); await A0.loadGames(true); const S = await import('./js/services/spieler.js'); await S.hideSpieler('sp0123456789'); const P = await import('./js/data/players.js'); const A = await import('./js/services/api.js');
     return { h: P.PL.sp0123456789.hidden, g: A.games.list.some(x => x.player === 'sp0123456789'), r: S.recent().some(x => x.id === 'sp0123456789') }; });
   ok(hidden && hid.h && !hid.g && !hid.r, 'Ausblenden: ' + JSON.stringify(hid));
+
+  // Vereins-Link ?v=
+  await p.goto('http://localhost:8123/?v=q162195', { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
+  ok(await p.evaluate(() => !document.getElementById('verein').hidden && /Birkenfeld/.test(document.querySelector('#verein h1').textContent) && !location.search), 'Vereins-Link öffnet Verein');
 
   console.log('Fehler:', fails.length ? fails : 'keine', t.errs.length ? t.errs : '');
   await t.b.close();

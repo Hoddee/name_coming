@@ -20,8 +20,8 @@ let timer = 0;
 
 /* ---------- Bausteine ---------- */
 const CHEV = '<span class="chev" aria-hidden="true">›</span>';
-export function spielerRow(p, attr = null) {
-  const st = playerStats(p.id), sub = [clubName(p), p.ext ? teamText(p) : (CL[p.c] && CL[p.c].lg ? 'Kreisliga ' + CL[p.c].lg : '')].filter(Boolean).join(' · ');
+export function spielerRow(p, attr = null, sub0 = null) {
+  const st = playerStats(p.id), sub = sub0 != null ? sub0 : [clubName(p), p.ext ? teamText(p) : (CL[p.c] && CL[p.c].lg ? 'Kreisliga ' + CL[p.c].lg : '')].filter(Boolean).join(' · ');
   return '<button type="button" class="su-row" ' + (attr || 'data-su="p:' + esc(p.id) + '"') + '>' + avatar(p.id) +
     '<span class="su-t"><b>' + esc(fullName(p)) + (p.num ? ' <i class="su-num">' + p.num + '</i>' : '') + '</b><small>' + esc(sub) + '</small></span>' +
     '<span class="su-pos">' + POS_SHORT[p.pos || 'MIT'] + '</span>' +

@@ -13,7 +13,7 @@ import { SEASON } from '../config.js';
 import { avatar, playerRow, nameWithStatus, gameRow, skeleton } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
-import { liveTilesHtml } from './watch.js';
+import { liveTilesHtml, liveList } from './watch.js';
 import { resetHof } from './hof.js';
 import { spieltagCardHtml, maybeLaunch } from './mvp.js';
 import { byDate } from '../core/market.js';
@@ -99,7 +99,9 @@ const newGameBtn = () => (store.S.match && !(store.S.ended && allSaved()) ? '' :
 /* Vereinssuche (ganz Deutschland) und Fun-Punkte */
 function extrasHtml() {
   const my = myClub();
-  return '<div class="vr-start"><button type="button" data-st="vereine"><b>' + (my ? esc(my.name) : 'Mein Verein') + '</b><small>' + (my ? 'Mein Verein' : 'Festlegen') + '</small></button>' +
+  /* Spielt der eigene Verein gerade, zeigt die Kachel „Live“ */
+  const on = my && liveList().some(x => x.d.team === my.id || x.d.opp === my.id);
+  return '<div class="vr-start"><button type="button" data-st="vereine"><b>' + (my ? esc(my.name) : 'Mein Verein') + '</b><small' + (on ? ' class="vr-live"' : '') + '>' + (on ? 'Live' : my ? 'Mein Verein' : 'Festlegen') + '</small></button>' +
     '<button type="button" data-st="fun"><b>Fun-Punkte</b><small>Ohne Konto</small></button></div>';
 }
 
