@@ -97,3 +97,11 @@ body { background: radial-gradient(120% 60% at 50% -10%, rgba(var(--acc-rgb), .1
 
 /* „Jetzt live“ hat schon den roten Live-Punkt */
 #startBody > h2.lvh::before { display: none; }
+
+/* Beschriftungen in normaler Schreibweise (keine Großbuchstaben-Zeilen mehr aus Version 1) */
+.note-badge, .nf > span, .acct small, .tag, .rec-t, .fx-h span, .rbm-l, .ga-head .ga-k, .ga-st small, .htlabel, .hb-sort button,
+.mvp-head h1 span, .md-news-k, .pname, .pplay, .ach-t, .mrec span, .mehero h1 b, .mh-t > span, .sh-mini.mm > span, .lv-live,
+.obtn, .grp, .mw-k, .pw-k, .pw-m, .fl, .ht, .sec, .lh2 .lnk {
+  text-transform: none !important; letter-spacing: 0 !important;
+}
+.grp span, .pw-k, .fx-h span, .rec-t, .ach-t, .mw-k { font-weight: 600; }

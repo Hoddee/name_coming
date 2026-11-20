@@ -11,7 +11,7 @@ import { cutout } from '../core/cutout.js';
 import { pushSupported, pushState, pushOn, pushOff } from '../services/push.js';
 import { rest, loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
 import { openProfile } from './profile.js';
-import { showIntro, showBookingTour } from './intro.js';
+import { showIntro, showBookingTour, showMgrTour } from './intro.js';
 import { marketOf } from '../core/market.js';
 import { ICON, statusIcon } from '../core/icons.js';
 import { avatar } from './components.js';
@@ -255,7 +255,7 @@ export function render() {
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
   else h = playerHtml();
-  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
+  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><button type="button" class="lnk" data-adm="tourmgr">Manager erklärt</button><button type="button" class="lnk" data-nav="legal">Impressum und Datenschutz</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
   if (isLoggedIn() && isAdmin() && !ui.passwordMode) loadTraffic();
   fillPush();
@@ -387,6 +387,7 @@ export function initAdmin() {
     else if (k === 'mode-register') { ui.mode = 'register'; ui.msg = ''; }
     else if (k === 'intro') { showIntro(); return; }
     else if (k === 'tourbook') { showBookingTour(); return; }
+    else if (k === 'tourmgr') { showMgrTour(); return; }
     else if (k === 'push-on' || k === 'push-off') {
       b.setAttribute('aria-checked', String(k === 'push-on')); /* Schalter springt sofort um */
       pushBusy = true; setTimeout(fillPush, 260);

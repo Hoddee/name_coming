@@ -7,7 +7,7 @@ const L = require('./lib.js');
     for (let i = 1; i <= steps; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x1 + (x2 - x1) * i / steps, y: y1 + (y2 - y1) * i / steps }] }); await p.waitForTimeout(ms); }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(700);
   };
-  const cur = () => p.evaluate(() => ['start', 'kader', 'hof', 'admin', 'me'].find(id => !document.getElementById(id).hidden));
+  const cur = () => p.evaluate(() => ['start', 'manager', 'hof', 'admin', 'me'].find(id => !document.getElementById(id).hidden));
   console.log('Start:', await cur());
   await swipe(300, 500, 80, 505); console.log('nach links wischen:', await cur());
   await swipe(300, 500, 80, 505); console.log('nach links wischen:', await cur());
@@ -20,6 +20,6 @@ const L = require('./lib.js');
   // Leiste „Nächste Spiele“ scrollt selbst
   const fx = await p.evaluate(() => { const e = document.querySelector('.fxs'); if (!e) return null; e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { y: r.top + r.height / 2, w: e.scrollWidth > e.clientWidth }; });
   if (fx) { await p.waitForTimeout(300); await swipe(330, fx.y, 80, fx.y); console.log('auf Spiele-Leiste (scrollbar=' + fx.w + '):', await cur()); }
-  const st = await p.evaluate(() => [...document.querySelectorAll('#start > *, #kader > *')].filter(e => e.style.transform || e.getAnimations().length).length);
+  const st = await p.evaluate(() => [...document.querySelectorAll('#start > *, #manager > *')].filter(e => e.style.transform || e.getAnimations().length).length);
   console.log('Reste von Transform/Animation:', st, '| Fehler:', t.errs.length ? t.errs : 'keine'); await t.b.close();
 })();

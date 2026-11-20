@@ -11,8 +11,11 @@ mit eigenem Namen, eigenem Look und eigener Wertung.
 
 ## Funktionen
 
-- **Liga:** Live-Spiele, nächste Spiele, Spieler der Woche, letzte Spiele. Menü unten (Liga, Kader, Spiel, Ranking, Ich),
+- **Liga:** Live-Spiele, nächste Spiele, Spieler der Woche, letzte Spiele. Menü unten (Liga, Team, Spiel, Ranking, Ich),
   zwischen den Bereichen wischen.
+- **Manager:** eigenes Team aus dem Kader (50 Mio. Budget, 5 Spieler, höchstens 1 Torwart), Kauf und Verkauf zum
+  aktuellen Marktwert. Ein Spieler bringt die Punkte der Spiele, die er gespielt hat, während er im Team war.
+  Manager-Liga mit allen angemeldeten Managern (Gesamt- und Wochenpunkte); ohne Anmeldung nur auf dem Gerät.
 - **Punkte vergeben:** bis zu 15 Spieler pro Spiel, Spieluhr mit Halbzeit, Ein-/Auswechseln, Aktionen nach Reitern
   (Angriff, Abwehr, Fehler) mit Suche, Leiste „Zuletzt gebucht“ (löschen oder anderem Spieler geben).
 - **Mitbuchen:** bis zu 3 weitere Handys buchen per QR-Code mit (ohne Konto, nur Name). Jeder sperrt seine Spieler,
@@ -104,12 +107,16 @@ assets/                 fonts, icons (Logo, App-Icons), img (p = Spielerfotos, p
 | `spieler_konten` | Nutzer ↔ Spieler, Status offen/frei/abgelehnt | eigener Antrag; freischalten nur Admin |
 | `live_spiele` | Stand laufender Spiele für den Live-Ticker | alle lesen; schreiben per Geräte-Schlüssel (`x-live-key`, nur Hash gespeichert) |
 | `admins` | Benutzer-IDs mit Admin-Rechten | nur per SQL |
+| `manager_moves` | Käufe/Verkäufe im Manager (Spieler, Art, Zeitpunkt vom Server) | alle lesen; angemeldete nur eigene anfügen, kein Ändern/Löschen (Migration 014) |
+| `manager_teams` | Teamname je Manager und Saison | alle lesen; eigenen anlegen/ändern (Migration 014) |
 
 Storage-Bucket `kickbase` (Name aus der ersten Version, gemeinsame Datenbank): Spielerfotos (nur Admins) und Bilder von Gastspielern/eigenen Gegnern unter `gast/`
 (nur neue Dateien). Feste Bilder liegen im Repo unter `assets/img`, um den Supabase-Traffic klein zu halten.
 
 **Schemaänderungen:** neue Datei `supabase/migrations/0NN_name.sql` (idempotent) und im Supabase-SQL-Editor ausführen.
 **Admin werden:** Benutzer unter Authentication → Users anlegen, dann `003_admin_eintragen.sql` ausführen.
+
+Plan bis zum Start (eigene Datenbank, mehrere Vereine, Hosting, Datenschutz): [`docs/produkt-plan.md`](docs/produkt-plan.md).
 
 ## Mitarbeiten
 
