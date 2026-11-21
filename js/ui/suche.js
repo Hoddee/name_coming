@@ -59,7 +59,9 @@ function resultsHtml() {
   const q = ui.q.trim();
   if (q.length < 2) return emptyHtml();
   const players = ui.tab === 'clubs' ? [] : mergePlayers(q, ui.dbFor === q ? ui.db : []).filter(p => !p.hidden);
-  const clubs = ui.tab === 'players' || !vr.list ? [] : vMerged(q, ui.vdbFor === q ? ui.vdb : []);
+  let clubs = ui.tab === 'players' || !vr.list ? [] : vMerged(q, ui.vdbFor === q ? ui.vdb : []);
+  /* „Celik Asbach“: kein Verein mit allen Wörtern → Vereine zum längsten passenden Wort (meist der Ort) */
+  if (!clubs.length && vr.list && ui.tab !== 'players') for (const w of q.split(/\s+/).filter(w => w.length >= 4).sort((a, b) => b.length - a.length)) { clubs = vMerged(w, []); if (clubs.length) break; }
   const wait = ui.busy && ui.dbFor !== q;
   let h = '';
   if (ui.tab !== 'clubs') {

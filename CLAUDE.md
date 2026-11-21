@@ -117,7 +117,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Manager nur angemeldet und nur Spiele mit `mit_konto` (Migration 016, in `cleanGame` als `g.konto`; `mgGames()` in ui/manager.js).
 - Vereinsdaten 2.6 (`assets/data/vereine.json` Format `v: 2`, gebaut von `tools/vereine/build.mjs`): je Verein Landkreis (`k` = Index in `d.k`, Grenzen aus
   `tools/vereine/kreise.json`), Landesverband (Wikipedia-Kategorie „Verein im …verband“, sonst `verband-zuordnung.mjs` je Landkreis; geteilte Landkreise bleiben leer),
-  BFV-/NFV-Bezirk, Wikidata-ID, Flags (1 = sicher Fußball, 2 = freies Wappen), Farben, Liga, Gründung. **Vereins-IDs bleiben stabil** (build.mjs übernimmt alte IDs).
+  BFV-/NFV-Bezirk, Wikidata-ID, Flags (1 = sicher Fußball, 2 = freies Wappen), Farben, Liga, Gründung. **Vereins-IDs bleiben stabil** (build.mjs übernimmt alte IDs; zusammengeführte stehen in `a` alt → neu, `loadVereine` trägt sie in `byId` ein). Orte ohne Koordinaten über `tools/vereine/quellen/orte.tsv` (Overture).
   Wappen: `assets/img/w/<Q-ID>.webp` (128 px, nur freie Dateien aus Wikimedia; Lizenz/Urheber in `assets/data/wappen.json`, angezeigt auf der Vereinsseite),
   Kreisliga-Wappen `assets/img/c/`, vom Verein hochgeladen (Migration 018, `vereine_wappen`, nur bestätigte Vereinsverwalter), sonst generiert (`generatedCrest(name, farben)`).
   Reihenfolge in `vereinCrest()` (services/vereine.js). Daten laden: GitHub Action „Wappen und Vereinsdaten“ (`.github/workflows/wappen.yml`, im Cloud-Container sind Wikimedia/Overpass gesperrt).

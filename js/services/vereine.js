@@ -77,6 +77,8 @@ export function loadVereine() {
     addSeeds(list);
     vr.quelle = str(d.quelle, 200); vr.stand = str(d.stand, 10);
     for (const v of list) byId.set(v.id, v);
+    /* Zusammengeführte Vereine: alte ID → neue ID (für „Mein Verein“ und gemerkte Vereine) */
+    if (d.a && typeof d.a === 'object') for (const [o, n] of Object.entries(d.a)) if (!byId.has(o) && byId.has(n)) byId.set(o, byId.get(n));
     vr.list = list; vr.error = false;
     fixMyClub(list);
     return list;
@@ -87,7 +89,10 @@ export const vereinById = id => byId.get(id) || null;
 /* „Mein Verein“ mit einer alten ID (Vereinsliste vor 2.4: o…) über Name + Ort neu zuordnen */
 function fixMyClub(list) {
   const c = readJson(KEYS.club, null);
-  if (!c || !/^o[nwr]\d/.test(c.id || '') || byId.has(c.id)) return;
+  if (!c) return;
+  const al = byId.get(c.id);
+  if (al) { if (al.id !== c.id) setMyClub(al); return; }
+  if (!/^o[nwr]\d/.test(c.id || '')) return;
   const n = simple(c.name), o = simple(c.ort);
   const v = list.find(x => simple(x.name) === n && simple(x.ort) === o) || list.find(x => simple(x.name) === n);
   if (v) setMyClub(v);
