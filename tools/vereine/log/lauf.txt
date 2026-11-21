@@ -1,0 +1,38 @@
+Treffer: 2215
+Wikidata HTTP 502 – neuer Versuch
+Treffer: 6453
+Vereine: 6246
+Wikidata: 6246 Vereine, 716 mit Logo
+Einstiegskategorien: 386 Kategorie:Fußballverein aus Aachen | Kategorie:Fußballverein aus Ankara | Kategorie:Fußballverein aus Aruba | Kategorie:Fußballverein aus Augsburg | Kategorie:Fußballverein aus Baden-Württemberg | Kategorie:Fußballverein aus Baku | Kategorie:Fußballverein aus Bamberg | Kategorie:Fußballverein aus Bangkok
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+HTTP 429
+Kategorien: 387 Artikel: 4130
+Artikel gelesen: 0 / 4130
+Artikel gelesen: 1000 / 4130
+Artikel gelesen: 2000 / 4130
+HTTP 429
+HTTP 429
+Artikel gelesen: 3000 / 4130
+Artikel gelesen: 4000 / 4130
+Wikipedia-Vereine mit Infobox: 3491 – Logos gesamt: 928
+Wappen: 909 geladen neu: 909 Fehler: 19
+Wappen: 909 Fehler: 0
+909
+total 32
+drwxr-xr-x 2 runner runner 4096 Nov 21 00:38 .
+drwxr-xr-x 5 runner runner 4096 Nov 21 00:21 ..
+-rw-r--r-- 1 runner runner    2 Nov 21 00:38 db-mannschaften.json
+-rw-r--r-- 1 runner runner    2 Nov 21 00:38 db-spieler.json
+-rw-r--r-- 1 runner runner    2 Nov 21 00:38 db-vereine.json
+-rw-r--r-- 1 runner runner  877 Nov 21 00:38 lauf.txt
+-rw-r--r-- 1 runner runner 4980 Nov 21 00:20 weggefallen.txt
