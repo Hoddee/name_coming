@@ -11,6 +11,8 @@ import { avatar, skeleton, playerStats } from './components.js';
 import { vr, loadVereine, searchLocal as vLocal, searchDb as vDb, merged as vMerged, vereinById, myClub } from '../services/vereine.js';
 import { loadModeration, setSpielerStatus, reportDone, fetchSpieler, searchDb, mergePlayers, recent, addRecent, clearRecent, createSpieler, useVerein, teamText, clubName, TEAM_ART, sp, searchLocal } from '../services/spieler.js';
 import { vereinRow, openVerein, openVereinNeu } from './vereine.js';
+import { openInvite } from './einladung.js';
+import { vereinCrest } from '../services/vereine.js';
 import { keyOf, score } from '../core/vsearch.js';
 import { openProfile } from './profile.js';
 import { requestNewGame } from './start.js';
@@ -57,14 +59,19 @@ function resultsHtml() {
   const q = ui.q.trim();
   if (q.length < 2) return emptyHtml();
   const players = ui.tab === 'clubs' ? [] : mergePlayers(q, ui.dbFor === q ? ui.db : []).filter(p => !p.hidden);
-  const clubs = ui.tab === 'players' || !vr.list ? [] : vMerged(q, ui.vdbFor === q ? ui.vdb : []);
+  let clubs = ui.tab === 'players' || !vr.list ? [] : vMerged(q, ui.vdbFor === q ? ui.vdb : []);
+  /* „Celik Asbach“: kein Verein mit allen Wörtern → Vereine zum längsten passenden Wort (meist der Ort) */
+  if (!clubs.length && vr.list && ui.tab !== 'players') for (const w of q.split(/\s+/).filter(w => w.length >= 4).sort((a, b) => b.length - a.length)) { clubs = vMerged(w, []); if (clubs.length) break; }
   const wait = ui.busy && ui.dbFor !== q;
   let h = '';
   if (ui.tab !== 'clubs') {
     const n = ui.tab === 'all' ? 5 : 40;
     if (ui.tab === 'all') h += '<h2 class="su-h">Spieler' + (players.length > n ? '<button type="button" class="lnk inline" data-su="tab:players">Alle ' + players.length + '</button>' : '') + '</h2>';
-    h += players.length ? '<div class="su-list">' + players.slice(0, n).map(p => spielerRow(p)).join('') + '</div>' : wait ? skeleton(2, true) : '<p class="su-none">Kein Spieler gefunden</p>';
-    h += '<button type="button" class="su-add" data-su="neu"><span aria-hidden="true">+</span>Spieler eintragen</button>';
+    if (players.length) h += '<div class="su-list">' + players.slice(0, n).map(p => spielerRow(p)).join('') + '</div>' + '<button type="button" class="su-add" data-su="neu"><span aria-hidden="true">+</span>Spieler eintragen</button>';
+    else if (wait) h += skeleton(2, true);
+    /* Nicht gefunden: gleich anlegen oder die Mannschaft einladen */
+    else h += '<div class="card su-miss"><b>' + esc(q) + ' ist noch nicht dabei</b><div class="duo"><button type="button" class="btn primary" data-su="neu">Spieler anlegen</button>' +
+      '<button type="button" class="btn" data-su="einl">Team einladen</button></div></div>';
   }
   if (ui.tab !== 'players') {
     const n = ui.tab === 'all' ? 4 : 30;
@@ -120,7 +127,7 @@ export function openNeu({ verein = null, name = '' } = {}) {
 }
 const seg = (key, opts, cur) => '<div class="seg full">' + opts.map(([k, l]) => '<button type="button" data-sn="' + key + ':' + k + '" aria-pressed="' + (String(cur) === String(k)) + '">' + l + '</button>').join('') + '</div>';
 function vereinPick() {
-  if (nf.verein) return '<div class="su-vsel"><span class="vr-ic" aria-hidden="true">' + esc(nf.verein.name.replace(/[^A-Za-zÄÖÜäöü]/g, '').slice(0, 2)) + '</span><span class="su-t"><b>' + esc(nf.verein.name) + '</b><small>' + esc(nf.verein.ort || '') + '</small></span>' +
+  if (nf.verein) return '<div class="su-vsel"><img class="vr-cr" src="' + esc(vereinCrest(nf.verein)) + '" alt=""><span class="su-t"><b>' + esc(nf.verein.name) + '</b><small>' + esc(nf.verein.ort || '') + '</small></span>' +
     '<button type="button" class="lnk inline" data-sn="vchange">Ändern</button></div>';
   const l = nf.vq.trim().length >= 2 && vr.list ? vLocal(nf.vq, 6) : [];
   return '<input class="fi" id="snVq" type="search" placeholder="Verein oder Ort" autocomplete="off" spellcheck="false" value="' + esc(nf.vq) + '">' +
@@ -263,6 +270,7 @@ export function initSuche() {
     else if (k.startsWith('tab:')) { ui.tab = k.slice(4); renderTabs(); renderList(); window.scrollTo(0, 0); }
     else if (k === 'clear') { clearRecent(); renderList(); }
     else if (k === 'neu') openNeu({ name: ui.q });
+    else if (k === 'einl') { const c = vr.list ? vMerged(ui.q, []) : []; openInvite(c[0] || (myClub() && vereinById(myClub().id)) || null); }
     else if (k === 'vneu') openVereinNeu(ui.q);
   });
 

@@ -6,7 +6,9 @@
      - quellen/overture.tsv  Overture Maps Places (CDLA Permissive 2.0), optional – overture-laden.py
    fussball.de und FuPa werden bewusst NICHT ausgelesen (Nutzungsbedingungen, Datenbankrecht § 87b UrhG).
    Was fehlt, legen Nutzer in der App an (Tabelle vereine, Migration 015). */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
+import { verbandFor } from './verband-zuordnung.mjs';
+mkdirSync(new URL('./log/', import.meta.url), { recursive: true });
 import { words, norm } from '../../js/core/vsearch.js';
 
 const DIR = new URL('./quellen/', import.meta.url);
@@ -21,9 +23,9 @@ function readTsv(name) {
 }
 
 /* ---------- Namen säubern ---------- */
-const PRE = /^(sports complex|kunstrasenhalle|soccerhalle|sportzentrum|sportpark|damenmannschaft|frauenmannschaft|herrenmannschaft|jugendabteilung|fu(ss|ß)ballabteilung|fu(ss|ß)ballplatz|vereinsheim|vereinshaus|vereinsgeb[äa]ude|sportheim|sportlerheim|sporthaus|clubhaus|clubheim|klubhaus|klubheim|gesch[äa]ftsstelle|festscheune|sportplatz(baude)?|sportanlage|sportgel[äa]nde|umkleide|abteilung fu(ss|ß)ball|fu(ss|ß)ballabteilung|kunstrasen(platz)?|rasenplatz|nachwuchsleistungszentrum|sportb[üu]ro)\b[\s:–-]*(des|der|vom|von)?\s*/i;
+const PRE = /^(sports complex|kunstrasenhalle|soccerhalle|sportzentrum|sportpark|damenmannschaft|frauenmannschaft|herrenmannschaft|jugendabteilung|fu(ss|ß)ballabteilung|fu(ss|ß)ballplatz|vereinsheim|vereinshaus|vereinsgeb[äa]ude|sportheim|sportlerheim|sporthaus|clubhaus|clubheim|klubhaus|klubheim|gesch[äa]ftsstelle|festscheune|sportplatz(baude)?|sportanlage|sportgel[äa]nde|umkleide|abteilung fu(ss|ß)ball|fu(ss|ß)ballabteilung|kunstrasen(platz)?|rasenplatz|nachwuchsleistungszentrum|sportb[üu]ro|mannschaftskabine|kabine|trainingsplatz)\b[\s:–-]*(des|der|vom|von)?\s*/i;
 const TEAM = /[\s,–-]+(ii|iii|iv|2\.? mannschaft|u ?1\d|u ?2[0-3]|juniorteam|junioren|jugend|frauen|damen|leichtathletik|esports|e-sports)\s*$/i;
-const POST = /[\s,–-]*(gesch[äa]ftsstelle|vereinsheim|vereinsgeb[äa]ude|vereinshaus|sportheim|clubhaus|abteilung fu(ss|ß)ball|abt\.? fu(ss|ß)ball|fu(ss|ß)ballabteilung|-? ?fu(ss|ß)ball|sportb[üu]ro|platz \d+)\s*$/i;
+const POST = /[\s,–-]*(gesch[äa]ftsstelle|vereinsheim|vereinsgeb[äa]ude|vereinshaus|sportheim|clubhaus|abteilung fu(ss|ß)ball|abt\.? fu(ss|ß)ball|fu(ss|ß)ballabteilung|-? ?fu(ss|ß)ball|sportb[üu]ro|vereinsraum|vereinsheim|platz \d+)\s*$/i;
 const EV = /,?\s*\b(e\.\s?v\.?|ev|e\. v|eingetragener verein)(?=\s|$|,)/gi;
 export function clean(s) {
   let t = String(s || '').replace(/\s+/g, ' ').trim();
@@ -37,8 +39,12 @@ export function clean(s) {
 /* Sieht der Name nach einem Fußball-/Sportverein aus? */
 const CLUBWORD = /\b(1\.\s?)?(fc|sv|tsv|sc|sg|sgm|spvgg|spvg|sp\.? ?vgg|vfb|vfl|vfr|tus|tsg|tsgv|fsv|ssv|sf|spfr|djk|fv|tv|mtv|bsv|esv|psv|sus|ffc|bc|svg|tsc|asv|ksv|fk|gsv|vfv|tura|lsv|hsv|fsg|usv|ftsv|atsv|sge|spg|rsv|tuspo|sk|ac|kickers|eintracht|germania|borussia|viktoria|victoria|concordia|union|alemannia|fortuna|dynamo|lok|lokomotive|motor|stahl|einheit|empor|traktor|hertha|arminia|teutonia|sparta|olympia|preu(ss|ß)en|wacker|rot-wei(ss|ß)|blau-wei(ss|ß)|gr[üu]n-wei(ss|ß)|schwarz-wei(ss|ß)|rot-gr[üu]n|blau-gelb|schwarz-gelb|sportverein|sportvereinigung|sportclub|sport-club|sportfreunde|spielvereinigung|sportgemeinschaft|turnverein|turn- und sport\w*|fu(ss|ß)ball\w*|ballspiel\w*|sportgemeinde|kickers|fussballclub|athletic|united|azzurri|türkspor|turkspor|türkgücü|spor)\b/i;
 const NOT = /\b(gemeinde|stadt|schule|schulzentrum|gymnasium|grundschule|realschule|universit|hochschule|kita|kindergarten|bolzplatz|landkreis|kreis\b|kreisverwaltung|bezirk|amt\b|verwaltung|verbandsgemeinde|samtgemeinde|kirche|pfarr|bundeswehr|kaserne|polizei|tennis|schützen|reit(er|sport|verein|club|ver)\w*\b|reit\b|golf|ruder|segel|kanu|kegel|tischfu(ss|ß)ball|tischtennis|schach|hockey|american football|baseball|rugby|handball|volleyball|basketball|turnhalle|soccerhalle|soccer-?arena|fu(ss|ß)ballgolf|freizeit|privat|gmbh|kg\b|ag\b|ug\b|hotel|camping|verband|kreissportbund|landessportbund|sportbund|stadtsportbund|fu(ss|ß)ballkreis|staffel|jugendfeuerwehr|feuerwehr|deutsche bahn|kickerking|monarchs|judo|karate|taekwondo|ju-?jutsu|kampfsport|boxing|box-?club|boxclub|ringer|schwimm|ski-?club|skiclub|radsport|radfahr|billard|dart|bowling|tanz|aero club|modell|angel|squash|badminton|cricket|curling|eissport|eishockey|lacrosse|ultimate|frisbee|footgolf|beach)\b/i;
-const NOT2 = /^the\b|\b(nordufer|billard|\w*segler|leichtathletik|alte garde|kegler|bogen(sport|schie|schü)|darts?\b|eissport|eishockey|basketball|volleyball|handball|badminton|judo|karate|taekwondo|boxen|box|ringer|fanprojekt|fans?\b|ultras|stammtisch|tennis|tischtennis|schwimm|tanz|tauch|reit(er|sport|verein|club|ver)\w*\b|reit\b|golf|schützen|sportschützen|kegel|bowling|segel|ruder|kanu|ski(club|verein|zunft|sport)?\b|gesang|männergesang|chor\b|chorgemeinschaft|musik|karneval|carneval|fastnacht|narren|heimat|kleingarten|schach|angel(sport|verein|club|er)?\b|fischer(ei)?verein|sportfischer|motor-?sport|motorsport|motorrad|rad(sport|fahr)|flug(sport)?\b|luftsport|modell|hunde|brieftauben|kampfsport|fitness|gym|studio|reisebüro|reisen|transporte?|shop|fan-?shop|fanclub|fan-?club|spielplatz|bolzplatz|\w*schule|akademie|camp|kita|förderverein|freundeskreis|stiftung|verlag|versicherung|immobilien|gaststätte|restaurant|pizzeria|bistro|kiosk|getränke)/i;
-export const isClub = n => n.length >= 4 && n.length <= 70 && CLUBWORD.test(n) && !NOT.test(n) && !NOT2.test(n);
+const NOT2 = /^the\b|\b(gewichtheb\w*|(?<![a-zäöüß])ringen\b|athletik|kraftsport|schwerathletik|angler\w*|yacht|aerobic|gymnastik|wassergymnastik|babyschwimmen|stockschütz\w*|eisstock\w*|wassersport|wasserski|wasserwacht|dlrg|faustball|prellball|rollsport|roll(er)?skat\w*|skater|inline|triathlon|lauftreff|marathon|wanderverein|wanderfreunde|alpenverein|bergsteig\w*|kletter\w*|bike|mtb|pferde?(sport|hof|freunde|zucht|pension)\w*|reit- und fahr\w*|voltigier\w*|turnerschaft|turnerbund|anwenderhandbuch|handbuch|fußballtraining|fussballtraining|fußballschule|fussballschule|soccerschool|pool\b|snooker|minigolf|sportabzeichen|seniorensport|reha(bilitation\w*|sport\w*)?\b|rehasport|herzsport|behindertensport|versehrten|nordufer|billard|\w*segler|leichtathletik|alte garde|kegler|bogen(sport|schie|schü)|darts?\b|eissport|eishockey|basketball|volleyball|handball|badminton|judo|karate|taekwondo|boxen|box|ringer|fanprojekt|fans?\b|ultras|stammtisch|tennis|tischtennis|schwimm|tanz|tauch|reit(er|sport|verein|club|ver)\w*\b|reit\b|golf|schützen|sportschützen|kegel|bowling|segel|ruder|kanu|ski(club|verein|zunft|sport)?\b|gesang|männergesang|chor\b|chorgemeinschaft|musik|karneval|carneval|fastnacht|narren|heimat|kleingarten|schach|angel(sport|verein|club|er)?\b|fischer(ei)?verein|sportfischer|motor-?sport|motorsport|motorrad|rad(sport|fahr)|flug(sport)?\b|luftsport|modell|hunde|brieftauben|kampfsport|fitness|gym|studio|reisebüro|reisen|transporte?|shop|fan-?shop|fanclub|fan-?club|spielplatz|bolzplatz|\w*schule|akademie|camp|kita|förderverein|freundeskreis|stiftung|verlag|versicherung|immobilien|gaststätte|restaurant|pizzeria|bistro|kiosk|getränke)/i;
+/* Name sagt sicher Fußball */
+/* Kürzel anderer Sportarten (Badminton-, Billard-, Box-, Athletik-, Tennis-, Golf-, Reit-, Yachtclub …) – nur ohne Fußball-Hinweis raus */
+const OTHER = /^(1\.\s?(bc|ac)|ac|tc|gc|yc|kc|lc|thc|htc)\b|\b(badminton|billard|boxing|boxen)\b/i;
+const FBNAME = /\b(fc|fv|fsv|ffc|jsg|sgm|spvgg|kickers|fu(ss|ß)ball\w*|soccer|calcio|spor|türkgücü)\b/i;
+export const isClub = n => n.length >= 4 && n.length <= 70 && CLUBWORD.test(n) && (/^tennis borussia/i.test(n) || !NOT.test(n) && (!NOT2.test(n) || FBNAME.test(n) && !/gewicht|(?<![a-zäöüß])ringen\b|angel|yacht|motor|reha|faustball|schule|training|handbuch|camp|akademie|academy/i.test(n)));
 
 /* Entfernung in km (genügt für Duplikate) */
 const km = (a, b) => {
@@ -55,14 +61,36 @@ function fromOsm(r) {
   else cand.push(r.name, r.short_name && r.name && r.name.length > 40 ? r.short_name : '', r.official_name, r.operator);
   for (const c of cand) {
     const n = clean(c);
-    if (n && isClub(n)) return { id: 'o' + r.typ + r.id, name: n, ort: r.ort, plz: r.plz, land: r.land, lat: +r.lat || 0, lon: +r.lon || 0, web: r.web, wd: r.wikidata, q: QUAL[r.art] };
+    if (n && isClub(n)) return { id: 'o' + r.typ + r.id, name: n, ort: r.ort, plz: r.plz, land: r.land, lat: +r.lat || 0, lon: +r.lon || 0, web: r.web, wd: r.wikidata, q: QUAL[r.art], fb: r.art === 'club' ? 0 : 1 };
   }
   return null;
 }
+const WDROW = new Map();
 function fromWikidata(r) {
-  const n = clean(r.name);
-  if (!n || !isClub(n) && !/^[A-ZÄÖÜ]/.test(n)) return null;
-  return { id: 'q' + r.id.replace(/^Q/, ''), name: n, ort: r.ort, plz: '', land: r.land || '', lat: +r.lat || 0, lon: +r.lon || 0, web: r.web, wd: r.id, q: QUAL.wd };
+  WDROW.set(r.id, r);
+  const n = clean(String(r.name || '').replace(/\s*\([^)]*\)\s*$/, ''));
+  if (!n || !isClub(n) && (!/^[A-ZÄÖÜ0-9]/.test(n) || NOT2.test(n))) return null;
+  return { id: 'q' + r.id.replace(/^Q/, ''), name: n, ort: ortKurz(r.ort), plz: '', land: r.land || '', lat: +r.lat || 0, lon: +r.lon || 0, web: r.web, wd: r.id, q: QUAL.wd, fb: 1,
+    liga: r.liga ? r.liga.split('|')[0] : '', farben: r.farben || '', gr: /^\d{4}$/.test(r.gruendung || '') ? r.gruendung : '', wiki: r.dewiki || '' };
+}
+/* Wikipedia (Kategorie Fußballverein aus Deutschland, Infobox) – gleiche Q-ID wie Wikidata, ergänzt Liga/Saison/Farben */
+const DEWIKI = new Map();
+const VBLAND = { BADFV: 'BW', WFV: 'BW', SBFV: 'BW', BAYFV: 'BY', BERFV: 'BE', FLB: 'BB', BREFV: 'HB', HAMFV: 'HH', HESFV: 'HE', LFVMV: 'MV', NFV: 'NI',
+  FVM: 'NW', FVN: 'NW', FLVW: 'NW', FVR: 'RP', SWFV: 'RP', SAARFV: 'SL', SAXFV: 'SN', FSA: 'ST', SHFV: 'SH', TFV: 'TH' };
+const LANDNAME = [['Baden-Württemberg', 'BW'], ['Bayern', 'BY'], ['Berlin', 'BE'], ['Brandenburg', 'BB'], ['Bremen', 'HB'], ['Hamburg', 'HH'], ['Hessen', 'HE'],
+  ['Mecklenburg-Vorpommern', 'MV'], ['Niedersachsen', 'NI'], ['Nordrhein-Westfalen', 'NW'], ['Rheinland-Pfalz', 'RP'], ['Saarland', 'SL'],
+  ['Sachsen-Anhalt', 'ST'], ['Sachsen', 'SN'], ['Schleswig-Holstein', 'SH'], ['Thüringen', 'TH']];
+const landAus = o => { const t = String(o || ''); const m = LANDNAME.find(([n]) => t.includes(n)); return m ? m[1] : ''; };
+/* „Köln-Weidenpesch, Nordrhein-Westfalen“ / „[[Pforzheim]]“ → „Köln-Weidenpesch“ / „Pforzheim“ */
+const ortKurz = o => String(o || '').replace(/\[\[([^\]|]*\|)?|\]\]|\{\{[^}]*\}\}?|<[^>]*>/g, '').split(/[,;(]/)[0].trim().slice(0, 40);
+function fromDewiki(r) {
+  DEWIKI.set(r.id, r);
+  const n = clean(String(r.name || '').replace(/\s*\([^)]*\)\s*$/, ''));
+  if (!n || !isClub(n) && NOT2.test(n)) return null;
+  /* Nur deutsche Vereine: Verband aus der Kategorie oder Bundesland in der Ortsangabe (sonst Koordinaten, siehe unten) */
+  const land = VBLAND[r.verband] || landAus(r.ort);
+  if (!land && !+r.lat) return null;
+  return { id: 'q' + r.id.replace(/^Q/, ''), name: n, ort: ortKurz(r.ort), plz: '', land, wiki_only: 1, lat: +r.lat || 0, lon: +r.lon || 0, web: '', wd: r.id, q: QUAL.wd, fb: 1, wiki: r.artikel || '', vbw: r.verband || '' };
 }
 
 /* Overture-Namen kommen oft aus Registern in „Titel-Schreibweise“ („Sv Musterdorf 1920 E.v.“) – Kürzel wieder groß */
@@ -87,7 +115,7 @@ function fromOverture(r) {
   if (!OVKAT.test(r.kat || '')) return null;
   const n = kurz(clean(fixCase(r.name).split(' - ')[0].replace(VORNAME, '')));
   if (!n || !isClub(n)) return null;
-  return { id: 'v' + r.id.slice(0, 12), name: n, ort: r.ort, plz: r.plz, land: '', lat: +r.lat || 0, lon: +r.lon || 0, web: r.web, wd: '', q: QUAL.ov, kat: r.kat };
+  return { id: 'v' + r.id.slice(0, 12), name: n, ort: r.ort, plz: r.plz, land: '', lat: +r.lat || 0, lon: +r.lon || 0, web: r.web, wd: '', q: QUAL.ov, kat: r.kat, fb: /soccer|football/.test(r.kat) ? 1 : 0 };
 }
 
 const ovRows = readTsv('overture.tsv'), ovOk = ovRows.map(fromOverture);
@@ -98,7 +126,46 @@ if (process.argv.includes('--kuerzen') && ovRows.length) {
   const keep = ovRows.filter((r, i) => ovOk[i]).map(r => cols.split('\t').map(c => r[c]).join('\t'));
   writeFileSync(f, [...head, cols, ...keep].join('\n') + '\n');
 }
-const raw = [...readTsv('osm.tsv').map(fromOsm), ...readTsv('wikidata.tsv').map(fromWikidata), ...ovOk].filter(Boolean);
+const raw = [...readTsv('osm.tsv').map(fromOsm), ...readTsv('wikidata.tsv').map(fromWikidata), ...readTsv('dewiki.tsv').map(fromDewiki), ...ovOk].filter(Boolean);
+for (const x of raw) { x.ids = [x.id]; if (!x.fb && FBNAME.test(x.name)) x.fb = 1; }
+
+/* Ohne Koordinaten (manche Wikidata-Einträge): Ort eines anderen Eintrags mit Koordinaten übernehmen */
+{ const at = new Map(); for (const x of raw) if (x.lat && x.ort && !at.has(x.ort)) at.set(x.ort, x);
+  for (const x of raw) if (!x.lat && x.ort && at.has(x.ort)) { const y = at.get(x.ort); x.lat = y.lat; x.lon = y.lon; } }
+
+/* Ohne Koordinaten: Ort über die Ortsliste (Overture Divisions, orte.tsv) – aus der Ortsangabe oder dem Ende des Namens
+   („1. FC 1928 Elfershausen“ → Elfershausen). Nur eindeutige Orte (alle Treffer innerhalb 25 km). */
+{ const at = new Map();
+  const add = (n, y) => { const k = norm(n); if (!k) return; const l = at.get(k); if (!l) at.set(k, [y]); else if (l.length < 8) l.push(y); };
+  for (const r of existsSync(new URL('orte.tsv', DIR)) ? readTsv('orte.tsv') : []) add(r.name, { ort: r.name, lat: +r.lat, lon: +r.lon, land: r.land, typ: r.typ });
+  /* Kreisfreie Stadt/Landkreis vor Gemeinde vor Ortsteil; mehrdeutig → nur das Bundesland, wenn alle Treffer im selben liegen */
+  const one = l => l.length && l.every(y => km(y, l[0]) < 25) ? l[0] : null;
+  const find = t => {
+    const l = at.get(norm(t)); if (!l) return null;
+    const y = one(l.filter(y => y.typ === 'county')) || one(l.filter(y => /^local/.test(y.typ))) || one(l);
+    if (y) return y;
+    return l.every(y => y.land === l[0].land) ? { land: l[0].land } : null;
+  };
+  let nO = 0;
+  for (const x of raw) {
+    if (x.lat) continue;
+    let y = x.ort ? find(x.ort) || find(x.ort.split(/[-\s]/)[0]) : null;
+    if (!y) {
+      const w = x.name.replace(/\b(e\.\s?V\.|\d+\.?)(?=\s|$)/g, ' ').trim().split(/\s+/);
+      for (const n of [3, 2, 1]) {
+        if (n > w.length - 1) continue;
+        const t = w.slice(-n).join(' ');
+        if (t.length < 4 || !/^[A-ZÄÖÜ]/.test(t)) continue;
+        if ((y = find(t))) break;
+      }
+    }
+    if (y && y.lat) { x.lat = y.lat; x.lon = y.lon; if (!x.ort) x.ort = y.ort; nO++; } else if (y && !x.land) x.land = y.land;
+  }
+  console.log('Ort aus Ortsliste:', nO);
+  /* Wikidata Q122940000–Q122960000: Sammelanlage bayerischer Vereine (98 % der zugeordneten liegen in Bayern) */
+  for (const x of raw) if (!x.land && !x.lat && /^Q12294\d{4}$|^Q12295\d{4}$/.test(x.wd || '')) x.land = 'BY';
+  for (let i = raw.length - 1; i >= 0; i--) if (/nationalmannschaft|gründungsversammlung|auswahl\b/i.test(raw[i].name)) raw.splice(i, 1);
+}
 
 /* Bundesland über die Landesgrenzen (laender.json: Overture Maps Divisions, vereinfacht, CDLA Permissive 2.0) */
 const LG = JSON.parse(readFileSync(new URL('./laender.json', import.meta.url), 'utf8'));
@@ -107,6 +174,8 @@ const inPoly = (x, y, p) => inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x
 const LORD = ['BE', 'HB', 'HH', ...Object.keys(LG).filter(k => !['BE', 'HB', 'HH'].includes(k))];
 const landAt = (lat, lon) => LORD.find(k => { const g = LG[k]; return (g.type === 'Polygon' ? [g.coordinates] : g.coordinates).some(p => inPoly(lon, lat, p)); }) || '';
 for (const x of raw) if (x.lat) { const l = landAt(x.lat, x.lon); if (l) x.land = l; }
+/* Wikipedia-Artikel ohne deutsches Bundesland (Vereine im Ausland) */
+for (let i = raw.length - 1; i >= 0; i--) if (raw[i].wiki_only && !raw[i].land) raw.splice(i, 1);
 
 /* Rest ohne Angabe: Mehrheit der 5 nächsten Einträge mit Angabe */
 const withLand = raw.filter(x => x.land && x.lat);
@@ -126,9 +195,11 @@ for (const x of raw.sort((a, b) => b.q - a.q || (b.web ? 1 : 0) - (a.web ? 1 : 0
   if (!k) continue;
   const list = groups.get(k) || [];
   /* Gleicher Name im Umkreis von 15 km (oder gleiche Wikidata-ID) = derselbe Verein */
-  const same = list.find(y => (x.wd && y.wd && x.wd === y.wd) || km(x, y) < 15);
+  /* Wikipedia/Wikidata ohne Ort: gleicher Name genügt */
+  const same = list.find(y => (x.wd && y.wd && x.wd === y.wd) || km(x, y) < 15) || (!x.lat && x.wd ? list[0] : null);
   if (same) {
-    for (const f of ['ort', 'plz', 'web', 'wd', 'land']) if (!same[f] && x[f]) same[f] = x[f];
+    for (const f of ['ort', 'plz', 'web', 'wd', 'land', 'liga', 'farben', 'gr', 'wiki', 'vbw']) if (!same[f] && x[f]) same[f] = x[f];
+    same.ids.push(...x.ids); same.fb = same.fb || x.fb;
     if (!same.lat && x.lat) { same.lat = x.lat; same.lon = x.lon; }
     continue;
   }
@@ -137,9 +208,9 @@ for (const x of raw.sort((a, b) => b.q - a.q || (b.web ? 1 : 0) - (a.web ? 1 : 0
   list.push(x); groups.set(k, list);
 }
 /* Gleiche Wikidata-ID unter verschiedenen Namen: den OSM-Namen behalten */
-const out = [], seenWd = new Set();
+const out = [], seenWd = new Map();
 for (const list of groups.values()) for (const x of list) {
-  if (x.wd) { if (seenWd.has(x.wd)) continue; seenWd.add(x.wd); }
+  if (x.wd) { const o = seenWd.get(x.wd); if (o) { o.ids.push(...x.ids); o.fb = o.fb || x.fb; for (const f of ['ort', 'web', 'liga', 'farben', 'gr', 'wiki', 'vbw']) if (!o[f] && x[f]) o[f] = x[f]; if (!o.lat && x.lat) { o.lat = x.lat; o.lon = x.lon; } continue; } seenWd.set(x.wd, x); }
   out.push(x);
 }
 /* „Werder Bremen“ neben „SV Werder Bremen“: Name ohne Kürzel im Umkreis von 10 km = derselbe Verein */
@@ -153,24 +224,138 @@ for (const list of byCore.values()) {
   for (const x of list) {
     if (words(x.name).some(w => ABKW.has(w))) continue;
     const y = list.find(y => y !== x && !drop.has(y) && words(y.name).some(w => ABKW.has(w)) && km(x, y) < 10);
-    if (y) { drop.add(x); for (const f of ['ort', 'web', 'land']) if (!y[f] && x[f]) y[f] = x[f]; }
+    if (y) { drop.add(x); for (const f of ['ort', 'web', 'land', 'wd', 'liga', 'farben', 'gr', 'wiki', 'vbw']) if (!y[f] && x[f]) y[f] = x[f]; y.ids.push(...x.ids); y.fb = y.fb || x.fb; }
   }
 }
-for (let i = out.length - 1; i >= 0; i--) if (drop.has(out[i])) out.splice(i, 1);
+for (let i = out.length - 1; i >= 0; i--) if (drop.has(out[i]) || (!out[i].fb && OTHER.test(out[i].name))) out.splice(i, 1);
 out.sort((a, b) => norm(a.name).localeCompare(norm(b.name)));
 
 const r2 = v => Math.round(v * 100) / 100;
 const shortWeb = w => (w || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').slice(0, 60);
+
+/* ---------- Wikidata-ID wählen, Name aus dem Wikipedia-Artikel, Doppelte nach Umbenennung ---------- */
+const WAPPEN = new Set(existsSync(new URL('../../assets/img/w/', import.meta.url)) ? readdirSync(new URL('../../assets/img/w/', import.meta.url)).map(f => f.replace(/\.webp$/, '')) : []);
+for (const x of out) {
+  /* Zusammengeführte Einträge: die Wikidata-ID mit Wappen bzw. Wikipedia-Artikel bevorzugen, ältester Eintrag = Hauptverein (nicht Frauen/II) */
+  const wds = [x.wd, ...x.ids.filter(id => /^q\d+$/.test(id)).map(id => 'Q' + id.slice(1))].filter(Boolean);
+  const qs = [...new Set(wds)].sort((a, b) => a.slice(1) - b.slice(1));
+  x.wd = qs.find(q => WAPPEN.has(q)) || qs.find(q => DEWIKI.has(q)) || x.wd;
+  /* Wikidata-Bezeichnung ist oft veraltet („ETSV Weiche“) – der Artikeltitel ist der heutige Name */
+  const dn = x.wd && DEWIKI.has(x.wd) ? clean(String(DEWIKI.get(x.wd).name || '').replace(/\s*\([^)]*\)\s*$/, '')) : '';
+  if (dn && x.ids.some(id => id[0] === 'q') && isClub(dn) !== false) x.name = dn;
+}
+{ const seen = new Map();
+  for (let i = 0; i < out.length; i++) {
+    const x = out[i], k = key(x), l = seen.get(k) || [];
+    const y = l.find(y => km(x, y) < 15 || !x.lat || !y.lat);
+    if (y) { y.ids.push(...x.ids); for (const f of ['ort', 'web', 'land', 'wd', 'liga', 'farben', 'gr', 'wiki', 'vbw']) if (!y[f] && x[f]) y[f] = x[f]; if (!y.lat && x.lat) { y.lat = x.lat; y.lon = x.lon; } y.fb = y.fb || x.fb; out.splice(i--, 1); continue; }
+    l.push(x); seen.set(k, l);
+  }
+}
+
+/* ---------- IDs stabil halten ----------
+   „Mein Verein“, eingetragene Spieler und Mannschaften hängen an der Vereins-ID. Kommt ein Verein durch neue Quellen
+   in eine andere Gruppe, behält er die ID aus der letzten Vereinsliste. */
+const prevData = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : { c: [] };
+const prev = new Set(prevData.c.map(c => c[0]));
+const used = new Set();
+let kept = 0;
+for (const x of out) {
+  const old = x.ids.find(id => prev.has(id) && !used.has(id));
+  if (old) { if (old !== x.id) kept++; x.id = old; }
+  used.add(x.id);
+}
+const lost = [...prev].filter(id => !used.has(id) && !/^k-/.test(id));
+/* Alte IDs, die in einem anderen Verein aufgegangen sind → Verweis (die App leitet „Mein Verein“ um) */
+const alias = {};
+for (const x of out) for (const id of x.ids) if (id !== x.id && prev.has(id) && !used.has(id)) alias[id] = x.id;
+/* Weggefallene IDs, deren Verein unter anderem Eintrag weiterlebt (gleicher Name ohne Zahlen/Kürzel, < 15 km) */
+{ const byK = new Map();
+  for (const x of out) { const k = core(x); if (k) (byK.get(k) || byK.set(k, []).get(k)).push(x); }
+  for (const c of prevData.c) {
+    if (used.has(c[0]) || alias[c[0]] || /^k-/.test(c[0])) continue;
+    const p = { name: c[1], lat: +c[4] || 0, lon: +c[5] || 0 }, l = byK.get(core(p)) || [];
+    const y = l.find(y => p.lat && y.lat && km(p, y) < 15) || (l.length === 1 && (!p.lat || !l[0].lat) ? l[0] : null);
+    if (y) alias[c[0]] = y.id;
+  }
+}
+for (const [o, n] of Object.entries(prevData.a || {})) if (!used.has(o)) { const t = used.has(n) ? n : alias[n]; if (t) alias[o] = t; }
+
+/* ---------- Landkreis, Verband, Bezirk ---------- */
+const KR = existsSync(new URL('./kreise.json', import.meta.url)) ? JSON.parse(readFileSync(new URL('./kreise.json', import.meta.url), 'utf8')).k.filter(k => k.t !== 'b') : [];
+const box = g => { let a = 180, b = 90, c = -180, d = -90; const walk = p => { if (typeof p[0] === 'number') { a = Math.min(a, p[0]); b = Math.min(b, p[1]); c = Math.max(c, p[0]); d = Math.max(d, p[1]); } else p.forEach(walk); }; walk(g.coordinates); return [a, b, c, d]; };
+for (const k of KR) k.bb = box(k.g);
+const kreisAt = (lat, lon) => KR.findIndex(k => lon >= k.bb[0] && lon <= k.bb[2] && lat >= k.bb[1] && lat <= k.bb[3] &&
+  (k.g.type === 'Polygon' ? [k.g.coordinates] : k.g.coordinates).some(p => inPoly(lon, lat, p)));
+const kreise = [], kIdx = new Map();
+for (const x of out) {
+  if (!x.lat) continue;
+  const i = kreisAt(x.lat, x.lon);
+  if (i < 0) continue;
+  const k = KR[i];
+  if (!x.land && k.r) x.land = k.r;
+  if (k.r && k.r !== x.land) continue; // Grenzfall: Bundesland gilt
+  if (!kIdx.has(i)) { const vb = verbandFor(k.r, k.n, ''); kIdx.set(i, kreise.length); kreise.push([k.n, k.r, vb.bezirk]); }
+  x.k = kIdx.get(i);
+}
+for (const x of out) {
+  const kr = x.k != null ? kreise[x.k] : null;
+  /* Mitgliedschaft laut Wikipedia-Kategorie „Verein im …verband“ geht vor (genauer in geteilten Landkreisen) */
+  x.vb = x.vbw || verbandFor(x.land, kr ? kr[0] : '', '').verband;
+  /* Stadtstaaten: ein Verband, auch ohne Kreis */
+}
+
+/* ---------- Wappen, Farben, Liga ---------- */
+const WLIZ = existsSync(new URL('wappen.tsv', DIR)) ? new Map(readTsv('wappen.tsv').map(r => [r.id, r])) : new Map();
+const FARBWORT = { rot: '#d0202e', weiß: '#ffffff', weiss: '#ffffff', schwarz: '#111111', blau: '#1f4fbf', gelb: '#f7d117', grün: '#1d8a3a', gruen: '#1d8a3a',
+  orange: '#f07d19', violett: '#6b2c91', lila: '#6b2c91', bordeaux: '#7b1830', weinrot: '#7b1830', himmelblau: '#5fa8e0', hellblau: '#5fa8e0', dunkelblau: '#16295e',
+  marineblau: '#16295e', königsblau: '#1946b8', gold: '#c9a227', silber: '#a8adb3', grau: '#7d838a', braun: '#6b4423', türkis: '#1aa39a', pink: '#e2478b', rosa: '#f29bc0' };
+const farbenOf = x => {
+  const hex = String(x.farben || '').split('|').map(h => h.trim()).filter(h => /^[0-9a-f]{6}$/i.test(h)).map(h => '#' + h.toLowerCase());
+  if (hex.length) return [...new Set(hex)].slice(0, 2);
+  const d = x.wd && DEWIKI.get(x.wd);
+  const words2 = String((d && d.farben) || '').toLowerCase().split(/[^a-zäöüß]+/).map(w => FARBWORT[w]).filter(Boolean);
+  return [...new Set(words2)].slice(0, 2);
+};
+const ligaClean = (l, x) => { l = String(l || '').replace(/\[\[([^\]|]*\|)?|\]\]|#.*$/g, '').trim(); return /frauen|junior|jugend|reserve|\bII\b/i.test(l) && !/frauen|damen/i.test(x.name) ? '' : l; };
+const ligaOf = x => ligaClean(ligaRaw(x), x).slice(0, 40);
+const ligaRaw = x => {
+  const d = x.wd && DEWIKI.get(x.wd);
+  /* Infobox der Wikipedia mit aktueller Saison schlägt Wikidata */
+  if (d && d.liga && /202[5-7]/.test(d.saison || '')) return d.liga.slice(0, 40);
+  return String(x.liga || (d && d.liga) || '').slice(0, 40);
+};
+let nW = 0, nF = 0, nL = 0, nK = 0, nV = 0, nB = 0, nFb = 0;
+const rows = out.map(x => {
+  /* Angaben des gewählten Wikidata-Eintrags gehen vor (sonst stammen Liga/Web/Gründung evtl. von der Zweiten oder den Frauen) */
+  const wr = WDROW.get(x.wd);
+  if (wr) { if (wr.liga) x.liga = wr.liga.split('|')[0]; if (wr.web && !/\.(de|com|net|org|eu|info|club)(\/|$)/.test(x.web || '') || wr.web && /\.de(\/|$)/.test(wr.web)) x.web = wr.web; if (/^\d{4}$/.test(wr.gruendung || '')) x.gr = wr.gruendung; if (wr.farben) x.farben = wr.farben; }
+  const wp = x.wd && WAPPEN.has(x.wd) ? 1 : 0, fa = farbenOf(x), lg = ligaOf(x);
+  nW += wp; nF += fa.length ? 1 : 0; nL += lg ? 1 : 0; nK += x.k != null ? 1 : 0; nV += x.vb ? 1 : 0; nB += x.k != null && kreise[x.k][2] ? 1 : 0; nFb += x.fb ? 1 : 0;
+  /* [id, Name, Ort, Land, lat, lon, Web, Kreis-Index, Verband, Wikidata, Flags (1 = sicher Fußball, 2 = Wappen), Farben, Liga, Gründung] */
+  return [x.id, x.name, x.ort || '', x.land || '', r2(x.lat), r2(x.lon), shortWeb(x.web), x.k ?? -1, x.vb || '', x.wd || '', (x.fb ? 1 : 0) | (wp ? 2 : 0), fa.join(','), lg, x.gr || ''];
+});
+/* Namensnennung je Wappen (Lizenz, Urheber, Seite) – für die Anzeige auf der Vereinsseite */
+const wliz = {};
+for (const x of out) if (x.wd && WAPPEN.has(x.wd) && WLIZ.has(x.wd)) { const r = WLIZ.get(x.wd); wliz[x.wd] = [r.lizenz, r.urheber, r.seite]; }
+writeFileSync(new URL('../../assets/data/wappen.json', import.meta.url), JSON.stringify({ quelle: 'Wikimedia Commons / Wikipedia', w: wliz }));
 const data = {
-  v: 1,
+  v: 2,
   stand: new Date().toISOString().slice(0, 10),
   quelle: '© OpenStreetMap-Mitwirkende (ODbL 1.0)' + (existsSync(new URL('wikidata.tsv', DIR)) ? ', Wikidata (CC0)' : '') +
     (existsSync(new URL('overture.tsv', DIR)) ? ', Overture Maps Foundation (CDLA Permissive 2.0)' : ''),
-  /* [id, Name, Ort, Bundesland, lat, lon, Webseite] */
-  c: out.map(x => [x.id, x.name, x.ort || '', x.land || '', r2(x.lat), r2(x.lon), shortWeb(x.web)])
+  /* Landkreise: [Name, Land, Verbandsbezirk] */
+  k: kreise,
+  /* alte ID → neue ID */
+  a: alias,
+  c: rows
 };
 writeFileSync(OUT, JSON.stringify(data).replace(/\],\[/g, '],\n['));
 const per = {};
 for (const x of out) per[x.land || '?'] = (per[x.land || '?'] || 0) + 1;
-console.log('Vereine:', out.length, 'aus', raw.length, 'Rohtreffern');
+const pc = n => n + ' (' + Math.round(n / out.length * 100) + ' %)';
+const gone = lost.filter(id => !alias[id]);
+console.log('Vereine:', out.length, 'aus', raw.length, 'Rohtreffern; alte IDs behalten:', kept, '– zusammengeführt:', Object.keys(alias).length, '– weggefallen:', gone.length);
 console.log('Je Bundesland:', Object.entries(per).sort().map(([k, v]) => k + ' ' + v).join(', '));
+console.log('Abdeckung – Landkreis:', pc(nK), 'Verband:', pc(nV), 'Bezirk:', pc(nB), 'sicher Fußball:', pc(nFb), 'Wappen:', pc(nW), 'Farben:', pc(nF), 'Liga:', pc(nL));
+writeFileSync(new URL('./log/weggefallen.txt', import.meta.url), gone.join('\n') + '\n');

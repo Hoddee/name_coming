@@ -1,0 +1,56 @@
+# Wappen und Vereinsangaben aus Wikidata / Wikipedia / Commons laden (nur freie Dateien) und die Vereinsliste neu bauen.
+# Start von Hand: GitHub → Actions → „Wappen und Vereinsdaten“ → Run workflow. Ergebnis kommt als Pull Request.
+# Läuft außerdem bei Pushes auf claude/-Branches, wenn sich tools/vereine/lauf.txt ändert (Datenlauf aus der Entwicklung, schreibt in denselben Branch).
+name: Wappen und Vereinsdaten
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths: ['tools/vereine/lauf.txt']
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: wappen-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  laden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow pyarrow fsspec aiohttp requests shapely
+      - name: Lauf
+        run: |
+          set -o pipefail
+          mkdir -p tools/vereine/log
+          if [ -f tools/vereine/lauf.sh ] && [ "${{ github.event_name }}" = "push" ]; then bash tools/vereine/lauf.sh 2>&1 | tee tools/vereine/log/lauf.txt; else
+            node tools/vereine/wikidata-laden.mjs
+            node tools/vereine/wappen-laden.mjs
+            python3 tools/vereine/wappen-bilder.py
+            node tools/vereine/build.mjs
+          fi
+      - name: Speichern
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for p in tools/vereine/quellen tools/vereine/log tools/vereine/kreise.json assets/data assets/img/w; do [ -e "$p" ] && git add -A -- "$p"; done
+          if git diff --cached --quiet; then echo "Keine Änderung"; exit 0; fi
+          if [ "${{ github.event_name }}" = "push" ]; then
+            git commit -m "Datenlauf: Wappen und Vereinsdaten"
+            for i in 1 2 3; do git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break; sleep 5; done
+          else
+            b="wappen-$(date +%Y%m%d)"
+            git checkout -b "$b"
+            git commit -m "Wappen und Vereinsdaten aktualisiert"
+            git push -u origin "$b"
+            gh pr create --title "Wappen und Vereinsdaten aktualisieren" --body "Neu geladen aus Wikidata (CC0), Wikipedia/Commons (nur freie Dateien, Lizenz in tools/vereine/quellen/wappen.tsv). Bitte Stichproben prüfen, dann mergen."
+          fi

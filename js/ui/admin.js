@@ -1,6 +1,7 @@
 /* Konto-Bereich: Anmelden, Registrieren (Spielerkonto), Passwort.
    Spieler: Freigabe-Status, eigene Spiele nachtragen. Admin: Anfragen freischalten, Spiel nachtragen, Kader pflegen. */
 import { modHtml, loadMod } from './suche.js';
+import { fillMyProfile, vadmHtml, loadVadm } from './einladung.js';
 import { $, esc, eur, toast, applyTier, readJson } from '../core/util.js';
 import { myClub } from '../services/vereine.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
@@ -23,10 +24,10 @@ import { openSetup, askName } from './setup.js';
 const ui = { spTeam: 'vfr', spEdit: null, spDel: null, mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '', adding: false, accounts: null, changePlayer: false };
 
 /* Auswahl „Welcher Spieler bist du?“ (alle aktiven Kaderspieler, nach Verein gruppiert) */
-function playerSelect(cur) {
+function playerSelect(cur, optional = false) {
   const groups = new Map();
   for (const p of PLAYER_LIST.filter(x => x.active !== false)) { if (!groups.has(p.c)) groups.set(p.c, []); groups.get(p.c).push(p); }
-  return '<select class="fi" name="spieler" required><option value="">Bitte wählen …</option>' + [...groups].map(([c, l]) => '<optgroup label="' + esc(CL[c] ? CL[c].n : c) + '">' +
+  return '<select class="fi" name="spieler"' + (optional ? '' : ' required') + '><option value="">' + (optional ? 'Keiner davon' : 'Bitte wählen …') + '</option>' + [...groups].map(([c, l]) => '<optgroup label="' + esc(CL[c] ? CL[c].n : c) + '">' +
     l.map(p => '<option value="' + esc(p.id) + '"' + (p.id === cur ? ' selected' : '') + '>' + esc(fullName(p)) + '</option>').join('') + '</optgroup>').join('') + '</select>';
 }
 
@@ -40,11 +41,11 @@ function loginHtml() {
       '<button type="button" class="lnk" data-adm="mode-login">Zurück zum Login</button></div>';
   }
   if (ui.mode === 'register') {
-    return '<div class="auth card"><div class="auth-icon">' + ICON.user + '</div><h3>Registrieren</h3><p class="muted">Wähle deinen Spieler – nach der Freigabe kannst du loslegen.</p>' +
+    return '<div class="auth card"><div class="auth-icon">' + ICON.user + '</div><h3>Registrieren</h3>' +
       '<form id="registerForm" class="form"><label class="nf"><span>E-Mail</span><input class="fi" type="email" name="email" autocomplete="username" required value="' + esc(ui.email) + '"></label>' +
       '<label class="nf"><span>Passwort (mind. 8 Zeichen)</span><input class="fi" type="password" name="pw" autocomplete="new-password" minlength="8" required></label>' +
       '<label class="nf"><span>Passwort wiederholen</span><input class="fi" type="password" name="pw2" autocomplete="new-password" minlength="8" required></label>' +
-      '<label class="nf"><span>Welcher Spieler bist du?</span>' + playerSelect(ui.regPlayer) + '</label>' +
+      '<label class="nf"><span>Spieler aus dem Kader</span>' + playerSelect(ui.regPlayer, true) + '</label>' +
       (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
       '<button type="submit" class="btn primary full"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Konto wird angelegt …' : 'Konto anlegen') + '</button></form>' +
       '<button type="button" class="lnk" data-adm="mode-login">Schon ein Konto? Anmelden</button></div>';
@@ -67,6 +68,7 @@ function playerHtml() {
     '<form id="requestForm" class="form"><label class="nf"><span>Welcher Spieler bist du?</span>' + playerSelect(acc && acc.spieler_id) + '</label>' +
     (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
     '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>Anfrage senden</button>' + (acc && acc.status === 'offen' ? '<button type="button" class="btn" data-adm="change-cancel">Abbrechen</button>' : '') + '</div></form></div>';
+  h += '<div id="eiMe"></div>';
   if (mine && PL[mine]) {
     h += '<button type="button" class="pcard" data-adm="my-area">' + avatar(mine) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[mine])) + '</b></span><span class="chev">›</span></button>' +
       '<div class="tiles"><button type="button" class="tile" data-adm="my-manual">' + ICON.plus + '<b>Spiel nachtragen</b></button>' +
@@ -243,7 +245,7 @@ function adminHtml() {
     '<div class="tiles">' +
       '<button type="button" class="tile" data-adm="manual">' + ICON.plus + '<b>Spiel nachtragen</b></button>' +
       '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b></button>' +
-    '</div>' + trafficHtml() + modHtml() + (myPlayer() && PL[myPlayer()] ? '<button type="button" class="pcard" data-adm="my-area">' + avatar(myPlayer()) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[myPlayer()])) + '</b></span><span class="chev">›</span></button>' : '') +
+    '</div>' + trafficHtml() + modHtml() + vadmHtml() + '<div id="eiMe"></div>' + (myPlayer() && PL[myPlayer()] ? '<button type="button" class="pcard" data-adm="my-area">' + avatar(myPlayer()) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[myPlayer()])) + '</b></span><span class="chev">›</span></button>' : '') +
     accountsHtml() + scheduleHtml() +
     '<h2>Kader</h2>' +
     newPlayerHtml() +
@@ -259,7 +261,8 @@ export function render() {
   else h = playerHtml();
   $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-nav="vereine">' + (myClub() ? 'Mein Verein · ' + esc(myClub().name) : 'Mein Verein wählen') + '</button><button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><button type="button" class="lnk" data-adm="tourmgr">Manager erklärt</button><button type="button" class="lnk" data-nav="legal">Impressum und Datenschutz</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
-  if (isLoggedIn() && isAdmin() && !ui.passwordMode) { loadTraffic(); loadMod(); }
+  if (isLoggedIn() && isAdmin() && !ui.passwordMode) { loadTraffic(); loadMod(); loadVadm(); }
+  if (isLoggedIn() && !ui.passwordMode) fillMyProfile();
   fillPush();
   applyTier(0);
 }

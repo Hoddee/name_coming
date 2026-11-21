@@ -189,6 +189,11 @@ async function upload(path, blob, upsert) {
     throw e.name === 'AbortError' ? new Error('Upload hat zu lange gedauert.') : e;
   } finally { clearTimeout(timer); }
 }
+/* Datei an einen festen neuen Pfad laden (Wappen des Vereins, eigenes Spielerfoto) – Rechte prüft der Storage (Migration 018) */
+export async function uploadFile(path, blob) {
+  if (!(await accessToken())) throw new Error('Nicht angemeldet');
+  return upload(path, blob, false);
+}
 /* Spielerfoto in den Bucket laden (nur Admin); liefert den Pfad im Bucket */
 /* Jedes Foto bekommt einen eigenen Namen und wird neu angelegt.
    „Überschreiben“ (x-upsert) verlangt im Storage zusätzliche Rechte und schlug deshalb fehl. */

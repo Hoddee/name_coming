@@ -12,7 +12,7 @@ export const VAPID_PUBLIC = 'BPpdkr18TxFId_jZJ6A0qLOo3pkdTIdKzKqfSYsnChxvth3Oq3V
 export const SEASON = '2026/2027';
 
 /* Angezeigte Version (Konto-Seite) – zusammen mit VERSION in sw.js hochzählen */
-export const APP_VERSION = '2.5.0';
+export const APP_VERSION = '2.6.0';
 /* Name der App (Titel, Teilen-Bilder, Benachrichtigungen) */
 export const APP_NAME = 'Kreo';
 
