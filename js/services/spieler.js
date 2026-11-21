@@ -37,23 +37,25 @@ function clean(r) {
 /* In PL/CL eintragen und auf dem Gerät merken (höchstens 400 Spieler) */
 function remember(list) {
   if (!list.length) return;
-  for (const p of list) { registerClub(p.verein, p.vname); addExtPlayer(p); }
+  for (const p of list) { const v = vr.list ? vereinById(p.verein) : null; registerClub(p.verein, p.vname, v ? v.upl || v.wappen : '', v ? v.farben : null); addExtPlayer(p); }
   const old = readJson(KEYS.ext, null) || {};
   const ps = new Map((Array.isArray(old.p) ? old.p : []).map(p => [p.id, p]));
   for (const p of list) { ps.delete(p.id); ps.set(p.id, Object.assign({}, p)); }
   const keep = [...ps.values()].slice(-400);
   const cs = new Map();
-  for (const p of keep) cs.set(p.verein, { id: p.verein, n: p.vname });
-  writeJson(KEYS.ext, { p: keep, c: [...cs.values()] });
+  for (const c of old.c || []) if (c && c.id) cs.set(c.id, c);
+  for (const p of keep) if (!cs.has(p.verein)) cs.set(p.verein, { id: p.verein, n: p.vname });
+  writeJson(KEYS.ext, { p: keep, c: [...cs.values()].slice(-400) });
 }
 /* Verein (aus Vereinssuche) als Eintrag in CL – z. B. als Gegner */
 export function useVerein(v) {
   if (!v) return null;
   const t = v.teams && v.teams.find(x => x.crest && CL[x.crest] && x.art === 'herren' && x.nr === 1);
   if (t) return t.crest;
-  registerClub(v.id, v.name);
+  const w = v.upl || v.wappen || '', f = (v.farben || []).slice(0, 2);
+  registerClub(v.id, v.name, w, f);
   const old = readJson(KEYS.ext, null) || { p: [], c: [] };
-  if (!(old.c || []).some(c => c.id === v.id)) { old.c = (old.c || []).concat({ id: v.id, n: v.name }).slice(-400); writeJson(KEYS.ext, old); }
+  old.c = (old.c || []).filter(c => c.id !== v.id).concat({ id: v.id, n: v.name, w, f }).slice(-400); writeJson(KEYS.ext, old);
   return v.id;
 }
 
@@ -74,7 +76,7 @@ async function loadRefs(rows) {
   const clubs = [...new Set(rows.flatMap(g => [g.opp, g.team]).filter(id => id && VID.test(id) && !CL[id]))];
   if (!clubs.length) return;
   try { await loadVereine(); } catch (e) { return; }
-  for (const id of clubs) { const v = vereinById(id) || (await fetchVerein(id)); if (v) registerClub(id, v.name); }
+  for (const id of clubs) { const v = vereinById(id) || (await fetchVerein(id)); if (v) registerClub(id, v.name, v.upl || v.wappen, v.farben); }
 }
 setRefLoader(loadRefs);
 

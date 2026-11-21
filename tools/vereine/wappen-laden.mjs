@@ -39,16 +39,35 @@ const byArticle = new Map(wd.filter(r => r.dewiki).map(r => [r.dewiki, r]));
 console.log('Wikidata:', wd.length, 'Vereine,', logos.size, 'mit Logo');
 
 /* ---------- 2. Wikipedia-Kategorien ---------- */
-const ROOT = 'Kategorie:Fußballverein aus Deutschland';
-const SKIP = /(ehemalig|frauenfußball|fußballspieler|fußballtrainer|funktionär|person|stadion|saison|liga\b|wettbewerb|pokal|fanclub|sportler|mannschaft \(|nationalmannschaft|jugendfußball|liste)/i;
-const cats = [ROOT], seenCat = new Set(cats), pages = new Set();
-for (let i = 0; i < cats.length && i < 1500; i++) {
+/* Einstieg: alle Kategorien „Fußballverein aus …“ (Bundesländer, Landkreise) und „Verein im … Fußball…verband“ (Mitglieder je Landesverband) */
+async function allCats(prefix) {
+  const out = [];
   let cont = {};
+  do {
+    const j = await api({ action: 'query', list: 'allcategories', acprefix: prefix, aclimit: '500', ...cont });
+    for (const c of j.query.allcategories) out.push('Kategorie:' + (c.category || c['*']));
+    cont = j.continue || null;
+  } while (cont);
+  return out;
+}
+const SKIP = /(ehemalig|frauenfußball|fußballspieler|fußballtrainer|funktionär|person|stadion|saison|wettbewerb|pokal|fanclub|sportler|nationalmannschaft|liste)/i;
+const roots = [...(await allCats('Fußballverein aus ')), ...(await allCats('Verein im '))].filter(c => !SKIP.test(c) && (/Fußballverein aus /.test(c) || /Fußball/.test(c)));
+console.log('Einstiegskategorien:', roots.length, roots.slice(0, 8).join(' | '));
+/* Verband je Kategorie „Verein im …“ (Kürzel wie in js/data/verbaende.js) */
+const VB = [[/Württembergischen/, 'WFV'], [/Südbadischen/, 'SBFV'], [/Badischen/, 'BADFV'], [/Bayerischen/, 'BAYFV'], [/Berliner/, 'BERFV'], [/Brandenburg/, 'FLB'],
+  [/Bremer/, 'BREFV'], [/Hamburger/, 'HAMFV'], [/Hessischen/, 'HESFV'], [/Mecklenburg/, 'LFVMV'], [/Niedersächsischen/, 'NFV'], [/Mittelrhein/, 'FVM'], [/Niederrhein/, 'FVN'],
+  [/Westfalen/, 'FLVW'], [/Rheinland/, 'FVR'], [/Südwestdeutschen/, 'SWFV'], [/Saarländischen/, 'SAARFV'], [/Sächsischen/, 'SAXFV'], [/Sachsen-Anhalt/, 'FSA'],
+  [/Schleswig-Holsteinischen/, 'SHFV'], [/Thüringer/, 'TFV']];
+const vbOf = c => { if (!/^Kategorie:Verein im /.test(c)) return ''; const m = VB.find(([re]) => re.test(c)); return m ? m[1] : ''; };
+const cats = [...roots], seenCat = new Set(cats), pages = new Set(), pageVb = new Map();
+for (let i = 0; i < cats.length && i < 3000; i++) {
+  let cont = {};
+  const vb = vbOf(cats[i]);
   do {
     const j = await api({ action: 'query', list: 'categorymembers', cmtitle: cats[i], cmlimit: '500', cmtype: 'page|subcat', ...cont });
     for (const m of j.query.categorymembers) {
       if (m.ns === 14) { if (!seenCat.has(m.title) && !SKIP.test(m.title)) { seenCat.add(m.title); cats.push(m.title); } }
-      else if (m.ns === 0) pages.add(m.title);
+      else if (m.ns === 0) { pages.add(m.title); if (vb) pageVb.set(m.title, vb); }
     }
     cont = j.continue || null;
   } while (cont);
@@ -77,8 +96,9 @@ for (let i = 0; i < list.length; i += 50) {
   for (const p of j.query.pages || []) {
     const q = p.pageprops && p.pageprops.wikibase_item;
     const txt = p.revisions && p.revisions[0] && p.revisions[0].slots.main.content || '';
-    if (!q || !/\{\{\s*Infobox (Fußballverein|Fußballklub|Verein|Sportverein)/i.test(txt)) continue;
-    const box = txt.slice(txt.search(/\{\{\s*Infobox/i), txt.search(/\{\{\s*Infobox/i) + 6000);
+    const ib = txt.search(/\{\{\s*Infobox (Fußballverein|Fußballklub|Verein|Sportverein)/i);
+    if (!q || (ib < 0 && !pageVb.has(p.title))) continue;
+    const box = ib < 0 ? '' : txt.slice(ib, ib + 6000);
     const logo = fileOf(PARAM(box, ['Bild', 'Logo', 'Vereinslogo', 'Wappen']));
     const liga = plain(PARAM(box, ['Liga']));
     const saison = plain(PARAM(box, ['Saison']));
@@ -86,11 +106,11 @@ for (let i = 0; i < list.length; i += 50) {
     const farben = plain(PARAM(box, ['Vereinsfarben', 'Farben']));
     const c = p.coordinates && p.coordinates[0];
     if (logo && !logos.has(q) && !/stadion|arena|sportpark|sportplatz|mannschaft|team|spieler|luftbild|tribüne/i.test(logo)) logos.set(q, logo);
-    dewiki.push([q, p.title.replace(/\s*\([^)]*\)$/, ''), ort, c ? c.lat : '', c ? c.lon : '', logo, liga, saison, farben, p.title].map(tsv).join('\t'));
+    dewiki.push([q, p.title.replace(/\s*\([^)]*\)$/, ''), ort, c ? c.lat : '', c ? c.lon : '', logo, liga, saison, farben, p.title, pageVb.get(p.title) || ''].map(tsv).join('\t'));
   }
   if (i % 1000 === 0) console.log('Artikel gelesen:', i, '/', list.length);
 }
-writeFileSync(new URL('dewiki.tsv', DIR), '# Wikipedia (deutsch), Infobox-Angaben (Fakten), Stand ' + new Date().toLocaleDateString('de-DE') + '.\nid\tname\tort\tlat\tlon\tlogo\tliga\tsaison\tfarben\tartikel\n' + dewiki.join('\n') + '\n');
+writeFileSync(new URL('dewiki.tsv', DIR), '# Wikipedia (deutsch), Infobox-Angaben (Fakten), Stand ' + new Date().toLocaleDateString('de-DE') + '.\nid\tname\tort\tlat\tlon\tlogo\tliga\tsaison\tfarben\tartikel\tverband\n' + dewiki.join('\n') + '\n');
 console.log('Wikipedia-Vereine mit Infobox:', dewiki.length, '– Logos gesamt:', logos.size);
 
 /* ---------- 3. Lizenz, Urheber, Vorschaubild ---------- */

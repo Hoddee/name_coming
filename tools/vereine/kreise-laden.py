@@ -1,4 +1,5 @@
-"""Lädt die Landkreise und kreisfreien Städte Deutschlands (Grenzen) aus Overture Maps Divisions nach kreise.json.
+"""Lädt die Landkreise und kreisfreien Städte Deutschlands (Grenzen) aus Overture Maps Divisions nach kreise.json,
+dazu die Regierungsbezirke (Bayern, Baden-Württemberg, Hessen, Nordrhein-Westfalen).
 
 Overture Maps Foundation, Divisions (CDLA Permissive 2.0; enthält Daten von © OpenStreetMap-Mitwirkenden, ODbL).
 build.mjs ordnet damit jedem Verein seinen Landkreis zu – daraus folgen Landesverband und Fußballkreis (kreise-fussball.mjs).
@@ -39,7 +40,7 @@ for k in files:
   if not rgs:
     continue
   for r in f.read_row_groups(rgs, columns=['subtype', 'class', 'country', 'region', 'names', 'geometry', 'is_land']).to_pylist():
-    if r.get('country') != 'DE' or r.get('subtype') != 'county':
+    if r.get('country') != 'DE' or r.get('subtype') not in ('county', 'macrocounty'):
       continue
     if r.get('is_land') is False:
       continue
@@ -49,6 +50,6 @@ for k in files:
     def fix(c):
       if isinstance(c[0], (int, float)): return rd(c)
       return [fix(x) for x in c]
-    feats.append({'n': (r.get('names') or {}).get('primary') or '', 'r': (r.get('region') or '').replace('DE-', ''), 'g': {'type': gj['type'], 'coordinates': fix(gj['coordinates'])}})
+    feats.append({'t': 'b' if r['subtype'] == 'macrocounty' else 'k', 'n': (r.get('names') or {}).get('primary') or '', 'r': (r.get('region') or '').replace('DE-', ''), 'g': {'type': gj['type'], 'coordinates': fix(gj['coordinates'])}})
 json.dump({'quelle': 'Overture Maps Foundation, Divisions ' + rel + ' (CDLA Permissive 2.0, © OpenStreetMap-Mitwirkende ODbL)', 'k': feats}, open(OUT, 'w'), ensure_ascii=False, separators=(',', ':'))
-print('Kreise:', len(feats))
+print('Kreise:', sum(f['t'] == 'k' for f in feats), 'Regierungsbezirke:', sum(f['t'] == 'b' for f in feats))

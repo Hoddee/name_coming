@@ -68,27 +68,59 @@ export const OWN_CLUBS = ['vfr', 'vfrk', 'fornsbach', 'sgm5'];
 export function storageUrl(path) {
   return STORAGE_BASE + path.split('/').map(encodeURIComponent).join('/');
 }
-/* Generiertes Wappen (Schild mit Initialen) für eigene Gegner */
-function initials(name) {
-  const w = name.replace(/[^\p{L}\p{N} ]/gu, ' ').split(' ').filter(x => x && !/^\d+$/.test(x) && !/^(fc|sv|tsv|sc|sg|sgm|fsv|vfr|vfb|tsg|sf|svg|fv|tsc|sk)$/i.test(x));
-  return ((w[0] || name)[0] + (w[1] ? w[1][0] : (w[0] || '').slice(1, 2))).toUpperCase();
+/* Generiertes Wappen für Vereine ohne freies Logo: Schild in den Vereinsfarben (wenn bekannt, sonst aus dem Namen),
+   Kürzel aus dem Ortsteil des Namens, Form und Muster je Verein fest (gleicher Name = gleiches Wappen). */
+const SKIP_W = /^(\d+\.?|e|v|ev|fc|sv|tsv|sc|sg|sgm|fsv|vfr|vfb|vfl|tsg|sf|svg|fv|tsc|sk|tus|djk|spvgg|ssv|asv|tv|mtv|bsv|esv|psv|sus|fsg|ksv|rsv|usv|lsv|hsv|1)$/i;
+export function initials(name) {
+  const w = String(name).replace(/[^\p{L}\p{N} ]/gu, ' ').split(' ').filter(x => x && !/^\d+$/.test(x) && !SKIP_W.test(x));
+  const a = w[0] || String(name).replace(/[^\p{L}]/gu, '') || '?';
+  return (a[0] + (w[1] ? w[1][0] : a.slice(1, 2))).toUpperCase();
 }
+const hash = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+const HEX = /^#[0-9a-f]{6}$/i;
+const lum = c => { const n = parseInt(c.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255; };
+const SHIELDS = [
+  'M50 4l40 12v30c0 26-17 42-40 50C27 88 10 72 10 46V16z',
+  'M12 8h76v40c0 24-18 38-38 46C30 86 12 72 12 48z',
+  'M50 4c14 6 26 8 40 8v34c0 26-17 42-40 50C27 88 10 72 10 46V12c14 0 26-2 40-8z',
+  'M10 10h80v30c0 30-20 46-40 54C30 86 10 70 10 40z'
+];
 const crestCache = new Map();
-export function generatedCrest(name) {
-  if (!crestCache.has(name)) {
-    let h = 0;
-    for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    const hue = h % 360;
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 4l40 12v30c0 26-17 42-40 50C27 88 10 72 10 46V16z" fill="hsl(' + hue + ',55%,38%)" stroke="#fff" stroke-width="4"/>' +
-      '<text x="50" y="60" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="30" fill="#fff">' + initials(name).replace(/[<&>]/g, '') + '</text></svg>';
-    crestCache.set(name, 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+export function generatedCrest(name, colors = null) {
+  const cols = (Array.isArray(colors) ? colors : []).filter(c => HEX.test(c));
+  const key = name + '|' + cols.join(',');
+  if (!crestCache.has(key)) {
+    const h = hash(name), hue = h % 360;
+    let a = cols[0] || 'hsl(' + hue + ',58%,36%)', b = cols[1] || (cols[0] ? (lum(cols[0]) > 0.6 ? '#1b2340' : '#ffffff') : 'hsl(' + ((hue + 40) % 360) + ',40%,92%)');
+    /* Weiß als erste Farbe: Hauptfläche dunkel lassen, damit das Kürzel lesbar bleibt */
+    if (HEX.test(a) && lum(a) > 0.8 && cols[1]) [a, b] = [b, a];
+    const ink = HEX.test(a) && lum(a) > 0.62 ? '#10131f' : '#ffffff';
+    const shape = SHIELDS[h % SHIELDS.length], pat = (h >> 3) % 4;
+    const deco = pat === 0 ? '<path d="M0 0h50v100H0z" fill="' + b + '" opacity=".9"/>'
+      : pat === 1 ? '<path d="M0 0h100v26H0z" fill="' + b + '"/>'
+      : pat === 2 ? '<path d="M0 100L100 0v34L34 100z" fill="' + b + '" opacity=".85"/>'
+      : '<path d="M38 0h24v100H38z" fill="' + b + '" opacity=".9"/>';
+    const txt = initials(name).replace(/[<&>]/g, '');
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><clipPath id="s"><path d="' + shape + '"/></clipPath></defs>' +
+      '<g clip-path="url(#s)"><path d="M0 0h100v100H0z" fill="' + a + '"/>' + deco + '</g>' +
+      '<path d="' + shape + '" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="4"/>' +
+      '<circle cx="50" cy="52" r="23" fill="' + a + '" stroke="' + b + '" stroke-width="3"/>' +
+      '<text x="50" y="61" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="' + (txt.length > 1 ? 24 : 28) + '" fill="' + ink + '">' + txt + '</text></svg>';
+    crestCache.set(key, 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
   }
-  return crestCache.get(name);
+  return crestCache.get(key);
 }
-/* Verein aus der Vereinssuche bzw. Mannschaft eines gesuchten Spielers als Eintrag in CL (Wappen generiert, keine Liga) */
-export function registerClub(id, name) {
-  if (!id || clubBase[id]) return clubBase[id] || null;
-  clubBase[id] = { id, n: String(name || '').slice(0, 60) || 'Verein', lg: null, ext: true, img: generatedCrest(String(name || id)) };
+/* Verein aus der Vereinssuche bzw. Mannschaft eines gesuchten Spielers als Eintrag in CL (keine Liga).
+   img = echtes Wappen (assets/img/w/…), sonst generiert. */
+const OK_IMG = /^(assets\/img\/w\/Q\d{1,12}\.webp|https:\/\/[a-z0-9.-]+\.supabase\.co\/storage\/v1\/object\/public\/[A-Za-z0-9_./%-]+)$/;
+export const okCrest = v => (typeof v === 'string' && OK_IMG.test(v) ? v : '');
+export function registerClub(id, name, img = '', colors = null) {
+  if (!id) return null;
+  const c = clubBase[id];
+  if (c && !c.ext) return c;
+  const n = String(name || '').slice(0, 60) || (c && c.n) || 'Verein';
+  const real = okCrest(img) || (c && c.real) || '';
+  clubBase[id] = { id, n, lg: null, ext: true, real, img: real || generatedCrest(n, colors) };
   return clubBase[id];
 }
 export function crestUrl(clubId) {

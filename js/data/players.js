@@ -64,7 +64,7 @@ export const EXT_ID = /^sp[a-f0-9]{10}$/;
 try {
   const ext = JSON.parse(localStorage.getItem(KEYS.ext) || 'null');
   if (ext && typeof ext === 'object') {
-    for (const c of Array.isArray(ext.c) ? ext.c : []) if (c && typeof c.id === 'string' && /^[a-z0-9_-]{2,40}$/.test(c.id)) registerClub(c.id, typeof c.n === 'string' ? c.n : '');
+    for (const c of Array.isArray(ext.c) ? ext.c : []) if (c && typeof c.id === 'string' && /^[a-z0-9_-]{2,40}$/.test(c.id)) registerClub(c.id, typeof c.n === 'string' ? c.n : '', c.w, Array.isArray(c.f) ? c.f : null);
     for (const p of Array.isArray(ext.p) ? ext.p : []) if (p && EXT_ID.test(p.id) && typeof p.n === 'string') addExtPlayer(p);
   }
 } catch (e) {}

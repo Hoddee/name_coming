@@ -42,7 +42,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A tools/vereine/quellen tools/vereine/log tools/vereine/kreise.json assets/data assets/img/w || true
+          for p in tools/vereine/quellen tools/vereine/log tools/vereine/kreise.json assets/data assets/img/w; do [ -e "$p" ] && git add -A -- "$p"; done
           if git diff --cached --quiet; then echo "Keine Änderung"; exit 0; fi
           if [ "${{ github.event_name }}" = "push" ]; then
             git commit -m "Datenlauf: Wappen und Vereinsdaten"
