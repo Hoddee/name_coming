@@ -242,9 +242,11 @@ export const vereineIn = (land, kreis) => (vr.list || []).filter(v => v.land ===
 
 /* ---------- Wappen ----------
    Reihenfolge: vom Verein hochgeladen (Supabase, Migration 018) → freies Logo aus Wikimedia (assets/img/w) → generiert (Farben + Kürzel) */
-export const vereinCrest = v => (v ? v.upl || v.wappen || generatedCrest(v.name, v.farben) : generatedCrest('?'));
+/* Kreisliga-Vereine (clubs.js) haben ihr Wappen schon im Repo (assets/img/c) */
+const seedCrest = v => { const t = (v.teams || []).find(x => x.crest && x.src === 'kl'); return t ? 'assets/img/c/' + t.crest + '.webp' : ''; };
+export const vereinCrest = v => (v ? v.upl || v.wappen || seedCrest(v) || generatedCrest(v.name, v.farben) : generatedCrest('?'));
 /* Für CL (Spiele, Live, Profile): Verein mit Wappen eintragen */
-export const registerVerein = v => (v ? registerClub(v.id, v.name, v.upl || v.wappen, v.farben) : null);
+export const registerVerein = v => (v ? registerClub(v.id, v.name, v.upl || v.wappen || seedCrest(v), v.farben) : null);
 let liz = null;
 /* Namensnennung (Lizenz, Urheber, Seite) – nur auf der Vereinsseite, einmal pro Sitzung */
 export async function wappenLizenz(wd) {

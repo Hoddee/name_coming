@@ -22,6 +22,7 @@ import { initLegal } from './ui/legal.js';
 import { initVereine, openVerein } from './ui/vereine.js';
 import { initFun } from './ui/fun.js';
 import { initSuche, openPlayerLink } from './ui/suche.js';
+import { initEinladung, openInviteLink } from './ui/einladung.js';
 import { startTraffic } from './services/traffic.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
@@ -44,6 +45,7 @@ initLegal();
 initVereine();
 initFun();
 initSuche();
+initEinladung();
 
 /* Navigation über data-nav="…" (back = zur vorherigen Ansicht) */
 document.addEventListener('click', e => {
@@ -97,6 +99,13 @@ const vParam = new URLSearchParams(location.search).get('v');
 if (vParam) {
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (/^[a-z0-9_-]{2,40}$/.test(vParam)) openVerein(vParam);
+}
+
+/* Einladung in eine Mannschaft: ?t=<Code> */
+const tParam = new URLSearchParams(location.search).get('t');
+if (tParam) {
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (/^[a-f0-9]{12}$/.test(tParam)) openInviteLink(tParam);
 }
 
 /* Startbildschirm ausblenden (mindestens kurz sichtbar, damit er nicht flackert); beim ersten Mal die Einführung */

@@ -77,7 +77,7 @@ function fromDewiki(r) {
   DEWIKI.set(r.id, r);
   const n = clean(r.name);
   if (!n || !isClub(n) && NOT2.test(n)) return null;
-  return { id: 'q' + r.id.replace(/^Q/, ''), name: n, ort: r.ort, plz: '', land: '', lat: +r.lat || 0, lon: +r.lon || 0, web: '', wd: r.id, q: QUAL.wd, fb: 1, wiki: r.artikel || '' };
+  return { id: 'q' + r.id.replace(/^Q/, ''), name: n, ort: r.ort, plz: '', land: '', lat: +r.lat || 0, lon: +r.lon || 0, web: '', wd: r.id, q: QUAL.wd, fb: 1, wiki: r.artikel || '', vbw: r.verband || '' };
 }
 
 /* Overture-Namen kommen oft aus Registern in „Titel-Schreibweise“ („Sv Musterdorf 1920 E.v.“) – Kürzel wieder groß */
@@ -148,7 +148,7 @@ for (const x of raw.sort((a, b) => b.q - a.q || (b.web ? 1 : 0) - (a.web ? 1 : 0
   /* Gleicher Name im Umkreis von 15 km (oder gleiche Wikidata-ID) = derselbe Verein */
   const same = list.find(y => (x.wd && y.wd && x.wd === y.wd) || km(x, y) < 15);
   if (same) {
-    for (const f of ['ort', 'plz', 'web', 'wd', 'land', 'liga', 'farben', 'gr', 'wiki']) if (!same[f] && x[f]) same[f] = x[f];
+    for (const f of ['ort', 'plz', 'web', 'wd', 'land', 'liga', 'farben', 'gr', 'wiki', 'vbw']) if (!same[f] && x[f]) same[f] = x[f];
     same.ids.push(...x.ids); same.fb = same.fb || x.fb;
     if (!same.lat && x.lat) { same.lat = x.lat; same.lon = x.lon; }
     continue;
@@ -160,7 +160,7 @@ for (const x of raw.sort((a, b) => b.q - a.q || (b.web ? 1 : 0) - (a.web ? 1 : 0
 /* Gleiche Wikidata-ID unter verschiedenen Namen: den OSM-Namen behalten */
 const out = [], seenWd = new Map();
 for (const list of groups.values()) for (const x of list) {
-  if (x.wd) { const o = seenWd.get(x.wd); if (o) { o.ids.push(...x.ids); continue; } seenWd.set(x.wd, x); }
+  if (x.wd) { const o = seenWd.get(x.wd); if (o) { o.ids.push(...x.ids); o.fb = o.fb || x.fb; for (const f of ['ort', 'web', 'liga', 'farben', 'gr', 'wiki', 'vbw']) if (!o[f] && x[f]) o[f] = x[f]; if (!o.lat && x.lat) { o.lat = x.lat; o.lon = x.lon; } continue; } seenWd.set(x.wd, x); }
   out.push(x);
 }
 /* „Werder Bremen“ neben „SV Werder Bremen“: Name ohne Kürzel im Umkreis von 10 km = derselbe Verein */
@@ -174,7 +174,7 @@ for (const list of byCore.values()) {
   for (const x of list) {
     if (words(x.name).some(w => ABKW.has(w))) continue;
     const y = list.find(y => y !== x && !drop.has(y) && words(y.name).some(w => ABKW.has(w)) && km(x, y) < 10);
-    if (y) { drop.add(x); for (const f of ['ort', 'web', 'land', 'wd', 'liga', 'farben', 'gr', 'wiki']) if (!y[f] && x[f]) y[f] = x[f]; y.ids.push(...x.ids); y.fb = y.fb || x.fb; }
+    if (y) { drop.add(x); for (const f of ['ort', 'web', 'land', 'wd', 'liga', 'farben', 'gr', 'wiki', 'vbw']) if (!y[f] && x[f]) y[f] = x[f]; y.ids.push(...x.ids); y.fb = y.fb || x.fb; }
   }
 }
 for (let i = out.length - 1; i >= 0; i--) if (drop.has(out[i]) || (!out[i].fb && OTHER.test(out[i].name))) out.splice(i, 1);
@@ -215,7 +215,8 @@ for (const x of out) {
 }
 for (const x of out) {
   const kr = x.k != null ? kreise[x.k] : null;
-  x.vb = verbandFor(x.land, kr ? kr[0] : '', '').verband;
+  /* Mitgliedschaft laut Wikipedia-Kategorie „Verein im …verband“ geht vor (genauer in geteilten Landkreisen) */
+  x.vb = x.vbw || verbandFor(x.land, kr ? kr[0] : '', '').verband;
   /* Stadtstaaten: ein Verband, auch ohne Kreis */
 }
 

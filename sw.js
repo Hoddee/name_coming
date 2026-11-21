@@ -5,7 +5,7 @@
    Bilder (Spielerfotos, Wappen): nur einmal laden, danach immer aus dem Cache – kein erneutes Herunterladen.
    Geänderte Fotos bekommen eine neue Adresse (?v=…), alte Einträge werden beim Versionswechsel aufgeräumt.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kreo-v2.5.0';
+const VERSION = 'kreo-v2.6.0';
 const APP = 'app-' + VERSION;
 const IMG = 'img-v3';
 const SHELL = [
@@ -16,7 +16,7 @@ const SHELL = [
   'js/core/game.js', 'js/core/icons.js', 'js/core/market.js', 'js/core/util.js',
   'js/services/api.js', 'js/services/auth.js',
   'js/ui/admin.js', 'js/ui/feel.js', 'js/ui/tabbar.js', 'js/ui/mvp.js', 'js/ui/onehand.js', 'js/ui/mit.js', 'js/services/mit.js', 'js/core/qr.js', 'js/services/traffic.js', 'js/services/push.js', 'css/brand.css', 'css/kreo.css', 'css/manager.css', 'js/core/manager.js', 'js/services/manager.js', 'js/ui/manager.js', 'js/ui/legal.js', 'js/ui/goal.js', 'css/feel.css', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',
-  'js/core/vsearch.js', 'js/data/verbaende.js', 'js/services/vereine.js', 'js/ui/vereine.js', 'js/ui/fun.js', 'css/vereine.css', 'js/services/spieler.js', 'js/ui/suche.js', 'css/suche.css',
+  'js/core/vsearch.js', 'js/data/verbaende.js', 'js/services/vereine.js', 'js/ui/vereine.js', 'js/ui/fun.js', 'css/vereine.css', 'js/services/spieler.js', 'js/ui/suche.js', 'css/suche.css', 'js/ui/einladung.js',
   'assets/fonts/inter-tight-latin-400-normal.woff2', 'assets/fonts/inter-tight-latin-500-normal.woff2',
   'assets/fonts/inter-tight-latin-600-normal.woff2', 'assets/fonts/inter-tight-latin-700-normal.woff2',
   'assets/fonts/sora-var.woff2',

@@ -78,3 +78,66 @@
 .vr-start small.vr-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: vrPulse 1.6s ease-in-out infinite; }
 @keyframes vrPulse { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .vr-start small.vr-live::before { animation: none; } }
+
+/* ---------- Wappen, Steckbrief, Stöbern (Version 2.6) ---------- */
+.vr-cr { width: 40px; height: 40px; object-fit: contain; }
+.vr-head .vr-crest { position: relative; width: 112px; height: 112px; margin: 0 auto 12px; display: grid; place-items: center; }
+.vr-head .vr-crest::before { content: ""; position: absolute; inset: -18px; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--acc-rgb), .38), transparent); }
+.vr-head .vr-crest img { position: relative; width: 112px; height: 112px; object-fit: contain; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .45)); }
+.vr-fa { display: inline-flex; gap: 6px; margin-top: 10px; }
+.vr-fa i { width: 22px; height: 8px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .25); }
+.vr-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+.vr-facts div { padding: 10px 12px; border-radius: 14px; background: var(--surface); min-width: 0; }
+.vr-facts div:first-child:nth-last-child(odd), .vr-facts div:first-child { grid-column: 1 / -1; }
+.vr-facts dt { font: 500 12px var(--font-body); color: var(--muted); }
+.vr-facts dd { margin: 2px 0 0; font: 600 15px var(--font-body); overflow-wrap: anywhere; }
+.vr-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 0 0 14px; }
+.vr-links a { color: var(--acc); font-weight: 600; font-size: 14px; }
+.vr-kt { margin-top: 10px; }
+.vr-up { display: grid; place-items: center; cursor: pointer; }
+.vr-admst { text-align: center; margin-top: 12px; }
+.vr-crumbs { display: flex; gap: 6px; overflow-x: auto; margin: -4px 0 12px; scrollbar-width: none; }
+.vr-crumbs::-webkit-scrollbar { display: none; }
+.vr-crumbs button { flex: none; padding: 6px 12px; border: 0; border-radius: 999px; background: var(--surface); color: var(--muted); font: 600 13px var(--font-body); }
+.vr-crumbs button[aria-current] { background: rgba(var(--acc-rgb), .22); color: var(--ink); }
+.vr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vr-reg { display: grid; gap: 2px; min-height: 64px; padding: 12px 14px; border: 0; border-radius: 16px; background: var(--surface); color: var(--ink); text-align: left; }
+.vr-reg b { font: 600 14px var(--font-body); }
+.vr-reg small { font: 500 12px var(--font-body); color: var(--muted); }
+.vr-reg:active, .vr-crumbs button:active { transform: scale(.98); }
+.vr-row.vr-kr { grid-template-columns: minmax(0, 1fr) auto 12px; min-height: 52px; }
+.vr-n { font: 600 13px var(--font-body); font-style: normal; color: var(--muted); }
+.vr-vb { margin: -4px 0 12px; color: var(--muted); font-size: 13px; }
+
+/* ---------- Einladung, Kader als Liste, eigenes Profil (ei-) ---------- */
+.ei-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 14px; margin: 4px 0 16px; }
+.ei-head img { width: 56px; height: 56px; object-fit: contain; }
+.ei-head span { display: grid; gap: 2px; min-width: 0; }
+.ei-head b { font: 700 20px var(--font-head); letter-spacing: -.02em; }
+.ei-head small { color: var(--muted); font-size: 14px; }
+.ei-qr { display: grid; justify-items: center; gap: 6px; padding: 18px; margin-bottom: 12px; text-align: center; }
+.ei-qrc { width: min(240px, 70vw); padding: 12px; border-radius: 16px; background: #fff; }
+.ei-qrc svg { display: block; width: 100%; height: auto; }
+.ei-link { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.ei-again { display: block; margin: 12px auto 0; }
+.ei-nr { margin-top: 8px; }
+.ei-list { display: grid; gap: 6px; margin-bottom: 14px; }
+.ei-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--surface); }
+.ei-num { font: 700 15px var(--font-display); color: var(--muted); text-align: center; }
+.ei-own { font: 600 12px var(--font-body); font-style: normal; color: var(--muted2); }
+.ei-done { display: grid; gap: 4px; padding: 16px; margin-bottom: 12px; text-align: center; }
+.ei-done b { font: 700 18px var(--font-head); }
+.ei-done small { color: var(--muted); }
+.ei-done small.bad { color: var(--live); text-align: left; }
+.ei-ta { min-height: 168px; resize: vertical; font: 500 15px/1.5 var(--font-body); }
+.ei-prev { display: flex; flex-wrap: wrap; gap: 6px; }
+.ei-prev span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: var(--raised); font-size: 13px; }
+.ei-prev i { font-style: normal; font-weight: 700; color: var(--acc2); min-width: 14px; text-align: center; }
+.ei-prev small { color: var(--muted); }
+.ei-me { display: grid; gap: 12px; margin-bottom: 12px; }
+.ei-mehead { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.ei-mehead .hav, .ei-mehead .hav img { width: 48px; height: 48px; }
+.ei-meform { display: grid; gap: 12px; }
+.ei-meform .btn { display: grid; place-items: center; cursor: pointer; }
+.su-miss { display: grid; gap: 12px; padding: 16px; text-align: center; }
+.su-miss b { font: 600 15px var(--font-body); }

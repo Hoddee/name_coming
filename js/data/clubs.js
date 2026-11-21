@@ -112,7 +112,7 @@ export function generatedCrest(name, colors = null) {
 }
 /* Verein aus der Vereinssuche bzw. Mannschaft eines gesuchten Spielers als Eintrag in CL (keine Liga).
    img = echtes Wappen (assets/img/w/…), sonst generiert. */
-const OK_IMG = /^(assets\/img\/w\/Q\d{1,12}\.webp|https:\/\/[a-z0-9.-]+\.supabase\.co\/storage\/v1\/object\/public\/[A-Za-z0-9_./%-]+)$/;
+const OK_IMG = /^(assets\/img\/w\/Q\d{1,12}\.webp|assets\/img\/c\/[a-zA-Z0-9_]{2,30}\.webp|https:\/\/[a-z0-9.-]+\.supabase\.co\/storage\/v1\/object\/public\/[A-Za-z0-9_./%-]+)$/;
 export const okCrest = v => (typeof v === 'string' && OK_IMG.test(v) ? v : '');
 export function registerClub(id, name, img = '', colors = null) {
   if (!id) return null;

@@ -4,7 +4,7 @@
    Spiel, Hall of Fame und Marktwert ohne Sonderwege. Gemerkt in KEYS.ext, damit ein laufendes Spiel einen Neustart übersteht.
    Datenschutz: nur Name, Verein, Mannschaft, Position, Rückennummer; nur Erwachsene; Ausblenden geht sofort (rpc/spieler_ausblenden). */
 import { KEYS, SEASON } from '../config.js';
-import { rest, str, setRefLoader, games } from './api.js';
+import { rest, str, setRefLoader, games, uploadFile } from './api.js';
 import { readJson, writeJson } from '../core/util.js';
 import { keyOf, score, simple } from '../core/vsearch.js';
 import { PL, PLAYER_LIST, EXT_ID, addExtPlayer, fullName } from '../data/players.js';
@@ -16,7 +16,15 @@ const VID = /^[a-z0-9_-]{2,40}$/;
 const POS = ['TW', 'ABW', 'MIT', 'ANG'];
 export const TEAM_ART = { herren: 'Herren', frauen: 'Frauen', ah: 'Alte Herren' };
 export const sp = { dbMissing: false, rev: 0 };
-const FIELDS = 'id,vorname,nachname,verein_id,verein_name,team_id,team_art,team_nr,pos,nummer,status,doppelt_von';
+const FIELDS0 = 'id,vorname,nachname,verein_id,verein_name,team_id,team_art,team_nr,pos,nummer,status,doppelt_von';
+/* Mit Migration 018 zusätzlich eigenes Foto und „übernommen“; ohne 018 still die alten Spalten */
+let FIELDS = FIELDS0 + ',foto,beansprucht';
+const OK_FOTO = /^eigen\/[a-f0-9-]{36}\/[A-Za-z0-9_-]{4,40}\.(webp|png)$/;
+const no018 = e => e && /foto|beansprucht|spieler_suche2|column|42703|PGRST202|PGRST204/i.test(e.message || '');
+async function restSel(path) {
+  try { return await (await rest(path.replace('$F', FIELDS))).json(); }
+  catch (e) { if (FIELDS !== FIELDS0 && no018(e)) { FIELDS = FIELDS0; return (await rest(path.replace('$F', FIELDS))).json(); } throw e; }
+}
 
 /* ---------- Prüfen und eintragen ---------- */
 /* Namen: Buchstaben, Leerzeichen, Bindestrich, Punkt, Apostroph (gleiche Regel wie in der DB) */
@@ -31,7 +39,7 @@ function clean(r) {
     art: TEAM_ART[r.team_art] ? r.team_art : 'herren', nr: Math.max(1, Math.min(9, Math.round(+r.team_nr) || 1)),
     pos: POS.includes(r.pos) ? r.pos : 'MIT', num: r.nummer >= 1 && r.nummer <= 99 ? Math.round(+r.nummer) : null,
     st: r.status === 'doppelt' && /^[A-Za-z0-9_-]{1,64}$/.test(r.doppelt_von || '') ? r.doppelt_von : null,
-    mw: 1000000, status: 'fit', foto: '', ext: true
+    mw: 1000000, status: 'fit', foto: OK_FOTO.test(r.foto || '') ? r.foto : '', own: r.beansprucht === true, ext: true
   };
 }
 /* In PL/CL eintragen und auf dem Gerät merken (höchstens 400 Spieler) */
@@ -67,7 +75,7 @@ async function loadRefs(rows) {
   if (want.length && !sp.dbMissing) {
     for (let i = 0; i < want.length; i += 80) {
       try {
-        const d = await (await rest('spieler?select=' + FIELDS + '&id=in.(' + want.slice(i, i + 80).join(',') + ')')).json();
+        const d = await restSel('spieler?select=$F&id=in.(' + want.slice(i, i + 80).join(',') + ')');
         remember((Array.isArray(d) ? d : []).map(clean).filter(Boolean));
       } catch (e) { if (isMissing(e)) sp.dbMissing = true; break; }
     }
@@ -84,7 +92,7 @@ setRefLoader(loadRefs);
 export async function fetchSpieler(id) {
   if (PL[id] || !EXT_ID.test(id) || sp.dbMissing) return PL[id] || null;
   try {
-    const d = await (await rest('spieler?select=' + FIELDS + '&id=eq.' + id)).json();
+    const d = await restSel('spieler?select=$F&id=eq.' + id);
     const p = clean(Array.isArray(d) ? d[0] : null);
     if (p && !p.st) remember([p]);
     return PL[id] || null;
@@ -115,7 +123,11 @@ export async function searchDb(q, verein = null) {
   const key = t + '|' + (verein || '');
   if (dbCache.has(key)) return dbCache.get(key);
   try {
-    const d = await (await rest('rpc/spieler_suche', { method: 'POST', headers: json, body: JSON.stringify({ q: t, v: verein, n: verein ? 60 : 20 }) })).json();
+    const body = JSON.stringify({ q: t, v: verein, n: verein ? 60 : 20 });
+    let d;
+    try { if (!sp.no2) d = await (await rest('rpc/spieler_suche2', { method: 'POST', headers: json, body })).json(); }
+    catch (e) { if (e && (e.status === 404 || no018(e))) sp.no2 = true; else throw e; }
+    if (sp.no2) d = await (await rest('rpc/spieler_suche', { method: 'POST', headers: json, body })).json();
     const list = (Array.isArray(d) ? d : []).map(clean).filter(p => p && !p.st);
     remember(list);
     const res = list.map(p => PL[p.id]).filter(Boolean);
@@ -179,7 +191,7 @@ export async function createSpieler(f) {
   };
   if (!row.vorname || !row.nachname || !VID.test(row.verein_id || '') || !row.bestaetigt) throw new Error('Angaben prüfen');
   try {
-    const d = await (await rest('spieler?select=' + FIELDS, { method: 'POST', headers: Object.assign({ Prefer: 'return=representation' }, json), body: JSON.stringify(row) })).json();
+    const d = await (await rest('spieler?select=' + FIELDS0, { method: 'POST', headers: Object.assign({ Prefer: 'return=representation' }, json), body: JSON.stringify(row) })).json();
     const p = clean(Array.isArray(d) ? d[0] : d);
     if (!p) throw new Error('leer');
     remember([p]); dbCache.clear(); keyCache.delete(p.id); sp.rev++;
@@ -211,7 +223,7 @@ export function forget(id) {
 export async function loadModeration() {
   const [r, h] = await Promise.all([
     rest('spieler_meldungen?select=id,spieler_id,art,text,created_at&erledigt=eq.false&order=created_at.desc&limit=50').then(x => x.json()),
-    rest('spieler?select=' + FIELDS + '&status=eq.ausgeblendet&order=created_at.desc&limit=50').then(x => x.json())
+    restSel('spieler?select=$F&status=eq.ausgeblendet&order=created_at.desc&limit=50')
   ]);
   const rows = (Array.isArray(h) ? h : []).map(x => Object.assign(clean(Object.assign({}, x, { status: 'neu' })) || {}, { id: x.id })).filter(x => x.n);
   const names = new Map(rows.map(p => [p.id, fullName(p)]));
@@ -228,6 +240,110 @@ export async function setSpielerStatus(id, status) {
 }
 export async function reportDone(id) {
   await rest('spieler_meldungen?id=eq.' + id, { method: 'PATCH', headers: json, body: JSON.stringify({ erledigt: true }) });
+}
+
+/* ---------- Kader schnell füllen (Migration 018) ---------- */
+const rpc = async (fn, body) => (await rest('rpc/' + fn, { method: 'POST', headers: json, body: JSON.stringify(body) })).json();
+const inviteErr = e => {
+  const m = (e && e.message) || '';
+  if (/schon ein Profil/i.test(m)) return 'Du hast schon ein Profil';
+  if (/ungültig|ungueltig/i.test(m)) return 'Einladung abgelaufen';
+  if (/zu viele/i.test(m)) return 'Für heute genug';
+  if (/nicht angemeldet|JWT|401/i.test(m)) return 'Bitte anmelden';
+  if (/duplicate|23505|unique/i.test(m)) return 'Gibt es an diesem Verein schon';
+  if (e && (e.status === 404 || /function|PGRST202/i.test(m))) return 'Noch nicht freigeschaltet';
+  return 'Nicht gespeichert';
+};
+const CODE = /^[a-f0-9]{12}$/;
+export async function createInvite(v, art, nr) {
+  try {
+    const d = await (await rest('team_einladungen?select=code', { method: 'POST', headers: Object.assign({ Prefer: 'return=representation' }, json),
+      body: JSON.stringify({ verein_id: v.id, verein_name: str(v.name, 60).replace(/[<>"]/g, ''), team_art: TEAM_ART[art] ? art : 'herren', team_nr: Math.max(1, Math.min(9, +nr || 1)) }) })).json();
+    const code = Array.isArray(d) && d[0] && d[0].code;
+    if (!CODE.test(code || '')) throw new Error('leer');
+    return code;
+  } catch (e) { throw new Error(inviteErr(e)); }
+}
+export const inviteLink = code => location.origin + location.pathname + '?t=' + code;
+export async function readInvite(code) {
+  if (!CODE.test(code || '')) return null;
+  try {
+    const d = await rpc('einladung_lesen', { p_code: code });
+    const r = Array.isArray(d) ? d[0] : null;
+    if (!r || !VID.test(r.verein_id || '')) return null;
+    const list = (Array.isArray(r.spieler) ? r.spieler : []).filter(x => x && EXT_ID.test(x.id)).map(x => ({ id: x.id, vn: okName(x.vorname), n: okName(x.nachname),
+      pos: POS.includes(x.pos) ? x.pos : 'MIT', num: x.nummer >= 1 && x.nummer <= 99 ? +x.nummer : null, own: x.beansprucht === true })).filter(x => x.vn && x.n);
+    return { code, verein: r.verein_id, vname: str(r.verein_name, 60).replace(/[<>"]/g, ''), art: TEAM_ART[r.team_art] ? r.team_art : 'herren',
+      nr: Math.max(1, Math.min(9, +r.team_nr || 1)), ok: r.gueltig === true, list };
+  } catch (e) { return null; }
+}
+export async function joinTeam(code, f) {
+  try {
+    const id = await rpc('spieler_beitreten', { p_code: code, p_vorname: okName(f.vn), p_nachname: okName(f.n), p_pos: POS.includes(f.pos) ? f.pos : 'MIT', p_nummer: f.num >= 1 && f.num <= 99 ? Math.round(f.num) : null });
+    if (!EXT_ID.test(id || '')) throw new Error('leer');
+    me.id = id; dbCache.clear(); sp.rev++;
+    return fetchSpieler(id);
+  } catch (e) { throw new Error(inviteErr(e)); }
+}
+export async function claimPlayer(code, id) {
+  try {
+    if ((await rpc('spieler_beanspruchen', { p_code: code, p_id: id })) !== true) throw new Error('vergeben');
+    me.id = id; dbCache.clear(); sp.rev++;
+    if (PL[id]) PL[id].own = true;
+    return true;
+  } catch (e) { throw new Error(e.message === 'vergeben' ? 'Schon vergeben' : inviteErr(e)); }
+}
+/* Eigenes Profil (übernommen) */
+const me = { id: undefined };
+export async function myPlayerId(force = false) {
+  if (me.id !== undefined && !force) return me.id;
+  try { const d = await rpc('mein_spieler', {}); me.id = EXT_ID.test(d || '') ? d : null; } catch (e) { me.id = null; }
+  return me.id;
+}
+export const resetMe = () => { me.id = undefined; };
+export async function uploadOwnPhoto(uid, blob) {
+  const path = 'eigen/' + uid + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + (blob.type === 'image/webp' ? '.webp' : '.png');
+  await uploadFile(path, blob);
+  return path;
+}
+export async function updateMyProfile(id, f) {
+  try {
+    const ok = await rpc('spieler_profil', { p_id: id, p_pos: POS.includes(f.pos) ? f.pos : null, p_nummer: f.num >= 1 && f.num <= 99 ? Math.round(f.num) : null, p_foto: f.foto === undefined ? null : f.foto });
+    if (ok !== true) throw new Error('Nicht dein Profil');
+    const p = PL[id];
+    if (p) { if (f.pos) p.pos = f.pos; p.num = f.num || null; if (f.foto !== undefined) { p.foto = f.foto || ''; p.fotoV = Date.now(); } }
+    remember(p ? [p] : []); dbCache.clear(); sp.rev++;
+  } catch (e) { throw new Error(e.message === 'Nicht dein Profil' ? e.message : inviteErr(e)); }
+}
+export async function releaseProfile(id) {
+  try { if ((await rpc('spieler_freigeben', { p_id: id })) !== true) throw new Error('x'); } catch (e) { throw new Error('Nicht gespeichert'); }
+  me.id = null; if (PL[id]) { PL[id].own = false; PL[id].foto = ''; } dbCache.clear(); sp.rev++;
+}
+/* Kader als Liste: „Vorname Nachname [Nr] [Position]“ je Zeile, auch „Nachname, Vorname“ */
+const POSW = { tw: 'TW', torwart: 'TW', tor: 'TW', abw: 'ABW', abwehr: 'ABW', iv: 'ABW', av: 'ABW', mit: 'MIT', mittelfeld: 'MIT', zm: 'MIT', dm: 'MIT', om: 'MIT', ang: 'ANG', sturm: 'ANG', st: 'ANG', angriff: 'ANG' };
+export function parseKader(text) {
+  const out = [], bad = [];
+  for (const raw of String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).slice(0, 60)) {
+    let l = raw.replace(/[;\t|]+/g, ' ').replace(/\s+/g, ' ').trim(), num = null, pos = 'MIT';
+    l = l.replace(/(^|\s)#?(\d{1,2})(?=\s|$)/, (m, a, n) => { num = +n; return ' '; }).trim();
+    l = l.replace(/(^|\s)\(?([A-Za-zä]{2,10})\)?$/, (m, a, w) => { const k = POSW[w.toLowerCase()]; if (k) { pos = k; return ''; } return m; }).trim();
+    let vn = '', n = '';
+    if (l.includes(',')) { const [a, b] = l.split(',').map(x => x.trim()); n = a; vn = b; }
+    else { const w = l.split(' '); n = w.pop() || ''; vn = w.join(' '); }
+    vn = okName(vn); n = okName(n);
+    if (vn && n) out.push({ vn, n, num: num >= 1 && num <= 99 ? num : null, pos }); else bad.push(raw);
+  }
+  return { out, bad };
+}
+export async function bulkCreate(v, art, nr, list, onStep = () => {}) {
+  const res = { ok: 0, dup: 0, fail: [] };
+  for (let i = 0; i < list.length; i++) {
+    const x = list[i];
+    onStep(i + 1, list.length);
+    try { await createSpieler({ vn: x.vn, n: x.n, verein: v.id, vname: v.name, art, nr, pos: x.pos, num: x.num, ok: true }); res.ok++; }
+    catch (e) { if (/schon/i.test(e.message)) res.dup++; else { res.fail.push(x.vn + ' ' + x.n + ': ' + e.message); if (/genug|freigeschaltet/i.test(e.message)) break; } }
+  }
+  return res;
 }
 
 /* Mannschaft als Text: „Herren II“, „Frauen“ */

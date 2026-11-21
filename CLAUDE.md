@@ -115,6 +115,17 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Suche läuft im Gerät; DB (Migration 015) nur für angelegte Vereine, Mannschaften, Staffeln, Meldungen. fussball.de/FuPa nicht auslesen (Nutzungsbedingungen).
   „Mein Verein“ in `KEYS.club`. Fun-Punkte (`js/ui/fun.js`, Ansicht `fun`, Klassen `fun-`, `KEYS.fun`): ohne Konto, nichts in die DB.
   Manager nur angemeldet und nur Spiele mit `mit_konto` (Migration 016, in `cleanGame` als `g.konto`; `mgGames()` in ui/manager.js).
+- Vereinsdaten 2.6 (`assets/data/vereine.json` Format `v: 2`, gebaut von `tools/vereine/build.mjs`): je Verein Landkreis (`k` = Index in `d.k`, Grenzen aus
+  `tools/vereine/kreise.json`), Landesverband (Wikipedia-Kategorie „Verein im …verband“, sonst `verband-zuordnung.mjs` je Landkreis; geteilte Landkreise bleiben leer),
+  BFV-/NFV-Bezirk, Wikidata-ID, Flags (1 = sicher Fußball, 2 = freies Wappen), Farben, Liga, Gründung. **Vereins-IDs bleiben stabil** (build.mjs übernimmt alte IDs).
+  Wappen: `assets/img/w/<Q-ID>.webp` (128 px, nur freie Dateien aus Wikimedia; Lizenz/Urheber in `assets/data/wappen.json`, angezeigt auf der Vereinsseite),
+  Kreisliga-Wappen `assets/img/c/`, vom Verein hochgeladen (Migration 018, `vereine_wappen`, nur bestätigte Vereinsverwalter), sonst generiert (`generatedCrest(name, farben)`).
+  Reihenfolge in `vereinCrest()` (services/vereine.js). Daten laden: GitHub Action „Wappen und Vereinsdaten“ (`.github/workflows/wappen.yml`, im Cloud-Container sind Wikimedia/Overpass gesperrt).
+  Keine Fotos/Kader von FuPa/fussball.de (Urheberrecht, personenbezogene Daten).
+- Kader füllen (`js/ui/einladung.js`, Klassen `ei-`, Migration 018): „Team einladen“ (Link/QR `?t=<Code>`, `team_einladungen`), Spieler übernehmen ihr Profil
+  („Das bin ich“) oder treten neu bei – nur angemeldet, ein Profil je Konto (`spieler.konto`); eigenes Foto nur vom Spieler selbst (`eigen/<uid>/…`),
+  Karte „Mein Spielerprofil“ im Konto (`#eiMe`). „Kader als Liste“ (`parseKader`). Leere Spielersuche zeigt „Spieler anlegen“ + „Team einladen“.
+  Vereinsverwalter: Anfrage auf der Vereinsseite, Freigabe durch Admin (Karte im Admin-Bereich). Test: `tests/vereinsseite.js`.
 - Spielersuche (`js/services/spieler.js` Daten, `js/ui/suche.js` Ansichten `suche`/`sneu`, `css/suche.css`, Klassen `su-`, Migration 017):
   Suchfeld oben auf der Liga-Seite, Reiter Alle/Spieler/Vereine, „Zuletzt“ (`KEYS.recent`). Spieler tragen angemeldete Nutzer ein (Tabelle `spieler`,
   ID `sp` + 10 Hex, nur Herren/Frauen/AH, Häkchen „volljährig“), sonst „Nur für ein Spiel“ = Gastspieler am Verein. Kein fussball.de/FuPa.
